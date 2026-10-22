@@ -8,7 +8,7 @@ with classical ML (scikit-learn) and explains *why* the model decided that.
 > Scope: *Damage classification on building footprints derived from xBD annotations.* AfterSight does not
 > detect buildings in imagery, map hazards, or give rescue advice. See `CLAUDE.md` for the full rules.
 
-Status: **Phase 1 — data readiness.** The full README (architecture, dataset, usage, limitations) is written in Phase 7.
+Status: **Phase 2 — features and splits.** The full README (architecture, dataset, usage, limitations) is written in Phase 7.
 
 ## Quick start (macOS)
 
@@ -49,6 +49,20 @@ python scripts/inspect_dataset.py --alignment          # verify the shards, writ
 python scripts/make_fixture.py                         # synthetic test fixtures (NOT xBD)
 python scripts/inspect_dataset.py --config config/events.fixture_parquet.yaml
 ```
+
+## Features and splits (Phase 2)
+
+```zsh
+source backend/.venv/bin/activate
+python scripts/build_features.py --workers 4   # 37 features per building -> data/processed/features/
+python scripts/make_splits.py                  # scene-grouped manifests -> data/splits/
+```
+
+Two split designs, both grouped by scene and checked for leakage:
+- **within-event generalisation:** a stratified ~70/15/15 split across all 5 events;
+- **cross-event generalisation:** hurricane-michael held out entirely as the test set.
+
+The features are documented in [docs/FEATURES.md](docs/FEATURES.md).
 
 ## Limitations
 

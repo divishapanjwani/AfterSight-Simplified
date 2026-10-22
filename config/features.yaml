@@ -1,0 +1,10 @@
+# AfterSight per-building feature extraction (Phase 2). See docs/FEATURES.md for every feature.
+# Changing any value here changes the config hash, so cached feature tables are rebuilt.
+
+scene_cache_dir: data/processed/scenes     # input: scenes extracted by scripts/inspect_dataset.py
+output_dir: data/processed/features         # output: features_v<schema>.parquet + .meta.json + .log
+
+ring_width_px: 8          # context ring: pixels within this distance of the footprint, minus all buildings
+canny_sigma: 1.5          # Gaussian smoothing before Canny edge detection (skimage.feature.canny)
+glcm_levels: 32           # grey levels for the co-occurrence matrix (0-255 quantised to this many bins)
+glcm_distance_px: 1       # pixel offset for co-occurrence pairs (horizontal and vertical, averaged)

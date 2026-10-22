@@ -1,0 +1,26 @@
+# AfterSight split designs (Phase 2) — models are added in Phase 3.
+# Splits are made at SCENE level: every building of a scene lands in the same split.
+
+seed: 42
+
+splits:
+  min_class_count_warning: 100   # flag any split where a damage class has fewer buildings than this
+
+  designs:
+    within_event:
+      label: "within-event generalisation"
+      description: >
+        Scene-grouped, class-stratified ~70/15/15 split across all configured events. Scenes from the same
+        disaster appear in train, validation and test, so scores measure generalisation to new scenes of
+        disasters the model has seen — not to new disasters.
+      method: stratified_group
+      fractions: {train: 0.70, val: 0.15, test: 0.15}
+
+    cross_event:
+      label: "cross-event generalisation"
+      description: >
+        Every scene of the held-out event is the test set; train and validation come only from the other
+        events (scene-grouped, class-stratified). Scores measure generalisation to an unseen disaster.
+      method: event_holdout
+      holdout_event: hurricane-michael
+      fractions: {train: 0.85, val: 0.15}   # of the non-held-out scenes

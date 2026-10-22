@@ -23,7 +23,7 @@ from shapely.geometry import Polygon
 
 from app.datasets.annotations import Building, DropReason, DroppedBuilding, polygonal_part
 
-_STRUCTURE = {4: ndimage.generate_binary_structure(2, 1), 8: ndimage.generate_binary_structure(2, 2)}
+CONNECTIVITY_STRUCTURES = {4: ndimage.generate_binary_structure(2, 1), 8: ndimage.generate_binary_structure(2, 2)}
 
 
 @dataclass(frozen=True)
@@ -119,7 +119,7 @@ def buildings_from_masks(
     result.footprint_px_without_damage_value = int(np.count_nonzero(footprint & ~labelled))
     result.damage_px_outside_footprint = int(np.count_nonzero(labelled & ~footprint))
 
-    blobs, _n_blobs = ndimage.label(footprint, structure=_STRUCTURE[connectivity])
+    blobs, _n_blobs = ndimage.label(footprint, structure=CONNECTIVITY_STRUCTURES[connectivity])
     for index, window in enumerate(ndimage.find_objects(blobs), start=1):
         uid = building_id(scene_id, index)
         blob = blobs[window] == index

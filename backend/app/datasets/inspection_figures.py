@@ -153,6 +153,9 @@ def sample_pairs(result: InspectionResult, out_dir: Path) -> list[Path]:
 
 
 def write_inspection_figures(result: InspectionResult, figures_dir: Path) -> list[Path]:
+    # Remove samples from earlier runs so a changed event selection never leaves stale figures behind.
+    for old in figures_dir.glob("sample_*.png"):
+        old.unlink()
     report = result.to_report()
     source = "synthetic fixture" if result.config.source == "synthetic" else "xBD ground truth"
     written = []

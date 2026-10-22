@@ -59,6 +59,7 @@ def review_queue(store: Store, model: str, split: str, offset: int, limit: int) 
                       "predicted": str(main["pred"][i]), "true_label": str(y[i]), "confidence": round(float(main["conf"][i]), 4),
                       "reasons": reasons, "other_models": {k: str(o["pred"][i]) for k, o in others.items()}})
     return {"model": name, "split": split, "threshold": threshold, "threshold_rule": thresholds.get("rule"),
+            "target_accuracy": thresholds.get("target_accuracy"),
             "total_buildings": int(len(y)), "total_flagged": int(len(flagged)),
             "flagged_low_confidence": int(low.sum()), "flagged_disagreement_only": int((disagree & ~low).sum()), "items": items,
             "offset": offset, "limit": limit}

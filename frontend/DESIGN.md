@@ -76,7 +76,7 @@ Every number or label that could be mistaken for something else carries a chip w
 | `● GROUND TRUTH` | xBD annotation (mask-derived), double border |
 | `▲ TEST SET` | held-out; never used to fit or tune |
 | `△ VALIDATION` | used for tuning; caution tone |
-| `! TRAINING SCENE` | used for fitting; caution tone; results optimistic |
+| `! TRAINING SCENE` | used for fitting; caution tone; results optimistic (`TRAINING SPLIT` on pages that summarise the whole training split) |
 | `– NOT AVAILABLE` | not computed / not built, dashed |
 | `⚙ FROM CONFIG` | e.g. disaster type, which the dataset does not store |
 | `◇ DEMO` | reserved for a watermarked demo mode (not implemented) |

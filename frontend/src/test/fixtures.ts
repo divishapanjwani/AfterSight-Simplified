@@ -42,6 +42,7 @@ const row = (model: string, f1: number) => ({ model, optional: false, val_macro_
 export const comparison = (design: string, lr: number, other: number): Comparison => ({
   design, design_label: design === 'within_event' ? 'within-event generalisation' : 'cross-event generalisation',
   scheme: 'four_class', scheme_label: '4-class', classes: [], split_note: '', experiment: false, provenance: 'TEST SET',
+  holdout_event: design === 'cross_event' ? 'ev-c' : null, test_events: design === 'cross_event' ? ['ev-c'] : ['ev-a', 'ev-b', 'ev-c'],
   models: [row('logistic_regression', lr), row('decision_tree', other)],
 })
 

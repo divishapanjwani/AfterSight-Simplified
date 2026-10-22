@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     artifacts_dir: Path = Path("artifacts")
     outputs_dir: Path = Path("outputs")
     frontend_origin: str = "http://localhost:5200"
+    events_config: Path = Path("config/events.yaml")
+    training_config: Path = Path("config/training.yaml")
 
     def resolve(self, path: Path) -> Path:
         """Turn a repo-relative path from config into an absolute path."""

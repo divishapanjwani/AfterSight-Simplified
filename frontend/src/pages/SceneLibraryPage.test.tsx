@@ -57,7 +57,7 @@ describe('Scene Library', () => {
   it('dataset not built: shows the command instead of an error', async () => {
     mockApi({ '/api/scenes': { status: 503, body: { error: { code: 'dataset_not_ready', message: 'The scene cache has not been built yet.', fix: 'python scripts/inspect_dataset.py --alignment' } } } })
     renderAt(<SceneLibraryPage />, '/library')
-    expect(await screen.findByText('scenes is not available yet')).toBeInTheDocument()
+    expect(await screen.findByText('Not available yet: scenes')).toBeInTheDocument()
     expect(screen.getByText('$ python scripts/inspect_dataset.py --alignment')).toBeInTheDocument()
   })
 })

@@ -14,13 +14,29 @@ from reportlab.platypus import Image as RLImage, Paragraph, SimpleDocTemplate, S
 from app.core.config import SCOPE_LABEL
 from app.evaluation.figures import heatmap
 
-LIMITATIONS = [
-    "Footprints are derived from rasterised xBD annotation masks, not original polygons; touching buildings may be merged.",
-    "Classical ML on 37 hand-crafted colour/texture features. Within-event scores are optimistic; on an unseen "
-    "disaster (cross-event test) macro-F1 drops to about 0.29.",
-    "Confidence values are model scores (see 'confidence meaning'), not calibrated probabilities of being correct.",
-    "Not for operational rescue or routing decisions. Pixel coordinates only — no geographic location or area.",
-]
+def report_context(store: Any) -> dict[str, Any]:
+    """Numbers quoted in the limitations, read from saved artifacts (never typed in)."""
+    model = store.training_config.default_model
+    ctx: dict[str, Any] = {"model": model}
+    for design in ("within_event", "cross_event"):
+        doc = store.read_json(f"metrics/{design}/four_class/comparison.json") or {}
+        row = next((m for m in doc.get("models", []) if m["model"] == model), None)
+        ctx[design] = row["test_macro_f1"] if row else None
+    return ctx
+
+
+def limitations(context: dict[str, Any] | None) -> list[str]:
+    context = context or {}
+    scores = ""
+    if context.get("within_event") is not None and context.get("cross_event") is not None:
+        scores = (f" For the default model, test macro-F1 is {context['within_event']:.2f} on new scenes of known disasters "
+                  f"but {context['cross_event']:.2f} on an unseen disaster (cross-event).")
+    return [
+        "Footprints are derived from rasterised xBD annotation masks, not original polygons; touching buildings may be merged.",
+        "Classical ML on hand-crafted colour/texture features. Within-event scores are optimistic." + scores,
+        "Confidence values are model scores (see 'confidence meaning'), not calibrated probabilities of being correct.",
+        "Not for operational rescue or routing decisions. Pixel coordinates only — no geographic location or area.",
+    ]
 
 
 def write_csv(analysis: dict[str, Any], path: Path) -> Path:
@@ -38,7 +54,7 @@ def write_csv(analysis: dict[str, Any], path: Path) -> Path:
     return path
 
 
-def write_pdf(analysis: dict[str, Any], path: Path) -> Path:
+def write_pdf(analysis: dict[str, Any], path: Path, context: dict[str, Any] | None = None) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     styles = getSampleStyleSheet()
     p = lambda text, style="BodyText": Paragraph(text, styles[style])  # noqa: E731
@@ -76,7 +92,7 @@ def write_pdf(analysis: dict[str, Any], path: Path) -> Path:
     reviewed = sum(b["needs_review"] for b in analysis["buildings"])
     story += [p(f"Suggested for human review: {reviewed} buildings (confidence below {analysis['review_threshold']}, "
                 f"threshold chosen on validation). Confidence meaning: {analysis['confidence_kind']}."),
-              Spacer(1, 4 * mm), p("Limitations", "Heading2"), *[p(f"• {t}") for t in LIMITATIONS],
+              Spacer(1, 4 * mm), p("Limitations", "Heading2"), *[p(f"• {t}") for t in limitations(context)],
               Spacer(1, 2 * mm), p(f"<font size=8>analysis {analysis['analysis_id']} · generated {analysis['created_at']}</font>")]
     SimpleDocTemplate(str(path), pagesize=A4, title=f"AfterSight {analysis['scene_id']}",
                       leftMargin=18 * mm, rightMargin=18 * mm, topMargin=16 * mm, bottomMargin=16 * mm).build(story)

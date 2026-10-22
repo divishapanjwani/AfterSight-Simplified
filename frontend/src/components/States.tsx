@@ -60,7 +60,7 @@ export function NotReadyState({ title, message, fix }: { title: string; message?
 export function ErrorState({ error, what }: { error: unknown; what: string }) {
   const e = error instanceof ApiError ? error : new ApiError(0, 'unknown', String(error))
   if (e.notReady) {
-    return <NotReadyState title={`${what} is not available yet`} message={e.message} fix={e.fix} />
+    return <NotReadyState title={`Not available yet: ${what}`} message={e.message} fix={e.fix} />
   }
   return (
     <div role="alert" className="rounded-[4px] border border-danger bg-danger-soft px-4 py-4">

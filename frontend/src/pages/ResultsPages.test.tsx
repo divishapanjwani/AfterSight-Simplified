@@ -40,15 +40,16 @@ describe('Review Queue', () => {
     const calls = mockApi({
       '/api/models': { body: models },
       '/api/review-queue': { body: { model: 'logistic_regression', split: 'test', framing: 'Suggested for human review — low confidence or model disagreement, not confirmed errors.',
-        threshold: 0.48, threshold_rule: 'r', total_buildings: 100, total_flagged: 70, flagged_low_confidence: 40, flagged_disagreement_only: 30, offset: 0, limit: 25,
+        threshold: 0.48, threshold_rule: 'r', target_accuracy: 0.7, total_buildings: 100, total_flagged: 70, flagged_low_confidence: 40, flagged_disagreement_only: 30, offset: 0, limit: 25,
         items: [{ building_uid: 'ev-a_00000001_b0003', scene_id: 'ev-a_00000001', event: 'ev-a', predicted: 'minor-damage', true_label: 'no-damage', confidence: 0.31,
           reasons: ['low confidence (0.31 < 0.48)'], other_models: {} }] } },
     })
     renderAt(<ReviewQueuePage />, '/review')
     expect(await screen.findByText(/not confirmed errors/)).toBeInTheDocument()
-    expect(screen.getByText(/test buildings/).closest('p')).toHaveTextContent('70 of 100 test buildings (70%) are suggested for review')
+    expect(screen.getByText(/test buildings/).closest('p')).toHaveTextContent('70 of 100 test buildings (70%) are suggested for human review')
     expect(screen.getByText(/low confidence ·/).closest('p')).toHaveTextContent('40 low confidence · 30 confident, but another model disagrees')
     expect(screen.getByRole('link', { name: 'Open →' })).toHaveAttribute('href', '/triage/ev-a_00000001?model=logistic_regression&run=1&b=ev-a_00000001_b0003')
+    expect(screen.getByText(/test buildings/).closest('p')).toHaveTextContent('at least 70% correct')
     expect(screen.queryByText(/error rate/i)).not.toBeInTheDocument()
     expect(calls.find((u) => u.pathname === '/api/review-queue')!.searchParams.get('split')).toBe('test')
   })

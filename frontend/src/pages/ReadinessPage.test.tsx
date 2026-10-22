@@ -43,7 +43,7 @@ describe('Readiness board', () => {
     page()
     expect(await screen.findAllByText('○ NOT READY')).toHaveLength(2)
     expect(screen.getByText('$ python scripts/inspect_dataset.py --alignment')).toBeInTheDocument()
-    expect(await screen.findByText('within-event results is not available yet')).toBeInTheDocument()
+    expect(await screen.findByText('Not available yet: within-event results')).toBeInTheDocument()
   })
 
   it('shows an error with the start command when the backend is unreachable', async () => {

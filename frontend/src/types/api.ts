@@ -98,6 +98,8 @@ export interface Comparison {
   classes: string[]
   models: ComparisonRow[]
   split_note: string
+  holdout_event: string | null
+  test_events: string[]
   experiment: boolean
   provenance: string
 }
@@ -366,6 +368,7 @@ export interface ReviewQueue {
   framing: string
   threshold: number | null
   threshold_rule: string | null
+  target_accuracy: number | null
   total_buildings: number
   total_flagged: number
   flagged_low_confidence: number

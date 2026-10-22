@@ -5,7 +5,7 @@
  * Three stacked layers share one transform: pre image, post image (clipped in screen space at the swipe
  * position) and the footprint overlay. A click that moved less than 4 px selects a footprint.
  */
-import { useCallback, useRef, useState, type PointerEvent as ReactPointerEvent, type WheelEvent } from 'react'
+import { useCallback, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type WheelEvent } from 'react'
 import { DAMAGE, DamagePatternDefs } from '../theme/damage'
 import type { DamageClass, PolygonParts } from '../types/api'
 
@@ -71,6 +71,19 @@ export function SceneViewer({ preUrl, postUrl, width, height, footprints, mode, 
     if (d.moved) setView((v) => clamp(v.scale, d.vx + dx, d.vy + dy))
   }
   const endDrag = () => { drag.current = null }
+  // keyboard: arrows pan, + / - zoom, 0 resets (the building list offers another keyboard route)
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget) return
+    const step = 60
+    const moves: Record<string, [number, number]> = { ArrowLeft: [step, 0], ArrowRight: [-step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] }
+    if (moves[e.key]) {
+      e.preventDefault()
+      const [dx, dy] = moves[e.key]
+      setView((v) => clamp(v.scale, v.x + dx, v.y + dy))
+    } else if (e.key === '+' || e.key === '=') zoomAt(1.5)
+    else if (e.key === '-') zoomAt(1 / 1.5)
+    else if (e.key === '0') setView({ scale: 1, x: 0, y: 0 })
+  }
   const clickFootprint = (uid: string) => {
     if (!drag.current?.moved) onSelect(uid === selected ? null : uid)
   }
@@ -98,6 +111,7 @@ export function SceneViewer({ preUrl, postUrl, width, height, footprints, mode, 
         className="relative cursor-grab touch-none overflow-hidden rounded-[3px] border border-rule bg-ink select-none active:cursor-grabbing"
         style={{ width: size, height: size }}
         onWheel={onWheel} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerLeave={endDrag}
+        onKeyDown={onKeyDown} tabIndex={0} role="group" aria-label="Scene viewer: arrow keys pan, plus and minus zoom, 0 resets"
         data-testid="scene-viewer"
       >
         <div className={layer} style={{ transform, width, height }}>
@@ -119,8 +133,9 @@ export function SceneViewer({ preUrl, postUrl, width, height, footprints, mode, 
                 <path key={f.uid} d={pathOf(f.polygon)} fill={s.fill} stroke={isSelected ? 'var(--focus)' : s.stroke}
                   strokeWidth={isSelected ? stroke * 2.4 : stroke * ('width' in s ? (s.width as number) : 1)} strokeDasharray={s.dash} fillRule="evenodd"
                   opacity={selected && !isSelected ? 0.55 : 1} className="cursor-pointer"
-                  role="button" aria-label={`Building ${f.uid}`} aria-pressed={isSelected}
-                  onPointerUp={() => clickFootprint(f.uid)} />
+                  role="button" tabIndex={0} aria-label={`Building ${f.uid}`} aria-pressed={isSelected}
+                  onPointerUp={() => clickFootprint(f.uid)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(isSelected ? null : f.uid) } }} />
               )
             })}
           </svg>

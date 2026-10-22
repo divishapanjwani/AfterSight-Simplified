@@ -50,8 +50,8 @@ class StorePaths:
     @classmethod
     def from_settings(cls, settings: Settings) -> "StorePaths":
         return cls(settings.resolve(settings.data_dir), settings.resolve(settings.artifacts_dir),
-                   settings.resolve(settings.outputs_dir), REPO_ROOT / "config" / "events.yaml",
-                   REPO_ROOT / "config" / "training.yaml")
+                   settings.resolve(settings.outputs_dir), settings.resolve(settings.events_config),
+                   settings.resolve(settings.training_config))
 
     @property
     def scene_cache(self) -> Path:

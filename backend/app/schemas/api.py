@@ -206,6 +206,7 @@ class ReviewQueue(BaseModel):
     framing: str = "Suggested for human review — low confidence or model disagreement, not confirmed errors."
     threshold: float | None
     threshold_rule: str | None
+    target_accuracy: float | None = None
     total_buildings: int
     total_flagged: int
     flagged_low_confidence: int

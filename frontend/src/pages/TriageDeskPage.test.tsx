@@ -88,6 +88,20 @@ describe('Triage Desk', () => {
   })
 })
 
+it('keyboard: Enter on a focused footprint opens it; arrow keys pan without errors', async () => {
+  api()
+  page(`/triage/${ID}?run=1`)
+  await screen.findByText('ANALYSIS · abcdef01')
+  const footprint = screen.getByRole('button', { name: `Building ${ID}_b0001` })
+  footprint.focus()
+  await userEvent.keyboard('{Enter}')
+  expect(await screen.findByText('CASE · B-0001')).toBeInTheDocument()
+  const viewer = screen.getByRole('group', { name: /Scene viewer/ })
+  viewer.focus()
+  await userEvent.keyboard('{ArrowLeft}+')
+  expect(screen.getByText('150%')).toBeInTheDocument()
+})
+
 describe('Case file page', () => {
   it.each([
     ['decision_tree', 'Leaf of', 'Texture smoothness change'],

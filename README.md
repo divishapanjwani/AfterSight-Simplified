@@ -15,31 +15,37 @@ Status: **Phase 5 — web app (all pages).** The full README (architecture, data
 Requires Python 3.11 (`brew install python@3.11`) and Node 20+. The virtualenv lives at the **repo root**.
 
 ```zsh
-# once, from the repo root
+# 1. once, from the repo root: Python + JS dependencies
 python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r backend/requirements.txt
+(cd frontend && npm ci)
+
+# 2. put the xBD Parquet shards in data/raw/xbd_parquet/  (see data/README.md)
+
+# 3. build everything: inspect → features → splits → train → thresholds → experiments → demo cache (~10 min)
+scripts/run_pipeline.sh
+
+# 4. run the app (frees ports 8020/5200 if busy, prints the URL; Ctrl-C stops both)
+./start.sh                      # → http://localhost:5200   (API docs: http://localhost:8020/docs)
 ```
 
-```zsh
-# Backend — API on http://localhost:8020 (Swagger: /docs)
-source .venv/bin/activate          # from the repo root
-cd backend && uvicorn app.main:app --reload --port 8020
-```
+Without step 2–3 the app still starts and every page shows what is missing and the command that builds it.
 
-Tests run from the repo root (or from `backend/`):
+### Tests
 
 ```zsh
 source .venv/bin/activate
-python -m pytest
+python -m pytest                      # backend (from the repo root)
+(cd frontend && npm test)             # frontend
+python scripts/e2e_check.py           # end-to-end on a synthetic deployment (backend + built frontend)
 ```
 
+### Running the servers by hand
+
 ```zsh
-# Frontend — UI on http://localhost:5200 (second terminal)
-cd frontend
-npm ci
-npm test
-npm run dev
+source .venv/bin/activate && cd backend && uvicorn app.main:app --port 8020   # terminal 1
+cd frontend && npm run dev                                                    # terminal 2
 ```
 
 ## Data (Phase 1)

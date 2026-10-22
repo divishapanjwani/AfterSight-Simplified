@@ -29,7 +29,7 @@ export function ReportsPage() {
             <thead><tr className="border-b border-rule text-left text-ink-3">
               <th className="py-1.5 font-normal">Scene</th><th className="py-1.5 font-normal">Split</th><th className="py-1.5 font-normal">Model</th>
               <th className="py-1.5 text-right font-normal">buildings</th><th className="py-1.5 text-right font-normal">scene macro-F1</th>
-              <th className="py-1.5 text-right font-normal">suggested for review</th><th className="py-1.5 pl-4 font-normal">Created</th><th className="py-1.5 text-right font-normal">Exports</th></tr></thead>
+              <th className="py-1.5 text-right font-normal">suggested for human review</th><th className="py-1.5 pl-4 font-normal">Created</th><th className="py-1.5 text-right font-normal">Exports</th></tr></thead>
             <tbody>
               {q.data.items.map((a) => (
                 <tr key={a.analysis_id} className="border-b border-rule/60 last:border-0">

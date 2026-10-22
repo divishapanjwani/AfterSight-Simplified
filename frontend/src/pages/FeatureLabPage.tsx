@@ -60,7 +60,7 @@ export function FeatureLabPage() {
               aside={<span className="num text-xs text-ink-2">η² = {current.separation_eta2.toFixed(3)}</span>}>
               <BoxPlot perClass={current.per_class} label={current.feature} width={660} />
               <p className="mt-2 text-[11px] text-ink-3">Box = middle half of buildings, line = median, whiskers = 5th–95th percentile. Overlapping boxes mean this feature alone
-                cannot tell the classes apart — which is why the models combine 37 of them.</p>
+                cannot tell the classes apart — which is why the models combine all {features.length} of them.</p>
             </CaseFolder>
             <CaseFolder tab="SCATTER" title="Two features together" aside={
               <div className="flex gap-2">

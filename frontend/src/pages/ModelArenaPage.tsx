@@ -47,7 +47,7 @@ function Story({ within, cross, title }: { within: Comparison; cross: Comparison
   }))
   return (
     <div className="grid grid-cols-[1fr_300px] gap-6">
-      <Dumbbell rows={rows} aLabel="within-event · new scenes, known disasters" bLabel="cross-event · unseen disaster (hurricane-michael)"
+      <Dumbbell rows={rows} aLabel="within-event · new scenes, known disasters" bLabel={`cross-event · unseen disaster (${cross.holdout_event ?? cross.test_events.join(', ')})`}
         axisLabel={`${title} · test macro-F1 (each model evaluated on its test set once)`} />
       <div className="space-y-3 text-xs leading-5 text-ink-2">
         <p><b className="text-ink">Within-event.</b> {within.split_note}</p>
@@ -219,11 +219,11 @@ function ConfoundingSection() {
   return (
     <div className="grid grid-cols-[1fr_1fr] gap-8">
       <div className="space-y-3">
-        <p className="text-sm text-ink-2">A classifier given the <b>same 37 features</b> was asked which <b>disaster</b> each building comes from. Event is never an input to any damage model.</p>
+        <p className="text-sm text-ink-2">A classifier given the <b>same features as the damage models</b> was asked which <b>disaster</b> each building comes from. Event is never an input to any damage model.</p>
         <BarList items={[
-          { label: 'Event prediction accuracy (37 features)', value: m.accuracy },
+          { label: 'Event prediction accuracy (same features)', value: m.accuracy },
           { label: `Always guess the most common event (${c.data.majority_class})`, value: c.data.majority_class_accuracy },
-          { label: 'Uniform chance (5 events)', value: c.data.chance_accuracy_uniform },
+          { label: `Uniform chance (${m.confusion_matrix.labels.length} events)`, value: c.data.chance_accuracy_uniform },
           ...variants,
         ]} />
         <p className="text-xs leading-5 text-ink-2">The features carry a strong signature of <i>which</i> disaster a building is from (sensor, region, vegetation, roofs).

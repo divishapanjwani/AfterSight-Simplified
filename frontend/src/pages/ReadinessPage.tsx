@@ -94,8 +94,8 @@ function Headline({ within, cross }: { within: Comparison; cross: Comparison }) 
   const lr = (c: Comparison) => c.models.find((m) => m.model === 'logistic_regression')
   const best = (c: Comparison) => c.models.reduce((a, b) => (b.test_macro_f1 > a.test_macro_f1 ? b : a))
   const rows = [
-    { c: within, title: 'Within-event', text: 'New scenes from the same five disasters.' },
-    { c: cross, title: 'Cross-event', text: 'A disaster never seen in training (hurricane-michael).' },
+    { c: within, title: 'Within-event', text: `New scenes from the same ${within.test_events.length} disasters the models were trained on.` },
+    { c: cross, title: 'Cross-event', text: `A disaster never seen in training (${cross.holdout_event ?? cross.test_events.join(', ')}).` },
   ]
   return (
     <div className="grid grid-cols-2 gap-4">

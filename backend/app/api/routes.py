@@ -14,7 +14,7 @@ from app.core.store import FIX, Store
 from app.features.schema import FEATURE_COLUMNS
 from app.inference import feature_lab, images, review_queue, scenes
 from app.inference.analysis import MODEL_LABELS, explain_building, list_analyses, load_analysis, run_analysis
-from app.reports.reports import write_csv, write_pdf
+from app.reports.reports import report_context, write_csv, write_pdf
 from app.schemas.api import (
     AnalysisRequest, AnalysisResult, DatasetStatus, ErrorResponse, Explanation, Job, ModelList, ReviewQueue,
     SceneDetail, SceneList, StatusTile, TrainingRequest,
@@ -180,7 +180,10 @@ def results_comparison(store: StoreDep, design: Design = "within_event", scheme:
     if doc is None:
         raise NotFound("No saved comparison for this design/scheme.", code="results_not_found", fix=FIX["models"])
     design_cfg = store.training_config.splits.designs[design]
+    manifest = store.manifest(design)
     return {**doc, "split_note": " ".join(design_cfg.description.split()),
+            "holdout_event": design_cfg.holdout_event,
+            "test_events": sorted(manifest["counts"]["test"]["events"]),
             "experiment": scheme != "four_class", "provenance": "TEST SET (each final model evaluated once)"}
 
 
@@ -251,7 +254,7 @@ def export_pdf(analysis_id: str, store: StoreDep) -> FileResponse:
     analysis = load_analysis(store, analysis_id)
     path = store.paths.reports / f"{analysis['analysis_id']}.pdf"
     if not path.is_file():
-        write_pdf(analysis, path)
+        write_pdf(analysis, path, report_context(store))
     return FileResponse(path, media_type="application/pdf", filename=f"aftersight_{analysis['scene_id']}_{analysis['model']['name']}.pdf")
 
 

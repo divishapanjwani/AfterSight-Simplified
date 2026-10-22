@@ -37,7 +37,7 @@ every value it returns is read from an artifact written by the pipeline scripts.
 | GET | `/models/{name}/metrics` | saved val/test/per-event metrics, search log, preprocessing, timings (`design`, `scheme`; baseline included) |
 | GET | `/models/decision_tree/tree` | tree structure in raw-unit thresholds, pruned to `max_depth` |
 | GET | `/results/overview` | which saved result groups exist |
-| GET | `/results/comparison` | model comparison per `design` × `scheme` (3-class flagged as an experiment) |
+| GET | `/results/comparison` | model comparison per `design` × `scheme` (3-class flagged as an experiment), with `holdout_event` and `test_events` |
 | GET | `/results/confounding` | event-prediction check (analysis only) |
 | GET | `/results/experiments` | Phase 3b, labelled "Experiments", not selectable |
 | GET | `/clusters` | K-Means for `k` (and `design`): sizes, contingency, ARI, PCA points; `never_predictions: true` |
@@ -47,7 +47,7 @@ every value it returns is read from an artifact written by the pipeline scripts.
 | GET | `/analysis/{id}/buildings/{uid}/explain` | LR contributions / DT decision path / KNN neighbours (+ crop URLs); RF: global importances only |
 | GET | `/analysis/{id}/export.csv` | per-building CSV |
 | GET | `/analysis/{id}/report.pdf` | PDF summary with provenance, counts, metrics, confusion matrix, limitations |
-| GET | `/review-queue` | `model`, `split` (default test): low confidence (threshold chosen on validation) or model disagreement |
+| GET | `/review-queue` | `model`, `split` (default test): low confidence (threshold chosen on validation) or model disagreement; counts per reason and `target_accuracy` |
 | POST | `/training/run` | background training job; requires `confirm: true`; one at a time |
 | GET | `/jobs/{job_id}` | job status + last 40 log lines (server paths redacted) |
 

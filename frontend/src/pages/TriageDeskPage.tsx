@@ -22,7 +22,7 @@ const OVERLAYS: { value: OverlayMode; label: string }[] = [
   { value: 'agreement', label: 'Correct vs wrong' },
   { value: 'none', label: 'Off' },
 ]
-const SORTS = { severity: 'Most severe first', review: 'Suggested for review first', confidence: 'Least confident first' } as const
+const SORTS = { severity: 'Most severe first', review: 'Suggested for human review first', confidence: 'Least confident first' } as const
 const SEVERITY: Record<DamageClass, number> = { 'no-damage': 0, 'minor-damage': 1, 'major-damage': 2, destroyed: 3 }
 
 export function ProvenanceBanner({ warning, note }: { warning: string | null; note: string }) {
@@ -105,7 +105,7 @@ function BuildingList({ buildings, selected, onSelect, sort, onSort }: {
               <span className="flex items-center gap-1 text-ink" title="PREDICTED"><DamageSwatch cls={b.predicted} size={11} />{DAMAGE[b.predicted].short}</span>
               <span className="flex items-center gap-1 text-ink-3" title="GROUND TRUTH">● {DAMAGE[b.true_label].short}</span>
               <span className="num text-right text-ink-2">{b.confidence.toFixed(2)}</span>
-              <span aria-label={b.needs_review ? 'suggested for review' : undefined} title={b.needs_review ? 'Suggested for human review' : ''}
+              <span aria-label={b.needs_review ? 'suggested for human review' : undefined} title={b.needs_review ? 'Suggested for human review' : ''}
                 className="text-center font-mono text-ink-3">{b.needs_review ? '◌' : ''}</span>
             </button>
           </li>
@@ -136,7 +136,7 @@ export function TriageDeskPage() {
   const scene = useQuery({ queryKey: ['scene', sceneId], queryFn: () => api.scene(sceneId!), enabled: Boolean(sceneId) })
   const runRequested = params.get('run') === '1' // set by "Run analysis"; kept in the URL so reloads restore it
   const run = useQuery({ queryKey: ['analysis', sceneId, model], queryFn: () => api.analyse(sceneId!, model),
-    enabled: Boolean(sceneId) && runRequested, staleTime: Infinity })
+    enabled: Boolean(sceneId) && runRequested && scene.isSuccess, staleTime: Infinity, retry: false })
   const analysis = run.data
 
   useEffect(() => { if (sceneId) update({ sceneId, model }) }, [sceneId, model, update])

@@ -1,4 +1,4 @@
-# Phase 3 results (classical ML, test sets evaluated once)
+# AfterSight results (classical ML, test sets evaluated once)
 
 Copied from `artifacts/metrics/*/*/comparison.json`, written by `python scripts/train.py` (seed 42,
 scikit-learn 1.9.1). Reprint anytime with `python scripts/evaluate.py`. Macro-F1 is the primary metric.
@@ -122,3 +122,31 @@ that these hand-crafted features cannot bridge.
 
 **Decision.** Keep the full 37-feature set (Phase 3 models) as the app default. No variant meets the
 "better cross-event without hurting within-event" bar.
+
+---
+
+# Review-queue thresholds (chosen on validation)
+
+`scripts/calibrate_review.py`, within-event 4-class models. The rule: the lowest confidence threshold t such
+that validation buildings with confidence ≥ t are at least 70% correct. Buildings below
+t are *suggested for human review*. In the app, the Review Queue also adds buildings where the served models
+disagree.
+
+| Model | t | share of validation flagged | accuracy at/above t | accuracy below t |
+|---|---:|---:|---:|---:|
+| logistic regression | 0.484 | 40% | 0.703 | 0.421 |
+| knn | 0.533 | 22% | 0.725 | 0.414 |
+| decision tree | 0.526 | 55% | 0.706 | 0.435 |
+| random forest | 0.387 | 14% | 0.701 | 0.380 |
+
+# Reproducing every number on this page
+
+```zsh
+source .venv/bin/activate
+scripts/run_pipeline.sh          # inspect → features → splits → train → thresholds → experiments → demo
+python scripts/evaluate.py       # prints the comparison tables from artifacts (never re-touches test)
+```
+
+A clean clone following the README reproduced every test macro-F1 above exactly (Phase 6 check). The seed is
+42 everywhere, and the splits are fixed by the manifest hashes `7bba8a9fbbd2740a` (within-event) and
+`dd7d8566b7dbaf7a` (cross-event).

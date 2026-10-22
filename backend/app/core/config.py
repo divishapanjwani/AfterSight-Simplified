@@ -29,3 +29,8 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def display_path(path: Path) -> str:
+    """Repo-relative path for reports when the file lives in the repo, else the absolute path."""
+    return str(path.relative_to(REPO_ROOT)) if path.is_relative_to(REPO_ROOT) else str(path)

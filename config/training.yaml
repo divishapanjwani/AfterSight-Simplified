@@ -24,3 +24,48 @@ splits:
       method: event_holdout
       holdout_event: hurricane-michael
       fractions: {train: 0.85, val: 0.15}   # of the non-held-out scenes
+
+# ---------------------------------------------------------------- Phase 3: models
+
+# Label schemes. four_class is the primary task; three_class is a separate, clearly labelled experiment.
+label_schemes:
+  four_class:
+    label: "4-class damage (primary)"
+    mapping: {no-damage: no-damage, minor-damage: minor-damage, major-damage: major-damage, destroyed: destroyed}
+  three_class:
+    label: "3-class experiment (no-damage / damaged / destroyed)"
+    mapping: {no-damage: no-damage, minor-damage: damaged, major-damage: damaged, destroyed: destroyed}
+
+preprocessing:
+  # Inside every pipeline, fitted on the training split only: log1p on features whose training-set
+  # skewness exceeds this (non-negative features only), then median imputation, then StandardScaler.
+  skew_threshold: 2.0
+
+default_model: logistic_regression   # Triage Desk default (decided after Phase 3)
+
+models:   # tuned on validation macro-F1; the best setting is evaluated on test exactly once
+  baseline:
+    quantile_step: 0.05        # threshold candidates = training-set quantiles of the feature at 5% steps
+  logistic_regression:
+    grid: {C: [0.01, 0.1, 1.0, 10.0]}
+    max_iter: 3000
+  knn:
+    grid: {n_neighbors: [5, 15, 31], weights: [uniform, distance]}
+  decision_tree:
+    grid: {max_depth: [4, 6, 8, 12], min_samples_leaf: [20, 100]}
+  random_forest:               # OPTIONAL stronger classical reference, run after the required models
+    optional: true
+    n_estimators: 200
+    grid: {max_depth: [12, null], min_samples_leaf: [2, 10]}
+
+explain:
+  permutation_sample: 4000     # stratified validation sample for permutation importance
+  permutation_repeats: 5
+
+kmeans:
+  k_values: [2, 3, 4, 5, 6, 7, 8, 9, 10]
+  silhouette_sample: 5000
+  pca_sample: 3000             # points saved for the 2-D "visualisation only" projection
+
+confounding:
+  grid: {C: [0.01, 0.1, 1.0, 10.0]}   # logistic regression predicting EVENT from the same 37 features

@@ -8,7 +8,7 @@ with classical ML (scikit-learn) and explains *why* the model decided that.
 > Scope: *Damage classification on building footprints derived from xBD annotations.* AfterSight does not
 > detect buildings in imagery, map hazards, or give rescue advice. See `CLAUDE.md` for the full rules.
 
-Status: **Phase 2 — features and splits.** The full README (architecture, dataset, usage, limitations) is written in Phase 7.
+Status: **Phase 3 — classical models trained and evaluated.** The full README (architecture, dataset, usage, limitations) is written in Phase 7.
 
 ## Quick start (macOS)
 
@@ -63,6 +63,16 @@ Two split designs, both grouped by scene and checked for leakage:
 - **cross-event generalisation:** hurricane-michael held out entirely as the test set.
 
 The features are documented in [docs/FEATURES.md](docs/FEATURES.md).
+
+## Models (Phase 3)
+
+```zsh
+source backend/.venv/bin/activate
+python scripts/train.py        # baseline, LR, KNN, DT (+ optional RF), K-Means, confounding check (~5 min)
+python scripts/evaluate.py     # print saved comparison tables (never re-touches the test set)
+```
+
+Results and an honest reading of them: [docs/RESULTS.md](docs/RESULTS.md).
 
 ## Limitations
 

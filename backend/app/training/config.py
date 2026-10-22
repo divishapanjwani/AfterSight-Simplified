@@ -1,12 +1,13 @@
-"""Load config/training.yaml (split designs now; model settings are added in Phase 3)."""
+"""Load config/training.yaml: split designs (Phase 2) and model settings (Phase 3)."""
 
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from app.core.config import REPO_ROOT
+from app.core.damage_scale import DAMAGE_CLASSES
 from app.core.events_config import ConfigError
 
 DEFAULT_TRAINING_CONFIG = REPO_ROOT / "config" / "training.yaml"
@@ -36,9 +37,66 @@ class SplitsConfig(BaseModel):
     designs: dict[str, SplitDesign]
 
 
+class LabelScheme(BaseModel):
+    label: str
+    mapping: dict[str, str]
+
+    @model_validator(mode="after")
+    def _covers_classes(self) -> "LabelScheme":
+        if set(self.mapping) != set(DAMAGE_CLASSES):
+            raise ValueError(f"mapping must cover exactly {list(DAMAGE_CLASSES)}")
+        return self
+
+    @property
+    def classes(self) -> list[str]:
+        """Target classes in severity order (order of first appearance in DAMAGE_CLASSES)."""
+        ordered: list[str] = []
+        for cls in DAMAGE_CLASSES:
+            if self.mapping[cls] not in ordered:
+                ordered.append(self.mapping[cls])
+        return ordered
+
+
+class ModelSettings(BaseModel):
+    grid: dict[str, list[Any]] = {}
+    optional: bool = False
+    max_iter: int = 3000
+    n_estimators: int = 200
+    quantile_step: float = Field(0.05, gt=0, lt=0.5)
+
+
+class ExplainConfig(BaseModel):
+    permutation_sample: int = Field(4000, ge=100)
+    permutation_repeats: int = Field(5, ge=1)
+
+
+class KMeansConfig(BaseModel):
+    k_values: list[int] = list(range(2, 11))
+    silhouette_sample: int = Field(5000, ge=100)
+    pca_sample: int = Field(3000, ge=100)
+
+
+class ConfoundingConfig(BaseModel):
+    grid: dict[str, list[Any]] = {"C": [0.01, 0.1, 1.0, 10.0]}
+
+
 class TrainingConfig(BaseModel):
     seed: int = 42
     splits: SplitsConfig
+    label_schemes: dict[str, LabelScheme] = {}
+    preprocessing: dict[str, float] = {"skew_threshold": 2.0}
+    default_model: str = "logistic_regression"
+    models: dict[str, ModelSettings] = {}
+    explain: ExplainConfig = ExplainConfig()
+    kmeans: KMeansConfig = KMeansConfig()
+    confounding: ConfoundingConfig = ConfoundingConfig()
+
+    @model_validator(mode="after")
+    def _known_models(self) -> "TrainingConfig":
+        unknown = set(self.models) - {"baseline", "logistic_regression", "knn", "decision_tree", "random_forest"}
+        if unknown:
+            raise ValueError(f"unknown models in config: {sorted(unknown)}")
+        return self
 
 
 def load_training_config(path: Path = DEFAULT_TRAINING_CONFIG) -> TrainingConfig:

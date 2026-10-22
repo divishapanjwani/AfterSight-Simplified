@@ -50,6 +50,8 @@ class SkewLog1p(TransformerMixin, BaseEstimator):
     def fit(self, X: Any, y: Any = None) -> "SkewLog1p":
         values = np.asarray(X, dtype=float)
         self.n_features_in_ = values.shape[1]
+        if hasattr(X, "columns"):
+            self.feature_names_in_ = np.asarray(X.columns, dtype=object)
         self.skew_ = stats.skew(values, axis=0, nan_policy="omit")
         skewed = np.abs(np.asarray(self.skew_, dtype=float)) > self.skew_threshold
         non_negative = np.nanmin(values, axis=0) >= 0

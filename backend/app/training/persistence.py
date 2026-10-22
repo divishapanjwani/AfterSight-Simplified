@@ -15,7 +15,8 @@ class ModelLoadError(Exception):
     """Saved model can't be used with this code/data; the message says why and how to fix it."""
 
 
-def save_model(pipe: Pipeline, metadata: dict[str, Any], folder: Path, name: str) -> dict[str, Path]:
+def save_model(pipe: Pipeline, metadata: dict[str, Any], folder: Path, name: str,
+               feature_columns: list[str] | None = None, feature_set: str = "full_v1") -> dict[str, Path]:
     folder.mkdir(parents=True, exist_ok=True)
     paths = {"model": folder / f"{name}.joblib", "meta": folder / f"{name}.json"}
     joblib.dump(pipe, paths["model"], compress=3)
@@ -23,7 +24,8 @@ def save_model(pipe: Pipeline, metadata: dict[str, Any], folder: Path, name: str
         **metadata,
         "model_name": name,
         "feature_schema_version": FEATURE_SCHEMA_VERSION,
-        "feature_columns": FEATURE_COLUMNS,
+        "feature_set": feature_set,
+        "feature_columns": feature_columns or FEATURE_COLUMNS,
         "sklearn_version": sklearn.__version__,
         "artifact_bytes": paths["model"].stat().st_size,
     }
@@ -31,12 +33,18 @@ def save_model(pipe: Pipeline, metadata: dict[str, Any], folder: Path, name: str
     return paths
 
 
-def load_model(model_path: Path, expected_manifest_hash: str | None = None) -> tuple[Pipeline, dict[str, Any]]:
+def load_model(model_path: Path, expected_manifest_hash: str | None = None,
+               feature_columns: list[str] | None = None) -> tuple[Pipeline, dict[str, Any]]:
+    """Load a pipeline; refuses a different feature schema/columns, scikit-learn version or manifest.
+
+    feature_columns defaults to the full v1 schema; pass a variant's columns for Phase 3b models.
+    """
     meta_path = model_path.with_suffix(".json")
     if not model_path.is_file() or not meta_path.is_file():
         raise ModelLoadError(f"{model_path.stem} is not trained yet. Run: python scripts/train.py")
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
-    if meta.get("feature_schema_version") != FEATURE_SCHEMA_VERSION or meta.get("feature_columns") != FEATURE_COLUMNS:
+    expected_columns = feature_columns or FEATURE_COLUMNS
+    if meta.get("feature_schema_version") != FEATURE_SCHEMA_VERSION or meta.get("feature_columns") != expected_columns:
         raise ModelLoadError(
             f"{model_path.stem} was trained on feature schema v{meta.get('feature_schema_version')}; "
             f"current is v{FEATURE_SCHEMA_VERSION}. Retrain with: python scripts/train.py"

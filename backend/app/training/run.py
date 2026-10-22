@@ -26,7 +26,7 @@ from sklearn.pipeline import Pipeline
 from app.core.config import REPO_ROOT, display_path
 from app.evaluation.figures import confusion_figure
 from app.evaluation.metrics import TestSetGuard, classification_metrics, timed_predict
-from app.explain.explain import lr_coefficients, permutation_importances, tree_structure
+from app.explain.explain import feature_names, lr_coefficients, permutation_importances, tree_structure
 from app.features.schema import FEATURE_COLUMNS
 from app.features.table import FeatureTable
 from app.training.config import LabelScheme, ModelSettings, TrainingConfig
@@ -56,6 +56,7 @@ class DesignData:
     X: dict[str, pd.DataFrame]
     y: dict[str, pd.Series]
     ids: dict[str, pd.DataFrame]
+    feature_set: str = "full_v1"
 
 
 @dataclass
@@ -71,7 +72,8 @@ class OutputRoots:
                 "analyses": self.analyses / sub, "figures": self.figures / sub}
 
 
-def design_data(table: FeatureTable, manifest: dict[str, Any], scheme_name: str, scheme: LabelScheme) -> DesignData:
+def design_data(table: FeatureTable, manifest: dict[str, Any], scheme_name: str, scheme: LabelScheme,
+                feature_set: str = "full_v1") -> DesignData:
     split = split_of_buildings(manifest, table.ids)
     y_all = table.y.map(scheme.mapping)
     return DesignData(
@@ -80,6 +82,7 @@ def design_data(table: FeatureTable, manifest: dict[str, Any], scheme_name: str,
         X={s: table.X[split == s].reset_index(drop=True) for s in SPLITS},
         y={s: y_all[split == s].reset_index(drop=True) for s in SPLITS},
         ids={s: table.ids[split == s].reset_index(drop=True) for s in SPLITS},
+        feature_set=feature_set,
     )
 
 
@@ -102,12 +105,13 @@ def _preprocessing_info(pipe: Pipeline) -> dict[str, Any]:
     if "log" not in pipe.named_steps:
         return {"steps": ["none — the threshold rule works in raw feature units"]}
     log = pipe.named_steps["log"]
+    names = feature_names(pipe)
     return {
         "steps": ["log1p on skewed features (fitted on train)", "median imputation (fitted on train)", "StandardScaler (fitted on train)"],
         "skew_threshold": log.skew_threshold,
-        "log1p_features": [FEATURE_COLUMNS[j] for j in log.log_columns_],
-        "skewed_signed_features_left_unchanged": [FEATURE_COLUMNS[j] for j in log.skipped_signed_],
-        "train_skewness": {FEATURE_COLUMNS[j]: round(float(s), 3) for j, s in enumerate(log.skew_)},
+        "log1p_features": [names[j] for j in log.log_columns_],
+        "skewed_signed_features_left_unchanged": [names[j] for j in log.skipped_signed_],
+        "train_skewness": {names[j]: round(float(s), 3) for j, s in enumerate(log.skew_)},
     }
 
 
@@ -157,7 +161,7 @@ def train_one(name: str, data: DesignData, cfg: TrainingConfig, guard: TestSetGu
     if name == "decision_tree":
         model = pipe.named_steps["model"]
         explain["feature_importances"] = sorted(
-            ({"feature": f, "importance": round(float(v), 5)} for f, v in zip(FEATURE_COLUMNS, model.feature_importances_)),
+            ({"feature": f, "importance": round(float(v), 5)} for f, v in zip(Xtr.columns, model.feature_importances_)),
             key=lambda r: -r["importance"])
         (out["models"]).mkdir(parents=True, exist_ok=True)
         (out["models"] / "decision_tree_structure.json").write_text(json.dumps(tree_structure(pipe, data.classes)), encoding="utf-8")
@@ -189,7 +193,7 @@ def train_one(name: str, data: DesignData, cfg: TrainingConfig, guard: TestSetGu
 
     metadata = {
         "design": data.design, "design_label": data.design_label, "scheme": data.scheme, "scheme_label": data.scheme_label,
-        "classes": data.classes, "optional": name in OPTIONAL_MODELS,
+        "classes": data.classes, "optional": name in OPTIONAL_MODELS, "feature_set": data.feature_set,
         "hyperparameters": params, "search_on_validation": search if name != "baseline" else "see explain file",
         "preprocessing": _preprocessing_info(pipe), "seed": cfg.seed,
         "manifest_hash": data.manifest_hash, "feature_table_fingerprint": data.fingerprint,
@@ -202,7 +206,7 @@ def train_one(name: str, data: DesignData, cfg: TrainingConfig, guard: TestSetGu
         "figures": figures,
         "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
-    save_model(pipe, metadata, out["models"], name)
+    save_model(pipe, metadata, out["models"], name, feature_columns=list(Xtr.columns), feature_set=data.feature_set)
     return {"model": name, "optional": name in OPTIONAL_MODELS, "hyperparameters": params,
             "val_macro_f1": val_metrics["macro_f1"], "test_macro_f1": test_metrics["macro_f1"],
             "test_accuracy": test_metrics["accuracy"], "test_weighted_f1": test_metrics["weighted_f1"],

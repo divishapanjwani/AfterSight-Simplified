@@ -66,3 +66,59 @@ Part of the pooled score comes from telling events apart, not from reading damag
 - Confusion matrices: `outputs/figures/models/<design>/<scheme>/<model>_confusion_{val,test}.png`
 - Event-confounding: `outputs/figures/models/confounding/within_event_event_confusion_test.png`
 - K-Means: `outputs/figures/models/kmeans/<design>/kmeans_elbow_silhouette.png`, `kmeans_contingency_k{2,4}.png`
+
+---
+
+# Phase 3b experiment: confounding-reduced feature sets
+
+*A separate experiment. These are new Logistic Regression and Decision Tree models, each tuned on
+validation and evaluated on test once, stored under `artifacts/experiments/phase3b/`. The Phase 3
+models were not replaced or re-tested. The Phase 3 rows below are copied from the tables above
+for reference.*
+
+Variants (`backend/app/features/variants.py`):
+
+- **change_only:** 17 features: the change group, the 4 texture deltas, the context ring and shape.
+  Every absolute pre/post colour and texture level is removed.
+- **scene_normalised:** all 37 features, each image feature minus its **scene median**. A difference
+  rather than a ratio, because many features are signed or near zero. Shape stays raw. Only feature
+  values are used, never labels, and scenes never cross splits, so this is leak-free.
+- **change_only_scene_normalised:** both of the above.
+
+Event-prediction accuracy is the confounding classifier retrained on each variant's features
+(within-event test; chance 0.20, majority class 0.25). Lower means less confounding.
+
+| Variant (features) | Design | Model | test macro-F1 | R major | R destroyed | event-pred. acc. |
+|---|---|---|---:|---:|---:|---:|
+| *Phase 3 full (37)* | within | LR | *0.527* | *0.566* | *0.817* | *0.829* |
+| *Phase 3 full (37)* | within | DT | *0.470* | *0.499* | *0.780* | *0.829* |
+| *Phase 3 full (37)* | cross | LR | *0.290* | *0.153* | *0.447* | |
+| *Phase 3 full (37)* | cross | DT | *0.294* | *0.024* | *0.428* | |
+| change_only (17) | within | LR | 0.450 | 0.501 | 0.764 | 0.632 |
+| change_only (17) | within | DT | 0.436 | 0.442 | 0.717 | 0.632 |
+| change_only (17) | cross | LR | 0.243 | 0.087 | 0.579 | |
+| change_only (17) | cross | DT | 0.278 | 0.022 | 0.314 | |
+| scene_normalised (37) | within | LR | 0.330 | 0.511 | 0.408 | 0.518 |
+| scene_normalised (37) | within | DT | 0.342 | 0.438 | 0.616 | 0.518 |
+| scene_normalised (37) | cross | LR | 0.236 | 0.200 | 0.804 | |
+| scene_normalised (37) | cross | DT | 0.241 | 0.168 | 0.506 | |
+| change_only + scene_normalised (17) | within | LR | 0.309 | 0.388 | 0.431 | 0.374 |
+| change_only + scene_normalised (17) | within | DT | 0.374 | 0.129 | 0.523 | 0.374 |
+| change_only + scene_normalised (17) | cross | LR | 0.248 | 0.330 | 0.711 | |
+| change_only + scene_normalised (17) | cross | DT | 0.262 | 0.188 | 0.464 | |
+
+**Mean per-event within-event test macro-F1 (LR):** full 0.403 · change_only 0.345 · scene_normalised 0.260 ·
+combined 0.252.
+
+**Interpretation.** Removing absolute levels and normalising by scene does cut the event signature
+sharply: event prediction falls from 0.83 to 0.37 with both changes. However, **no variant improves
+cross-event macro-F1** (0.24–0.28 vs 0.29), and within-event scores fall by 0.08–0.22. Per-event scores
+fall too, so the variants removed real damage information, not only the "which disaster" shortcut.
+Scene normalisation is hit hardest: where most of a neighbourhood is damaged (Santa Rosa: 0.46 → 0.22),
+the scene median itself looks damaged, which hides exactly the signal we need. The poor transfer to
+hurricane-michael is therefore not mainly the model exploiting event identity. It is a genuine domain
+shift between disasters (different roofs, imagery and damage appearance, and a minor-heavy class mix)
+that these hand-crafted features cannot bridge.
+
+**Decision.** Keep the full 37-feature set (Phase 3 models) as the app default. No variant meets the
+"better cross-event without hurting within-event" bar.

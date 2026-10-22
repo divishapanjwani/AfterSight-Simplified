@@ -141,7 +141,7 @@ Data, models, caches and outputs are git-ignored. They are rebuilt by `scripts/r
   share-alike, attribution required). It is **not** redistributed in this repository.
 - **Imagery in figures:** satellite imagery in screenshots or figures (e.g. in `report/`) is derived from xBD
   and remains under CC BY-NC-SA 4.0.
-- **Code licence:** the AfterSight code is MIT-licensed ([LICENSE](LICENSE)).
+- **Code licence:** the AfterSight code is MIT-licensed ([LICENSE](LICENSE)); see [NOTICE](NOTICE) for the data licence.
 
 > R. Gupta, R. Hosfelt, S. Sajeev, N. Patel, B. Goodman, J. Doshi, E. Heim, H. Choset and M. Gaston,
 > "xBD: A Dataset for Assessing Building Damage from Satellite Imagery," arXiv:1911.09296, 2019.

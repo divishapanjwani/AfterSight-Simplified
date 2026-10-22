@@ -1,0 +1,9 @@
+AfterSight — third-party data notice
+
+The MIT licence in LICENSE covers the AfterSight source code only.
+
+The xBD dataset (R. Gupta et al., "xBD: A Dataset for Assessing Building Damage from Satellite Imagery",
+arXiv:1911.09296, 2019) is published by the xView2 organisers under the Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International licence (CC BY-NC-SA 4.0). It is not included in or
+relicensed by this repository. Satellite imagery appearing in screenshots and figures (for example in report/)
+is derived from xBD and remains under CC BY-NC-SA 4.0: non-commercial use, with attribution, share-alike.

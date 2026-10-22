@@ -1,6 +1,6 @@
 /** Scene Library: browse cached scenes, defaulting to held-out TEST scenes. Filters live in the URL. */
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { CaseFolder } from '../components/CaseFolder'
 import { Chip, SplitChip } from '../components/Chip'
 import { DamageBar } from '../components/DamageBar'
@@ -62,8 +62,9 @@ function SceneRow({ scene }: { scene: SceneSummary }) {
         )}
       </td>
       <td className="py-2 text-right">
-        <button type="button" disabled title="The Triage Desk arrives in Phase 5 Part B"
-          className="cursor-not-allowed rounded-[3px] border border-dashed border-rule-strong px-2 py-1 text-xs whitespace-nowrap text-ink-3/70">Triage →</button>
+        {scene.n_buildings > 0 ? (
+          <Link to={`/triage/${scene.scene_id}`} className="rounded-[3px] border border-ink px-2 py-1 text-xs whitespace-nowrap text-ink hover:bg-sheet-2">Triage →</Link>
+        ) : <span className="text-xs text-ink-3">no buildings</span>}
       </td>
     </tr>
   )

@@ -32,6 +32,20 @@
   --dmg-2: #6b3590;          /* major-damage */
   --dmg-3: #3d1559;          /* destroyed */
   --shadow: 0 1px 0 rgba(27, 27, 26, 0.04), 0 1px 3px rgba(27, 27, 26, 0.06);
+  /* categorical series (validated reference palette, orange slot skipped: orange = action) */
+  --cat-1: #2a78d6;
+  --cat-2: #1baf7a;
+  --cat-3: #eda100;
+  --cat-4: #e87ba4;
+  --cat-5: #008300;
+  --cat-6: #6250d6;
+  --cat-7: #e34948;
+  /* magnitude ramp for heatmaps (single hue, light -> dark) */
+  --mag-0: #f3f7fd;
+  --mag-1: #9ec5f4;
+  --mag-2: #3987e5;
+  --mag-3: #1c5cab;
+  --mag-4: #0d366b;
 }
 
 :root[data-theme='dark'] {
@@ -60,6 +74,18 @@
   --dmg-2: #a066bf;
   --dmg-3: #7d3fa3;
   --shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+  --cat-1: #3987e5;
+  --cat-2: #199e70;
+  --cat-3: #c98500;
+  --cat-4: #d55181;
+  --cat-5: #008300;
+  --cat-6: #9085e9;
+  --cat-7: #e66767;
+  --mag-0: #1f2733;
+  --mag-1: #1c4a80;
+  --mag-2: #2a78d6;
+  --mag-3: #6da7ec;
+  --mag-4: #cde2fb;
 }
 
 @theme inline {

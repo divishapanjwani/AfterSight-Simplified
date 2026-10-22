@@ -42,6 +42,7 @@ every value it returns is read from an artifact written by the pipeline scripts.
 | GET | `/results/experiments` | Phase 3b, labelled "Experiments", not selectable |
 | GET | `/clusters` | K-Means for `k` (and `design`): sizes, contingency, ARI, PCA points; `never_predictions: true` |
 | POST | `/analysis` | `{scene_id, model_name}` → predictions, scores, review flags, counts, scene metrics, provenance |
+| GET | `/analyses` | recent cached analyses (newest first) for the Reports page |
 | GET | `/analysis/{id}` | a cached analysis |
 | GET | `/analysis/{id}/buildings/{uid}/explain` | LR contributions / DT decision path / KNN neighbours (+ crop URLs); RF: global importances only |
 | GET | `/analysis/{id}/export.csv` | per-building CSV |

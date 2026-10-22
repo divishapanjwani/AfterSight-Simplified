@@ -101,3 +101,293 @@ export interface Comparison {
   experiment: boolean
   provenance: string
 }
+
+export type Ring = [number, number][]
+export type PolygonParts = Ring[][]
+
+export interface Provenance {
+  split: Split
+  design: string
+  design_label: string
+  warning: string | null
+  note: string
+}
+
+export interface GroundTruthBuilding {
+  building_uid: string
+  true_label: DamageClass
+  area_px: number
+  label_purity: number
+  mixed_label: boolean
+  touches_border: boolean
+  polygon: PolygonParts
+}
+
+export interface SceneDetail extends SceneSummary {
+  width: number
+  height: number
+  provenance: Provenance
+  n_dropped: number
+  dropped_reasons: Record<string, number>
+  footprint_source: string
+  image_urls: Record<string, string>
+  buildings: GroundTruthBuilding[]
+}
+
+export interface ClassificationMetrics {
+  n: number
+  accuracy: number | null
+  macro_f1: number | null
+  weighted_f1: number | null
+  per_class: Record<string, { precision: number | null; recall: number | null; f1: number | null; support: number }>
+  confusion_matrix: { labels: string[]; rows_true_cols_pred: number[][] }
+  notes: string[]
+}
+
+export interface BuildingPrediction {
+  building_uid: string
+  true_label: DamageClass
+  predicted: DamageClass
+  correct: boolean
+  confidence: number
+  scores: Record<string, number>
+  needs_review: boolean
+  review_reasons: string[]
+  area_px: number
+  mixed_label: boolean
+  touches_border: boolean
+  polygon: PolygonParts
+}
+
+export interface AnalysisModel {
+  name: string
+  label: string
+  design: string
+  design_label: string
+  scheme: string
+  trained_at: string
+  hyperparameters: Record<string, unknown>
+  test_macro_f1: number
+  optional: boolean
+}
+
+export interface AnalysisResult {
+  analysis_id: string
+  cached: boolean
+  created_at: string
+  scene_id: string
+  event: string
+  disaster_type: string | null
+  model: AnalysisModel
+  confidence_kind: string
+  review_threshold: number | null
+  review_rule: string | null
+  provenance: Provenance
+  counts: { ground_truth: Record<DamageClass, number>; predicted: Record<DamageClass, number> }
+  scene_metrics: ClassificationMetrics | null
+  seconds: number
+  buildings: BuildingPrediction[]
+}
+
+export interface LrContribution {
+  feature: string
+  value_raw: number
+  standardised: number
+  coefficient: number
+  contribution: number
+}
+
+export interface PathStep {
+  feature: string
+  value_raw: number
+  op: '<=' | '>'
+  threshold_raw: number
+}
+
+export interface Neighbour {
+  sample_id: string
+  label: DamageClass
+  distance: number
+  split: 'train'
+  crop_urls: { pre: string; post: string }
+}
+
+export interface Explanation {
+  analysis_id: string
+  building_uid: string
+  model: string
+  kind: 'lr_contributions' | 'decision_path' | 'nearest_neighbours' | 'none'
+  predicted: DamageClass
+  true_label: DamageClass
+  confidence: number
+  confidence_kind: string
+  detail: {
+    // lr_contributions
+    predicted_class?: string
+    intercept?: number
+    score?: number
+    top_features?: LrContribution[]
+    note?: string
+    // decision_path
+    steps?: PathStep[]
+    leaf_samples?: number
+    leaf_class_fractions?: Record<string, number>
+    prediction?: string
+    // nearest_neighbours
+    k?: number
+    weights?: string
+    neighbours?: Neighbour[]
+  }
+  global_top_features: { feature: string; mean: number; std: number }[]
+  crop_urls: { pre: string; post: string }
+}
+
+// ---------------------------------------------------------------- arena / results
+export interface ModelMetrics {
+  model: string
+  label: string
+  design: string
+  design_label: string
+  scheme: string
+  scheme_label: string
+  classes: string[]
+  optional: boolean
+  hyperparameters: Record<string, unknown>
+  train_seconds: number
+  inference_seconds_per_1000_test: number
+  confidence: string
+  metrics: { val: ClassificationMetrics; test: ClassificationMetrics; test_per_event: Record<string, ClassificationMetrics> }
+  preprocessing: { log1p_features?: string[] }
+}
+
+export interface TreeNode {
+  id: number
+  depth: number
+  samples: number
+  class_fractions: Record<string, number>
+  majority: string
+  feature?: string
+  threshold_raw?: number
+  left?: TreeNode
+  right?: TreeNode
+  leaf?: boolean
+  truncated?: boolean
+}
+
+export interface TreeView {
+  n_nodes: number
+  max_depth: number
+  n_leaves: number
+  classes: string[]
+  view_max_depth: number
+  root: TreeNode
+}
+
+export interface Confounding {
+  design_label: string
+  target: string
+  test_metrics: ClassificationMetrics
+  majority_class: string
+  majority_class_accuracy: number
+  chance_accuracy_uniform: number
+}
+
+export interface ExperimentRow {
+  variant: string
+  n_features: number
+  design: string
+  model: string
+  val_macro_f1: number
+  test_macro_f1: number
+  test_recall_major: number
+  test_recall_destroyed: number
+  event_prediction_accuracy_within_event: number | null
+}
+
+export interface Experiments {
+  label: string
+  section: string
+  selectable: false
+  note: string
+  variants: Record<string, string>
+  rows: ExperimentRow[]
+}
+
+export interface FeatureSummary {
+  split: 'train'
+  n: number
+  separation_score: string
+  features: { feature: string; group: string; separation_eta2: number;
+    per_class: Record<string, { n: number; mean: number | null; p5: number | null; q1: number | null; median: number | null; q3: number | null; p95: number | null }> }[]
+}
+
+export interface Scatter {
+  split: 'train'
+  x: string
+  y: string
+  n: number
+  points: { x: number; y: number; label: DamageClass }[]
+}
+
+export interface Clusters {
+  design_label: string
+  classes: string[]
+  k_values: number[]
+  chosen_k_by_silhouette: number
+  elbow_k_heuristic: number
+  pca_explained_variance: number[]
+  pca_note: string
+  interpretation_note: string
+  k: number
+  inertia: number
+  silhouette_sampled: number
+  adjusted_rand_index: number
+  cluster_sizes: number[]
+  contingency_rows_cluster_cols_class: number[][]
+  pca_points: { x: number; y: number; cluster: number; label: DamageClass }[]
+  curves: Record<string, { inertia: number; silhouette: number }>
+  never_predictions: true
+}
+
+export interface ReviewItem {
+  building_uid: string
+  scene_id: string
+  event: string
+  predicted: DamageClass
+  true_label: DamageClass
+  confidence: number
+  reasons: string[]
+  other_models: Record<string, string>
+}
+
+export interface ReviewQueue {
+  model: string
+  split: Split
+  framing: string
+  threshold: number | null
+  threshold_rule: string | null
+  total_buildings: number
+  total_flagged: number
+  flagged_low_confidence: number
+  flagged_disagreement_only: number
+  items: ReviewItem[]
+  offset: number
+  limit: number
+}
+
+export interface AnalysisSummary {
+  analysis_id: string
+  scene_id: string
+  event: string
+  created_at: string
+  model: string
+  model_label: string
+  split: Split
+  warning: string | null
+  n_buildings: number
+  n_review: number
+  accuracy: number | null
+  macro_f1: number | null
+  csv_url: string
+  pdf_url: string
+}

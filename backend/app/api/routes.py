@@ -13,7 +13,7 @@ from app.core.jobs import JobManager
 from app.core.store import FIX, Store
 from app.features.schema import FEATURE_COLUMNS
 from app.inference import feature_lab, images, review_queue, scenes
-from app.inference.analysis import MODEL_LABELS, explain_building, load_analysis, run_analysis
+from app.inference.analysis import MODEL_LABELS, explain_building, list_analyses, load_analysis, run_analysis
 from app.reports.reports import write_csv, write_pdf
 from app.schemas.api import (
     AnalysisRequest, AnalysisResult, DatasetStatus, ErrorResponse, Explanation, Job, ModelList, ReviewQueue,
@@ -218,6 +218,11 @@ def clusters(store: StoreDep, k: Annotated[int, Query(ge=2, le=20)] = 4, design:
 @router.post("/analysis", response_model=AnalysisResult, tags=["analysis"])
 def create_analysis(request: AnalysisRequest, store: StoreDep) -> dict[str, Any]:
     return run_analysis(store, request.scene_id, request.model_name)
+
+
+@router.get("/analyses", tags=["reports"])
+def recent_analyses(store: StoreDep, limit: Annotated[int, Query(ge=1, le=200)] = 50) -> dict[str, Any]:
+    return list_analyses(store, limit)
 
 
 @router.get("/analysis/{analysis_id}", response_model=AnalysisResult, tags=["analysis"])

@@ -57,3 +57,56 @@ export const sceneList = (split: SceneSummary['split'], ids: string[]): SceneLis
   split_design: 'within_event', split_design_label: 'within-event generalisation', default_split: 'test',
   facets: { event: { 'ev-a': 9 }, split: { test: 3, val: 2, train: 4 }, disaster_type: { flooding: 9 } },
 })
+
+// ---------------------------------------------------------------- triage / case file
+import type { AnalysisResult, BuildingPrediction, Explanation, SceneDetail } from '../types/api'
+
+const square = (x: number): [number, number][][][] => [[[[x, 10], [x + 20, 10], [x + 20, 30], [x, 30], [x, 10]]]]
+
+export const sceneDetail = (id: string, split: SceneSummary['split'], warning: string | null): SceneDetail => ({
+  ...scene(id, split), n_buildings: 2, width: 1024, height: 1024,
+  ground_truth_counts: { 'no-damage': 1, 'minor-damage': 0, 'major-damage': 0, destroyed: 1 },
+  provenance: { split, design: 'within_event', design_label: 'within-event generalisation', warning, note: split === 'test' ? 'Held-out test scene: never used for training or tuning.' : 'Training scene.' },
+  n_dropped: 0, dropped_reasons: {}, footprint_source: 'mask', image_urls: {},
+  buildings: [
+    { building_uid: `${id}_b0001`, true_label: 'no-damage', area_px: 400, label_purity: 1, mixed_label: false, touches_border: false, polygon: square(10) },
+    { building_uid: `${id}_b0002`, true_label: 'destroyed', area_px: 400, label_purity: 1, mixed_label: true, touches_border: false, polygon: square(60) },
+  ],
+})
+
+const prediction = (uid: string, true_label: BuildingPrediction['true_label'], predicted: BuildingPrediction['predicted'], confidence: number, x: number): BuildingPrediction => ({
+  building_uid: uid, true_label, predicted, correct: true_label === predicted, confidence,
+  scores: { 'no-damage': predicted === 'no-damage' ? confidence : 0.1, destroyed: predicted === 'destroyed' ? confidence : 0.1 },
+  needs_review: confidence < 0.5, review_reasons: confidence < 0.5 ? [`confidence ${confidence.toFixed(2)} is below the review threshold 0.48 (chosen on validation)`] : [],
+  area_px: 400, mixed_label: false, touches_border: false, polygon: square(x),
+})
+
+export const analysisFor = (id: string, model = 'logistic_regression', split: SceneSummary['split'] = 'test', warning: string | null = null): AnalysisResult => ({
+  analysis_id: 'abcdef0123456789', cached: false, created_at: 't', scene_id: id, event: 'ev-a', disaster_type: 'flooding',
+  model: { name: model, label: model === 'knn' ? 'K-Nearest Neighbours' : model === 'decision_tree' ? 'Decision Tree' : 'Logistic Regression',
+    design: 'within_event', design_label: 'within-event generalisation', scheme: 'four_class', trained_at: 't', hyperparameters: {}, test_macro_f1: 0.5, optional: false },
+  confidence_kind: model === 'knn' ? 'vote fraction of neighbours' : 'probability (not calibrated)',
+  review_threshold: 0.48, review_rule: 'rule',
+  provenance: { split, design: 'within_event', design_label: 'within-event generalisation', warning, note: 'note' },
+  counts: { ground_truth: { 'no-damage': 1, 'minor-damage': 0, 'major-damage': 0, destroyed: 1 }, predicted: { 'no-damage': 0, 'minor-damage': 0, 'major-damage': 0, destroyed: 2 } },
+  scene_metrics: { n: 2, accuracy: 0.5, macro_f1: 0.333, weighted_f1: 0.333, per_class: {}, confusion_matrix: { labels: [], rows_true_cols_pred: [] }, notes: [] },
+  seconds: 0.004,
+  buildings: [prediction(`${id}_b0001`, 'no-damage', 'destroyed', 0.41, 10), prediction(`${id}_b0002`, 'destroyed', 'destroyed', 0.93, 60)],
+})
+
+const base = { analysis_id: 'abcdef0123456789', model: 'x', predicted: 'destroyed' as const, true_label: 'destroyed' as const, confidence: 0.93,
+  confidence_kind: 'k', global_top_features: [{ feature: 'gray_std_post', mean: 0.27, std: 0.01 }], crop_urls: { pre: '', post: '' } }
+
+export const explanations: Record<string, Explanation> = {
+  logistic_regression: { ...base, building_uid: 'x', kind: 'lr_contributions', detail: { intercept: -0.85, score: 2.44, top_features: [
+    { feature: 'post_mean_b', value_raw: 155.9, standardised: 1.2, coefficient: -3.6, contribution: -4.37 },
+    { feature: 'ring_dmean', value_raw: 4.2, standardised: 0.9, coefficient: 3.4, contribution: 3.07 },
+  ] } },
+  decision_tree: { ...base, building_uid: 'x', kind: 'decision_path', detail: { prediction: 'destroyed', leaf_samples: 3677,
+    leaf_class_fractions: { destroyed: 0.6, 'no-damage': 0.4 },
+    steps: [{ feature: 'glcm_homogeneity_delta', value_raw: -0.022, op: '>', threshold_raw: -0.146 }] } },
+  knn: { ...base, building_uid: 'x', kind: 'nearest_neighbours', detail: { k: 2, weights: 'uniform', neighbours: [
+    { sample_id: 'ev-b_00000001_b0003', label: 'destroyed', distance: 1.5, split: 'train', crop_urls: { pre: '/p', post: '/q' } },
+    { sample_id: 'ev-b_00000002_b0004', label: 'minor-damage', distance: 1.9, split: 'train', crop_urls: { pre: '/p', post: '/q' } },
+  ] } },
+}

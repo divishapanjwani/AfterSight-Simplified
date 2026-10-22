@@ -94,6 +94,34 @@ Train and val scenes also get a full-width caution banner. Chips alone are not e
 
 "Suggested for human review" (review queue, later) uses neutral styling. It is never shown as an error.
 
+## Overlays (Triage Desk)
+
+- **Ground truth / Prediction:** the class's pattern fill plus its ramp colour as the outline.
+- **Correct vs wrong:** a thin **solid** green outline means the prediction agrees with ground truth; a
+  thicker **dashed** red outline means it differs. Line style carries the meaning without colour, which
+  matters for red/green colour blindness.
+- **Selection:** a thick focus-blue (`--focus`) outline; other footprints dim. Orange is never used for
+  selection.
+- **Line width:** stays constant on screen at any zoom, because the stroke is divided by the zoom factor.
+- **Crops:** the Case File crops come from the cached view JPEG with the footprint outlined in the same
+  pixel coordinates. KNN neighbour thumbnails (other scenes) use the server crop endpoint.
+
+## Charts
+
+All charts are hand-built SVG components (`src/charts/`) rather than Recharts, which the original stack
+listed. This deviation gives exact control over pattern fills, direct labels and theme tokens, and makes
+the charts testable in jsdom.
+
+| Need | Encoding |
+|---|---|
+| model identity (Arena dumbbell) | categorical palette `--cat-1` blue (●) / `--cat-2` aqua (■). These are the first slots of the validated reference palette, which pass all-pairs; its orange slot is skipped because orange means "action" here |
+| clusters (Cluster Atlas) | `--cat-1…7` + marker shape; more than 7 clusters cycle the shape |
+| magnitude (confusion, contingency) | single-hue blue `--mag-0…4`; every cell also prints its count and row % |
+| damage class (box plots, scatter) | damage ramp + pattern (boxes) or ramp + marker shape (scatter) |
+
+Every chart has a legend, direct value labels or a table, and native `<title>` hover text. There are no
+dual axes. Log axes are used only for the skewed features, and they are labelled "(log)".
+
 ## Rules for pages
 
 1. Every number comes from an API response. No hard-coded scores or counts. Tests assert that the

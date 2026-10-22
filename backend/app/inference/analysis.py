@@ -140,3 +140,22 @@ def explain_building(store: Store, analysis_id: str, building_uid: str) -> dict[
         "global_top_features": explain.get("permutation_importance_val", [])[:5],
         "crop_urls": {p: f"/api/buildings/{building_uid}/crop/{p}" for p in ("pre", "post")},
     }
+
+
+def list_analyses(store: Store, limit: int) -> dict[str, Any]:
+    """Most recent cached analyses (newest first) as short summaries for the Reports page."""
+    folder = store.paths.analysis_runs
+    files = sorted(folder.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True) if folder.is_dir() else []
+    items = []
+    for path in files[:limit]:
+        a = json.loads(path.read_text(encoding="utf-8"))
+        m = a["scene_metrics"] or {}
+        items.append({
+            "analysis_id": a["analysis_id"], "scene_id": a["scene_id"], "event": a["event"], "created_at": a["created_at"],
+            "model": a["model"]["name"], "model_label": a["model"]["label"], "split": a["provenance"]["split"],
+            "warning": a["provenance"]["warning"], "n_buildings": len(a["buildings"]),
+            "n_review": sum(b["needs_review"] for b in a["buildings"]),
+            "accuracy": m.get("accuracy"), "macro_f1": m.get("macro_f1"),
+            "csv_url": f"/api/analysis/{a['analysis_id']}/export.csv", "pdf_url": f"/api/analysis/{a['analysis_id']}/report.pdf",
+        })
+    return {"total": len(files), "items": items}

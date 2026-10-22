@@ -215,6 +215,7 @@ def test_review_queue(client) -> None:
     confidences = [i["confidence"] for i in body["items"]]
     assert confidences == sorted(confidences) and all(i["reasons"] for i in body["items"])
     assert body["total_flagged"] <= body["total_buildings"]
+    assert body["flagged_low_confidence"] + body["flagged_disagreement_only"] == body["total_flagged"]
     _assert_clean_error(client.get("/api/review-queue", params={"model": "random_forest"}), 409, "model_not_trained")
     _assert_clean_error(client.get("/api/review-queue", params={"split": "everything"}), 422)
 
@@ -284,3 +285,13 @@ def test_cors_only_for_vite(client) -> None:
 
 def test_unknown_route_is_structured(client) -> None:
     _assert_clean_error(client.get("/api/nope"), 404, "not_found")
+
+
+def test_recent_analyses_list(client) -> None:
+    analysis = client.post("/api/analysis", json={"scene_id": _scene(client, "train"), "model_name": "decision_tree"}).json()
+    body = client.get("/api/analyses", params={"limit": 5}).json()
+    assert body["total"] >= 1 and len(body["items"]) <= 5
+    item = next(i for i in body["items"] if i["analysis_id"] == analysis["analysis_id"])
+    assert item["split"] == "train" and item["warning"] == TRAIN_WARNING
+    assert item["pdf_url"].endswith("/report.pdf") and item["n_buildings"] == len(analysis["buildings"])
+    _assert_clean_error(client.get("/api/analyses", params={"limit": 0}), 422)

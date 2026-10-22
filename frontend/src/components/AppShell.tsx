@@ -1,24 +1,30 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { api } from '../services/api'
 import { useTheme } from '../theme/ThemeProvider'
+import { useWorkflow } from './Workflow'
 
 const SCOPE = 'Damage classification on building footprints derived from xBD annotations.'
 
-/** Workflow steps (left to right). Part B pages are shown but disabled until they exist. */
-const STEPS: { to: string; label: string; ready: boolean }[] = [
-  { to: '/library', label: 'Library', ready: true },
-  { to: '/triage', label: 'Triage', ready: false },
-  { to: '/case', label: 'Case file', ready: false },
-  { to: '/arena', label: 'Arena', ready: false },
-  { to: '/reports', label: 'Report', ready: false },
-]
+/** Workflow steps (left to right); links follow the scene/analysis/building the user is working on. */
+function useSteps(): { to: string; label: string; ready: boolean; match: string }[] {
+  const { state } = useWorkflow()
+  const triage = state.sceneId ? `/triage/${state.sceneId}?model=${state.model ?? ''}${state.analysisId ? '&run=1' : ''}` : '/triage'
+  const caseFile = state.analysisId && state.buildingUid ? `/case/${state.analysisId}/${state.buildingUid}` : '/case'
+  return [
+    { to: '/library?split=test', label: 'Library', ready: true, match: '/library' },
+    { to: triage, label: 'Triage', ready: true, match: '/triage' },
+    { to: caseFile, label: 'Case file', ready: true, match: '/case' },
+    { to: '/arena', label: 'Arena', ready: true, match: '/arena' },
+    { to: '/reports', label: 'Report', ready: true, match: '/reports' },
+  ]
+}
 const TOOLS: { to: string; label: string; ready: boolean }[] = [
   { to: '/', label: 'Readiness', ready: true },
-  { to: '/features', label: 'Feature Lab', ready: false },
-  { to: '/clusters', label: 'Cluster Atlas', ready: false },
-  { to: '/review', label: 'Review Queue', ready: false },
+  { to: '/features', label: 'Feature Lab', ready: true },
+  { to: '/clusters', label: 'Cluster Atlas', ready: true },
+  { to: '/review', label: 'Review Queue', ready: true },
 ]
 
 function ApiDot() {
@@ -32,7 +38,8 @@ function ApiDot() {
   )
 }
 
-function StepLink({ to, label, ready, index }: { to: string; label: string; ready: boolean; index?: number }) {
+function StepLink({ to, label, ready, index, match }: { to: string; label: string; ready: boolean; index?: number; match?: string }) {
+  const { pathname } = useLocation()
   const prefix = index !== undefined ? <span className="num mr-1.5 text-ink-3">{String(index + 1).padStart(2, '0')}</span> : null
   if (!ready) {
     return (
@@ -42,8 +49,11 @@ function StepLink({ to, label, ready, index }: { to: string; label: string; read
     )
   }
   return (
-    <NavLink to={to} end
-      className={({ isActive }) => `flex items-center border-b-2 px-3 py-2 text-sm ${isActive ? 'border-ink font-medium text-ink' : 'border-transparent text-ink-2 hover:text-ink'}`}>
+    <NavLink to={to} end={!match}
+      className={({ isActive }) => {
+        const active = match ? pathname.startsWith(match) : isActive
+        return `flex items-center border-b-2 px-3 py-2 text-sm ${active ? 'border-ink font-medium text-ink' : 'border-transparent text-ink-2 hover:text-ink'}`
+      }}>
       {prefix}{label}
     </NavLink>
   )
@@ -51,6 +61,7 @@ function StepLink({ to, label, ready, index }: { to: string; label: string; read
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { theme, toggle } = useTheme()
+  const steps = useSteps()
   return (
     <div className="min-h-screen bg-paper">
       <header className="border-b border-rule bg-sheet">
@@ -69,10 +80,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <nav aria-label="Workflow" className="mx-auto flex max-w-[1240px] items-center justify-between px-5">
           <ol className="flex items-center">
-            {STEPS.map((s, i) => (
+            {steps.map((s, i) => (
               <li key={s.to} className="flex items-center">
                 <StepLink {...s} index={i} />
-                {i < STEPS.length - 1 && <span aria-hidden="true" className="text-ink-3/60">→</span>}
+                {i < steps.length - 1 && <span aria-hidden="true" className="text-ink-3/60">→</span>}
               </li>
             ))}
           </ol>

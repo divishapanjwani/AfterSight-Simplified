@@ -208,6 +208,8 @@ class ReviewQueue(BaseModel):
     threshold_rule: str | None
     total_buildings: int
     total_flagged: int
+    flagged_low_confidence: int
+    flagged_disagreement_only: int
     items: list[ReviewItem]
     offset: int
     limit: int

@@ -8,7 +8,7 @@ with classical ML (scikit-learn) and explains *why* the model decided that.
 > Scope: *Damage classification on building footprints derived from xBD annotations.* AfterSight does not
 > detect buildings in imagery, map hazards, or give rescue advice. See `CLAUDE.md` for the full rules.
 
-Status: **Phase 4 — API.** The full README (architecture, dataset, usage, limitations) is written in Phase 7.
+Status: **Phase 5 — web app (all pages).** The full README (architecture, dataset, usage, limitations) is written in Phase 7.
 
 ## Quick start (macOS)
 

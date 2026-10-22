@@ -1,14 +1,117 @@
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
 @import 'tailwindcss';
 
-/* Base tokens only; the full "field case file" design system is built in Phase 5 (see DESIGN.md). */
-@theme {
-  --color-paper: #f6f4ef;
-  --color-ink: #1b1b1a;
-  --color-signal: #e8590c;
-  --font-mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+/* AfterSight "field case file" tokens — see DESIGN.md. Light is the default; dark via <html data-theme="dark">. */
+:root {
+  color-scheme: light;
+  --paper: #f6f4ef;          /* page */
+  --sheet: #fcfcfb;          /* cards, chart surface */
+  --sheet-2: #efece5;        /* folder tabs, table header, inset */
+  --ink: #1b1b1a;
+  --ink-2: #4a4945;          /* secondary text */
+  --ink-3: #6b6a66;          /* muted text, axis labels */
+  --rule: #dcd8cf;           /* borders */
+  --rule-strong: #b9b3a6;
+  --signal: #c2410c;         /* safety orange — PRIMARY ACTIONS ONLY (AA on white text) */
+  --signal-ink: #ffffff;
+  --signal-soft: #fbe3d6;
+  --caution: #8a5a00;        /* provenance warnings (training/validation scene) */
+  --caution-soft: #f8eccf;
+  --danger: #a12a1c;         /* API / system errors */
+  --danger-soft: #f7dcd7;
+  --ok: #2f6b3a;             /* readiness "ready" (always with icon + word) */
+  --ok-soft: #dcebdd;
+  --focus: #1c5cab;
+  /* damage ordinal ramp (validated colour-blind-safe ordinal, light surface) */
+  --dmg-0: #c9a8d8;          /* no-damage */
+  --dmg-1: #9a64b5;          /* minor-damage */
+  --dmg-2: #6b3590;          /* major-damage */
+  --dmg-3: #3d1559;          /* destroyed */
+  --shadow: 0 1px 0 rgba(27, 27, 26, 0.04), 0 1px 3px rgba(27, 27, 26, 0.06);
 }
 
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #141413;
+  --sheet: #1c1b19;
+  --sheet-2: #26251f;
+  --ink: #ecebe6;
+  --ink-2: #c4c2ba;
+  --ink-3: #9a988f;
+  --rule: #34332d;
+  --rule-strong: #4d4b43;
+  --signal: #f26b2a;
+  --signal-ink: #1b0d05;
+  --signal-soft: #3b2014;
+  --caution: #e0b45c;
+  --caution-soft: #33290f;
+  --danger: #f08a7c;
+  --danger-soft: #3a1914;
+  --ok: #8fcf98;
+  --ok-soft: #17301b;
+  --focus: #86b6ef;
+  /* same hue, re-stepped for the dark surface (validated) */
+  --dmg-0: #e3cdee;
+  --dmg-1: #c39ad8;
+  --dmg-2: #a066bf;
+  --dmg-3: #7d3fa3;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-sheet: var(--sheet);
+  --color-sheet-2: var(--sheet-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-signal: var(--signal);
+  --color-signal-ink: var(--signal-ink);
+  --color-signal-soft: var(--signal-soft);
+  --color-caution: var(--caution);
+  --color-caution-soft: var(--caution-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-focus: var(--focus);
+  --color-dmg-0: var(--dmg-0);
+  --color-dmg-1: var(--dmg-1);
+  --color-dmg-2: var(--dmg-2);
+  --color-dmg-3: var(--dmg-3);
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+  --shadow-folder: var(--shadow);
+}
+
+html,
 body {
-  background: var(--color-paper);
-  color: var(--color-ink);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers and IDs: monospace with tabular figures so columns line up */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }

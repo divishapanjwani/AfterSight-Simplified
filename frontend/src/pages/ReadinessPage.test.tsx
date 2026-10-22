@@ -1,0 +1,66 @@
+import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { AppShell } from '../components/AppShell'
+import { comparison, missingStatus, models, readyStatus } from '../test/fixtures'
+import { health, mockApi, renderAt } from '../test/utils'
+import { ReadinessPage } from './ReadinessPage'
+
+afterEach(() => vi.unstubAllGlobals())
+
+const page = () => renderAt(<AppShell><ReadinessPage /></AppShell>)
+
+describe('Readiness board', () => {
+  it('shows tiles and headline numbers exactly as the API reports them', async () => {
+    mockApi({
+      '/api/health': { body: health }, '/api/dataset/status': { body: readyStatus }, '/api/models': { body: models },
+      '/api/results/comparison': (url) => ({ body: url.searchParams.get('design') === 'cross_event' ? comparison('cross_event', 0.111, 0.222) : comparison('within_event', 0.876, 0.5) }),
+    })
+    page()
+    const cache = (await screen.findByText('Scene cache')).closest('section')!
+    expect(within(cache).getByText('345')).toBeInTheDocument()
+    expect(within(cache).getByText('✓ READY')).toBeInTheDocument()
+    expect(await screen.findByText('0.876')).toBeInTheDocument() // within-event LR, from the API
+    expect(screen.getByText('0.111')).toBeInTheDocument() // cross-event LR
+    expect(screen.getByText('best: decision tree 0.222')).toBeInTheDocument()
+    expect(screen.getByText('Damage classification on building footprints derived from xBD annotations.')).toBeInTheDocument()
+  })
+
+  it('marks untrained models and shows the command that fixes them', async () => {
+    mockApi({ '/api/health': { body: health }, '/api/dataset/status': { body: readyStatus }, '/api/models': { body: models },
+      '/api/results/comparison': { body: comparison('within_event', 0.5, 0.5) } })
+    page()
+    const table = (await screen.findByText('Models served to the Triage Desk')).closest('section')!
+    expect(await within(table).findByText('NOT TRAINED')).toBeInTheDocument()
+    expect(within(table).getByText('DEFAULT')).toBeInTheDocument()
+  })
+
+  it('dataset-missing mode: every missing tile says NOT READY with its fix command', async () => {
+    mockApi({
+      '/api/health': { body: health }, '/api/dataset/status': { body: missingStatus }, '/api/models': { body: models },
+      '/api/results/comparison': { status: 404, body: { error: { code: 'results_not_found', message: 'No saved comparison.', fix: 'python scripts/train.py' } } },
+    })
+    page()
+    expect(await screen.findAllByText('○ NOT READY')).toHaveLength(2)
+    expect(screen.getByText('$ python scripts/inspect_dataset.py --alignment')).toBeInTheDocument()
+    expect(await screen.findByText('within-event results is not available yet')).toBeInTheDocument()
+  })
+
+  it('shows an error with the start command when the backend is unreachable', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('network')))
+    page()
+    expect(await screen.findByText('Could not load readiness status')).toBeInTheDocument()
+    expect(screen.getAllByText(/uvicorn app.main:app --port 8020/).length).toBeGreaterThan(0)
+  })
+
+  it('theme toggle switches to dark and back', async () => {
+    mockApi({ '/api/health': { body: health }, '/api/dataset/status': { body: readyStatus }, '/api/models': { body: models },
+      '/api/results/comparison': { body: comparison('within_event', 0.5, 0.5) } })
+    page()
+    const toggle = screen.getByRole('button', { name: /light/i })
+    await userEvent.click(toggle)
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    await userEvent.click(screen.getByRole('button', { name: /dark/i }))
+    expect(document.documentElement.dataset.theme).toBe('light')
+  })
+})

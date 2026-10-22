@@ -33,7 +33,7 @@ Data = Parquet mirror of the xBD train split (masks only, no polygons); footprin
 
 ## Environment
 - User runs **macOS (zsh)**; give macOS/zsh commands.
-- Python 3.11 venv at `backend/.venv`. Ports: backend **8020**, frontend **5200**.
+- Python 3.11 venv at the repo root: `.venv` (activate from the root, then `cd backend` for uvicorn). Ports: backend **8020**, frontend **5200**.
 - Data, artifacts and outputs are git-ignored (READMEs excepted).
 
 ## Workflow

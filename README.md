@@ -12,21 +12,25 @@ Status: **Phase 4 — API.** The full README (architecture, dataset, usage, limi
 
 ## Quick start (macOS)
 
-Requires Python 3.11 (`brew install python@3.11`) and Node 20+.
+Requires Python 3.11 (`brew install python@3.11`) and Node 20+. The virtualenv lives at the **repo root**.
+
+```zsh
+# once, from the repo root
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r backend/requirements.txt
+```
 
 ```zsh
 # Backend — API on http://localhost:8020 (Swagger: /docs)
-cd backend
-python3.11 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8020
+source .venv/bin/activate          # from the repo root
+cd backend && uvicorn app.main:app --reload --port 8020
 ```
 
-Tests run from the repo root or from `backend/` (same venv):
+Tests run from the repo root (or from `backend/`):
 
 ```zsh
-source backend/.venv/bin/activate
+source .venv/bin/activate
 python -m pytest
 ```
 
@@ -44,7 +48,7 @@ AfterSight reads a Parquet mirror of the xBD train split (17 shards in `data/raw
 See [data/README.md](data/README.md) for the schema, how footprints are derived, and the cache. From the repo root:
 
 ```zsh
-source backend/.venv/bin/activate
+source .venv/bin/activate
 python scripts/inspect_dataset.py --alignment          # verify the shards, write report + figures, fill the scene cache
 python scripts/make_fixture.py                         # synthetic test fixtures (NOT xBD)
 python scripts/inspect_dataset.py --config config/events.fixture_parquet.yaml
@@ -53,7 +57,7 @@ python scripts/inspect_dataset.py --config config/events.fixture_parquet.yaml
 ## Features and splits (Phase 2)
 
 ```zsh
-source backend/.venv/bin/activate
+source .venv/bin/activate
 python scripts/build_features.py --workers 4   # 37 features per building -> data/processed/features/
 python scripts/make_splits.py                  # scene-grouped manifests -> data/splits/
 ```
@@ -67,7 +71,7 @@ The features are documented in [docs/FEATURES.md](docs/FEATURES.md).
 ## Models (Phase 3)
 
 ```zsh
-source backend/.venv/bin/activate
+source .venv/bin/activate
 python scripts/train.py        # baseline, LR, KNN, DT (+ optional RF), K-Means, confounding check (~5 min)
 python scripts/evaluate.py     # print saved comparison tables (never re-touches the test set)
 ```
@@ -77,7 +81,7 @@ Results and an honest reading of them: [docs/RESULTS.md](docs/RESULTS.md).
 ## API (Phase 4)
 
 ```zsh
-source backend/.venv/bin/activate
+source .venv/bin/activate
 python scripts/calibrate_review.py              # review-queue thresholds, chosen on validation
 cd backend && uvicorn app.main:app --port 8020  # Swagger UI: http://localhost:8020/docs
 ```

@@ -76,7 +76,7 @@ Because there are no polygons, buildings are reconstructed from the masks
 ## 4. Inspect / validate
 
 ```zsh
-source backend/.venv/bin/activate
+source .venv/bin/activate
 python scripts/inspect_dataset.py --alignment --no-cache   # full scan, report + figures, no extraction
 python scripts/inspect_dataset.py --alignment              # same, and fill the scene cache
 python scripts/inspect_dataset.py --limit-per-event 20     # quick look

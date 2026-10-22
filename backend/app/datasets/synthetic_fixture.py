@@ -256,3 +256,48 @@ def build_synthetic_parquet(root: Path, seed: int = 7) -> Path:
         encoding="utf-8",
     )
     return root
+
+
+def build_synthetic_parquet_many(root: Path, events: tuple[str, ...] = ("synthetic-flood", "synthetic-fire", "synthetic-quake"),
+                                 scenes_per_event: int = 12, seed: int = 11) -> Path:
+    """A larger Parquet-mirror fixture for end-to-end API tests. NOT xBD data.
+
+    Each 128x128 scene holds 4-9 rectangular buildings with random damage; the post image changes
+    each roof according to its class so the pipeline has a learnable signal. Scene 0 of each event has
+    no buildings at all.
+    """
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    cell = pa.struct([("bytes", pa.binary()), ("path", pa.string())])
+    rng = np.random.default_rng(seed)
+    columns: dict[str, list] = {"t1_image": [], "t2_image": [], "t1_mask": [], "t2_mask": [], "image_name": []}
+    tint = {e: rng.integers(-15, 15, 3) for e in events}
+    for event in events:
+        for number in range(scenes_per_event):
+            pre = np.clip(rng.normal(110, 6, (PARQUET_SIZE, PARQUET_SIZE, 3)) + tint[event], 0, 255)
+            t1 = np.zeros((PARQUET_SIZE, PARQUET_SIZE), np.uint8)
+            t2 = np.zeros_like(t1)
+            post = pre.copy()
+            slots = rng.permutation(16)[: 0 if number == 0 else int(rng.integers(4, 10))]
+            for slot in slots:
+                r0, c0 = 6 + (slot // 4) * 30, 6 + (slot % 4) * 30
+                h, w = int(rng.integers(12, 22)), int(rng.integers(12, 22))
+                value = int(rng.choice([1, 2, 3, 4], p=[0.4, 0.2, 0.2, 0.2]))
+                roof = rng.choice([[175, 165, 160], [150, 70, 60], [205, 205, 210]])
+                pre[r0:r0 + h, c0:c0 + w] = roof + rng.normal(0, 3, (h, w, 3))
+                t1[r0:r0 + h, c0:c0 + w] = 1
+                t2[r0:r0 + h, c0:c0 + w] = value
+                rubble = np.array([95, 80, 65]) + rng.normal(0, 30, (h, w, 3))
+                share = {1: 0.0, 2: 0.25, 3: 0.6, 4: 1.0}[value]
+                post[r0:r0 + h, c0:c0 + w] = (1 - share) * pre[r0:r0 + h, c0:c0 + w] + share * rubble
+            columns["t1_image"].append({"bytes": _png(pre.astype(np.uint8), "RGB"), "path": None})
+            columns["t2_image"].append({"bytes": _png(np.clip(post, 0, 255).astype(np.uint8), "RGB"), "path": None})
+            columns["t1_mask"].append({"bytes": _png(t1, "L"), "path": None})
+            columns["t2_mask"].append({"bytes": _png(t2, "L"), "path": None})
+            columns["image_name"].append(f"train/images/{event}_{number:08d}")
+    root.mkdir(parents=True, exist_ok=True)
+    table = pa.table({k: pa.array(v, type=pa.string() if k == "image_name" else cell) for k, v in columns.items()})
+    pq.write_table(table, root / "train-00000-of-00001.parquet", row_group_size=16)
+    (root / "README.md").write_text("# SYNTHETIC PARQUET FIXTURE (multi-scene) — not xBD data\n", encoding="utf-8")
+    return root

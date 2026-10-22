@@ -2,10 +2,10 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app import __version__
+from app.core.config import SCOPE_LABEL
 
 router = APIRouter()
 
-SCOPE_LABEL = "Damage classification on building footprints derived from xBD annotations."
 
 
 class HealthResponse(BaseModel):

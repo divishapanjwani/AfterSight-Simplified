@@ -8,7 +8,7 @@ with classical ML (scikit-learn) and explains *why* the model decided that.
 > Scope: *Damage classification on building footprints derived from xBD annotations.* AfterSight does not
 > detect buildings in imagery, map hazards, or give rescue advice. See `CLAUDE.md` for the full rules.
 
-Status: **Phase 3 — classical models trained and evaluated.** The full README (architecture, dataset, usage, limitations) is written in Phase 7.
+Status: **Phase 4 — API.** The full README (architecture, dataset, usage, limitations) is written in Phase 7.
 
 ## Quick start (macOS)
 
@@ -73,6 +73,16 @@ python scripts/evaluate.py     # print saved comparison tables (never re-touches
 ```
 
 Results and an honest reading of them: [docs/RESULTS.md](docs/RESULTS.md).
+
+## API (Phase 4)
+
+```zsh
+source backend/.venv/bin/activate
+python scripts/calibrate_review.py              # review-queue thresholds, chosen on validation
+cd backend && uvicorn app.main:app --port 8020  # Swagger UI: http://localhost:8020/docs
+```
+
+The endpoints, rules and confidence meanings are in [docs/API.md](docs/API.md).
 
 ## Limitations
 

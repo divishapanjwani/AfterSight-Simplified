@@ -80,6 +80,16 @@ class ConfoundingConfig(BaseModel):
     grid: dict[str, list[Any]] = {"C": [0.01, 0.1, 1.0, 10.0]}
 
 
+class ServingConfig(BaseModel):
+    design: str = "within_event"
+    scheme: str = "four_class"
+    models: list[str] = ["logistic_regression", "knn", "decision_tree", "random_forest"]
+
+
+class ReviewConfig(BaseModel):
+    target_accuracy: float = Field(0.70, gt=0, lt=1)
+
+
 class TrainingConfig(BaseModel):
     seed: int = 42
     splits: SplitsConfig
@@ -90,6 +100,8 @@ class TrainingConfig(BaseModel):
     explain: ExplainConfig = ExplainConfig()
     kmeans: KMeansConfig = KMeansConfig()
     confounding: ConfoundingConfig = ConfoundingConfig()
+    serving: ServingConfig = ServingConfig()
+    review: ReviewConfig = ReviewConfig()
 
     @model_validator(mode="after")
     def _known_models(self) -> "TrainingConfig":

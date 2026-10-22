@@ -123,6 +123,9 @@ def tune_threshold_rule(X_train: Any, y_train: Any, X_val: Any, y_val: Any, clas
     log, best = [], None
     for name in BASELINE_CANDIDATES:
         j = FEATURE_COLUMNS.index(name)
+        if not np.nanstd(Xtr[:, j]) > 0:
+            log.append({"feature": name, "skipped": "constant on the training split"})
+            continue  # a constant feature cannot be thresholded
         rho = stats.spearmanr(Xtr[:, j], ytr, nan_policy="omit").statistic
         direction = 1 if (np.isnan(rho) or rho >= 0) else -1
         grid = np.unique(np.nanquantile(Xtr[:, j] * direction, qs))
@@ -140,7 +143,7 @@ def tune_threshold_rule(X_train: Any, y_train: Any, X_val: Any, y_val: Any, clas
             best = (top[0], j, direction, thresholds)
     _score, j, direction, thresholds = best
     rule = ThresholdRule(feature_index=j, direction=direction, thresholds=thresholds, classes=tuple(classes))
-    return rule.fit(Xtr, None), sorted(log, key=lambda r: -r["val_macro_f1"])
+    return rule.fit(Xtr, None), sorted(log, key=lambda r: -r.get("val_macro_f1", -1.0))
 
 
 def make_pipeline(name: str, params: dict[str, Any], seed: int, skew_threshold: float, settings: Any = None) -> Pipeline:

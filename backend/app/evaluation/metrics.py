@@ -21,7 +21,7 @@ def classification_metrics(y_true: Any, y_pred: Any, classes: list[str]) -> dict
     for i, cls in enumerate(classes):
         if support[i] == 0:
             per_class[cls] = {"precision": None, "recall": None, "f1": None, "support": 0}
-            notes.append(f"{cls} has no examples in this split; its metrics are undefined and excluded from macro-F1")
+            notes.append(f"{cls} has no examples here; its metrics are undefined and excluded from macro-F1")
         else:
             per_class[cls] = {"precision": round(float(precision[i]), 4), "recall": round(float(recall[i]), 4),
                               "f1": round(float(f1[i]), 4), "support": int(support[i])}

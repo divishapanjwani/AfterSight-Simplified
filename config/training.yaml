@@ -69,3 +69,15 @@ kmeans:
 
 confounding:
   grid: {C: [0.01, 0.1, 1.0, 10.0]}   # logistic regression predicting EVENT from the same 37 features
+
+# ---------------------------------------------------------------- Phase 4: what the app serves
+
+serving:
+  design: within_event          # Triage Desk models: within-event split, 4-class
+  scheme: four_class
+  models: [logistic_regression, knn, decision_tree, random_forest]   # random_forest is labelled optional
+
+review:
+  # Per model, on VALIDATION: the lowest confidence threshold t such that buildings with confidence >= t
+  # are at least this accurate. Buildings below t are "suggested for human review" (not "errors").
+  target_accuracy: 0.70

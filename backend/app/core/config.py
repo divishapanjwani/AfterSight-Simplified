@@ -5,6 +5,8 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+SCOPE_LABEL = "Damage classification on building footprints derived from xBD annotations."
+
 # backend/app/core/config.py -> repo root is three parents above backend/app/core
 REPO_ROOT = Path(__file__).resolve().parents[3]
 

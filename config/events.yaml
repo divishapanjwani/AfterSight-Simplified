@@ -1,0 +1,45 @@
+# AfterSight — which xBD disaster events the pipeline uses (laptop-sized subset).
+# Event names are the prefix of image_name in the Parquet mirror, e.g. train/images/hurricane-michael_00000172.
+# Run `python scripts/inspect_dataset.py` to see which events are present and their class counts.
+
+source: xbd                        # "xbd" = real data; "synthetic" = test fixture only
+dataset_format: xbd_parquet        # Parquet mirror with masks (footprints are derived from the masks)
+dataset_root: data/raw/xbd_parquet # folder holding the train-000NN-of-00017.parquet shards
+
+# Five events, four disaster types, chosen from the Phase 1 inspection for enough major-damage and destroyed
+# examples (mexico-earthquake and midwest-flooding had almost none). hurricane-michael is also the
+# held-out event in the cross-event experiment.
+events:
+  - hurricane-matthew
+  - hurricane-harvey
+  - santa-rosa-wildfire
+  - palu-tsunami
+  - hurricane-michael
+
+# CONFIG-SOURCED: the Parquet mirror has no disaster-type field. Values follow xBD's own metadata naming
+# and are shown in reports/UI as "type (from config)".
+disaster_types:
+  hurricane-matthew: wind
+  hurricane-harvey: flooding
+  santa-rosa-wildfire: fire
+  palu-tsunami: tsunami
+  hurricane-michael: wind
+
+# Damage-mask (t2_mask) values -> classes. 0 is background. Any other value is excluded and counted.
+masks:
+  damage_values: {1: no-damage, 2: minor-damage, 3: major-damage, 4: destroyed}
+  connectivity: 4          # pixels join a blob only through shared edges (merges fewer touching buildings)
+
+geometry:
+  min_area_px: 16          # blobs smaller than this many pixels are dropped and logged
+
+cache:
+  dir: data/processed/scenes   # configured events only: original PNGs, masks, thumbnails, derived footprints
+  thumbnail_px: 256
+
+inspection:
+  output_dir: artifacts/inspection/xbd
+  figures_dir: outputs/figures/inspection/xbd
+  n_samples: 4
+  seed: 42
+  alignment_flag_px: 8     # pairs whose estimated pre→post shift exceeds this get a data-quality flag

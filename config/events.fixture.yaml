@@ -1,0 +1,24 @@
+# Synthetic fixture config — for tests and pipeline development only. NOT xBD data.
+# Generate the fixture first: python scripts/make_fixture.py
+
+source: synthetic
+dataset_format: xbd_json
+dataset_root: backend/tests/fixtures/xbd_synthetic
+xbd_splits: [train, tier3, test, hold]
+image_extensions: [.png]
+
+events:
+  - synthetic-flood
+  - synthetic-fire
+
+excluded_labels: [un-classified]
+
+geometry:
+  min_area_px: 16
+
+inspection:
+  output_dir: artifacts/inspection/synthetic
+  figures_dir: outputs/figures/inspection/synthetic
+  n_samples: 3
+  seed: 42
+  alignment_flag_px: 8

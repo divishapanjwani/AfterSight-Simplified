@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# Env
+.env
+
+# Data, artifacts, outputs — keep only the READMEs
+data/**
+!data/
+!data/README.md
+!data/*/
+!data/*/.gitkeep
+artifacts/**
+!artifacts/
+!artifacts/README.md
+!artifacts/*/
+!artifacts/*/.gitkeep
+outputs/**
+!outputs/
+!outputs/README.md
+!outputs/*/
+!outputs/*/.gitkeep
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Generated synthetic fixture (python scripts/make_fixture.py)
+backend/tests/fixtures/xbd_synthetic/
+backend/tests/fixtures/xbd_synthetic_parquet/

@@ -1,0 +1,31 @@
+# AfterSight backend — classical ML only (no PyTorch / TensorFlow / Keras by design).
+# Python 3.11. Install: python -m pip install -r requirements.txt
+
+# API
+fastapi==0.153.0
+uvicorn[standard]==0.54.0
+pydantic==2.14.1
+pydantic-settings==2.16.1
+
+# Data + imaging
+numpy==2.4.6
+pandas==3.0.6
+pyarrow==26.0.0
+pillow==13.0.0
+opencv-python-headless==5.0.0.93
+scikit-image==0.26.0
+scipy==1.17.1
+shapely==2.2.0
+PyYAML==6.0.3
+
+# Machine learning (classical)
+scikit-learn==1.9.1
+joblib==1.6.0
+
+# Reports
+matplotlib==3.11.2
+reportlab==5.0.1
+
+# Testing
+pytest==9.1.1
+httpx2==2.15.1   # used by starlette.testclient (replaces deprecated httpx)

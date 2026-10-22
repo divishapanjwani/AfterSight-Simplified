@@ -1,0 +1,28 @@
+# Synthetic PARQUET fixture config — tests and pipeline development only. NOT xBD data.
+# Generate the fixture first: python scripts/make_fixture.py
+
+source: synthetic
+dataset_format: xbd_parquet
+dataset_root: backend/tests/fixtures/xbd_synthetic_parquet
+
+events:
+  - synthetic-flood
+  - synthetic-fire
+
+disaster_types:
+  synthetic-flood: flooding
+  synthetic-fire: fire
+
+
+geometry:
+  min_area_px: 16
+
+inspection:
+  output_dir: artifacts/inspection/synthetic_parquet
+  figures_dir: outputs/figures/inspection/synthetic_parquet
+  n_samples: 3
+  seed: 42
+  alignment_flag_px: 8
+
+cache:
+  dir: data/processed/scenes_synthetic

@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+
+/* Base tokens only; the full "field case file" design system is built in Phase 5 (see DESIGN.md). */
+@theme {
+  --color-paper: #f6f4ef;
+  --color-ink: #1b1b1a;
+  --color-signal: #e8590c;
+  --font-mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}

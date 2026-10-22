@@ -1,0 +1,37 @@
+{
+  "_comment": "Hand-written test fixture in the xBD label format. NOT xBD data. Image is 100x100 px.",
+  "features": {
+    "lng_lat": [],
+    "xy": [
+      {"properties": {"feature_type": "building", "subtype": "no-damage", "uid": "ok-square"},
+       "wkt": "POLYGON ((10 10, 30 10, 30 30, 10 30, 10 10))"},
+      {"properties": {"feature_type": "building", "subtype": "destroyed", "uid": "bowtie"},
+       "wkt": "POLYGON ((40 40, 60 60, 60 40, 40 60, 40 40))"},
+      {"properties": {"feature_type": "building", "subtype": "major-damage", "uid": "crosses-edge"},
+       "wkt": "POLYGON ((90 10, 110 10, 110 20, 90 20, 90 10))"},
+      {"properties": {"feature_type": "building", "subtype": "minor-damage", "uid": "outside"},
+       "wkt": "POLYGON ((120 120, 130 120, 130 130, 120 130, 120 120))"},
+      {"properties": {"feature_type": "building", "subtype": "no-damage", "uid": "tiny"},
+       "wkt": "POLYGON ((1 1, 3 1, 3 3, 1 3, 1 1))"},
+      {"properties": {"feature_type": "building", "subtype": "un-classified", "uid": "unclassified"},
+       "wkt": "POLYGON ((10 50, 30 50, 30 70, 10 70, 10 50))"},
+      {"properties": {"feature_type": "building", "subtype": "partial-damage", "uid": "unknown-label"},
+       "wkt": "POLYGON ((10 50, 30 50, 30 70, 10 70, 10 50))"},
+      {"properties": {"feature_type": "building", "uid": "no-label"},
+       "wkt": "POLYGON ((10 50, 30 50, 30 70, 10 70, 10 50))"},
+      {"properties": {"feature_type": "building", "subtype": "minor-damage", "uid": "bad-wkt"},
+       "wkt": "POLYGON ((1 2, 3"},
+      {"properties": {"feature_type": "building", "subtype": "minor-damage", "uid": "a-line"},
+       "wkt": "LINESTRING (0 0, 10 10)"},
+      {"properties": {"feature_type": "building", "subtype": "minor-damage", "uid": "zero-area"},
+       "wkt": "POLYGON ((70 70, 80 70, 90 70, 70 70))"},
+      {"properties": {"feature_type": "road", "subtype": "no-damage", "uid": "road"},
+       "wkt": "POLYGON ((10 80, 30 80, 30 90, 10 90, 10 80))"},
+      {"properties": {"feature_type": "building", "subtype": "no-damage"},
+       "wkt": "POLYGON ((10 80, 30 80, 30 90, 10 90, 10 80))"},
+      {"properties": {"feature_type": "building", "subtype": "no-damage", "uid": "ok-square"},
+       "wkt": "POLYGON ((10 10, 30 10, 30 30, 10 30, 10 10))"}
+    ]
+  },
+  "metadata": {"disaster": "handwritten-test", "disaster_type": "flooding", "width": 100, "height": 100}
+}

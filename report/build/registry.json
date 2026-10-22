@@ -1,0 +1,205 @@
+{
+ "toc": [
+  {
+   "level": 1,
+   "text": "1. Introduction"
+  },
+  {
+   "level": 1,
+   "text": "2. Motivation"
+  },
+  {
+   "level": 1,
+   "text": "3. Literature Survey"
+  },
+  {
+   "level": 2,
+   "text": "3.1 Gap addressed by this project"
+  },
+  {
+   "level": 1,
+   "text": "4. Dataset Used"
+  },
+  {
+   "level": 2,
+   "text": "4.1 Source and format"
+  },
+  {
+   "level": 2,
+   "text": "4.2 Events selected"
+  },
+  {
+   "level": 2,
+   "text": "4.3 Building footprints derived from masks"
+  },
+  {
+   "level": 2,
+   "text": "4.4 Feature description"
+  },
+  {
+   "level": 2,
+   "text": "4.5 Missing values and quality checks"
+  },
+  {
+   "level": 2,
+   "text": "4.6 Class imbalance"
+  },
+  {
+   "level": 1,
+   "text": "5. Flow Diagram / Block Diagram"
+  },
+  {
+   "level": 1,
+   "text": "6. Methods Used / Technology Stack"
+  },
+  {
+   "level": 2,
+   "text": "6.1 Programming languages"
+  },
+  {
+   "level": 2,
+   "text": "6.2 Libraries"
+  },
+  {
+   "level": 2,
+   "text": "6.3 Development environment"
+  },
+  {
+   "level": 1,
+   "text": "7. Model Development"
+  },
+  {
+   "level": 2,
+   "text": "7.1 Data preprocessing"
+  },
+  {
+   "level": 2,
+   "text": "7.2 Exploratory data analysis"
+  },
+  {
+   "level": 2,
+   "text": "7.3 Feature engineering"
+  },
+  {
+   "level": 2,
+   "text": "7.4 Model selection"
+  },
+  {
+   "level": 2,
+   "text": "7.5 Training"
+  },
+  {
+   "level": 2,
+   "text": "7.6 Evaluation"
+  },
+  {
+   "level": 1,
+   "text": "8. Version Control"
+  },
+  {
+   "level": 1,
+   "text": "9. Experiment Tracking"
+  },
+  {
+   "level": 1,
+   "text": "10. AutoML / MLOps"
+  },
+  {
+   "level": 1,
+   "text": "11. Deployment"
+  },
+  {
+   "level": 1,
+   "text": "12. Results and Discussions"
+  },
+  {
+   "level": 2,
+   "text": "12.1 Within-event results"
+  },
+  {
+   "level": 2,
+   "text": "12.2 Cross-event results (unseen disaster)"
+  },
+  {
+   "level": 2,
+   "text": "12.3 Per-event scores"
+  },
+  {
+   "level": 2,
+   "text": "12.4 Event-confounding check"
+  },
+  {
+   "level": 2,
+   "text": "12.5 Phase 3b: reducing the event signature"
+  },
+  {
+   "level": 2,
+   "text": "12.6 K-Means clustering"
+  },
+  {
+   "level": 2,
+   "text": "12.7 3-class experiment"
+  },
+  {
+   "level": 2,
+   "text": "12.8 Demo scenes and review suggestions"
+  },
+  {
+   "level": 2,
+   "text": "12.9 Discussion"
+  },
+  {
+   "level": 1,
+   "text": "13. Future Scope"
+  },
+  {
+   "level": 1,
+   "text": "14. Conclusion"
+  },
+  {
+   "level": 1,
+   "text": "15. References"
+  }
+ ],
+ "figures": [
+  "Figure 4.1: Footprints derived from the masks, drawn on a pre/post pair from the Santa Rosa wildfire",
+  "Figure 4.2: Distribution of footprint sizes with the 16 px minimum marked",
+  "Figure 4.3: Ground-truth class counts and class share per selected event",
+  "Figure 5.1: AfterSight end-to-end pipeline",
+  "Figure 7.1: Feature Lab: separation ranking, per-class box plot and two-feature scatter (training split)",
+  "Figure 8.1: git log --graph --oneline of the repository at the time of writing",
+  "Figure 9.1: Model Arena: every model on known vs unseen disasters, and the comparison table",
+  "Figure 11.1: Readiness board: build status, honest headline results and the served models",
+  "Figure 11.2: Scene Library, opening on held-out test scenes with ground-truth damage bars",
+  "Figure 11.3: Triage Desk: before/after swipe viewer with predicted damage overlays and building list",
+  "Figure 11.4: Building Case File with a Logistic Regression explanation",
+  "Figure 11.5: Case File with a KNN explanation: the most similar training buildings",
+  "Figure 11.6: Review Queue: buildings suggested for human review",
+  "Figure 12.1: Confusion matrices, Logistic Regression: within-event test set (left) and cross-event test set (right); row % = recall",
+  "Figure 12.2: Confounding check: confusion matrix for predicting the event from the features (test set)",
+  "Figure 12.3: K-Means: inertia (elbow) and sampled silhouette for k = 2 … 10",
+  "Figure 12.4: K-Means (k = 4) clusters against ground-truth damage classes"
+ ],
+ "tables": [
+  "Table 3.1: Literature survey",
+  "Table 4.1: Columns of the Parquet mirror (verified by reading the files)",
+  "Table 4.2: Selected events: scenes, buildings and ground-truth class counts",
+  "Table 4.3: Feature dictionary: 37 input features and the target",
+  "Table 6.1: Libraries and their purpose",
+  "Table 6.2: Development environment",
+  "Table 7.1: Strongest features by separation score (training split)",
+  "Table 7.2: Models and their important parameters (tuned on validation)",
+  "Table 7.3: Training settings",
+  "Table 8.1: Version control details",
+  "Table 8.2: Commit milestones",
+  "Table 9.1: Tracked experiments (4-class, test set evaluated once per model)",
+  "Table 11.1: Deployment components",
+  "Table 12.1: Within-event test results (4-class)",
+  "Table 12.2: Cross-event test results (4-class, hurricane-michael held out)",
+  "Table 12.3: Logistic Regression macro-F1 per event (within-event test)",
+  "Table 12.4: Phase 3b results (separate models; Phase 3 models untouched)",
+  "Table 12.5: 3-class experiment: test macro-F1 (no-damage / damaged / destroyed)",
+  "Table 12.6: Demo scenes (test split): ground truth and scene macro-F1 per model",
+  "Table 12.7: Review thresholds chosen on validation"
+ ]
+}

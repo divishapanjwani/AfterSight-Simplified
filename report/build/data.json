@@ -1,0 +1,2750 @@
+{
+ "inspection": {
+  "shards": 17,
+  "rows_all_events": 2799,
+  "events_all": {
+   "guatemala-volcano": {
+    "scenes": 18,
+    "scenes_without_buildings": 1,
+    "mask_errors": 0,
+    "blobs": 596,
+    "buildings_kept": 537,
+    "class_counts": {
+     "no-damage": 503,
+     "minor-damage": 9,
+     "major-damage": 8,
+     "destroyed": 17
+    },
+    "mixed_label_blobs": 1,
+    "drop_reasons": {
+     "label_missing": 59
+    }
+   },
+   "hurricane-florence": {
+    "scenes": 319,
+    "scenes_without_buildings": 13,
+    "mask_errors": 0,
+    "blobs": 5941,
+    "buildings_kept": 5634,
+    "class_counts": {
+     "no-damage": 4276,
+     "minor-damage": 126,
+     "major-damage": 1182,
+     "destroyed": 50
+    },
+    "mixed_label_blobs": 4,
+    "drop_reasons": {
+     "label_missing": 304,
+     "too_small": 3
+    }
+   },
+   "hurricane-harvey": {
+    "scenes": 319,
+    "scenes_without_buildings": 19,
+    "mask_errors": 0,
+    "blobs": 19394,
+    "buildings_kept": 19121,
+    "class_counts": {
+     "no-damage": 9463,
+     "minor-damage": 2251,
+     "major-damage": 7034,
+     "destroyed": 373
+    },
+    "mixed_label_blobs": 48,
+    "drop_reasons": {
+     "label_missing": 266,
+     "too_small": 7
+    }
+   },
+   "hurricane-matthew": {
+    "scenes": 238,
+    "scenes_without_buildings": 15,
+    "mask_errors": 0,
+    "blobs": 10246,
+    "buildings_kept": 9570,
+    "class_counts": {
+     "no-damage": 2103,
+     "minor-damage": 4440,
+     "major-damage": 1140,
+     "destroyed": 1887
+    },
+    "mixed_label_blobs": 314,
+    "drop_reasons": {
+     "label_missing": 674,
+     "label_tie": 1,
+     "too_small": 1
+    }
+   },
+   "hurricane-michael": {
+    "scenes": 343,
+    "scenes_without_buildings": 9,
+    "mask_errors": 0,
+    "blobs": 21665,
+    "buildings_kept": 21429,
+    "class_counts": {
+     "no-damage": 13870,
+     "minor-damage": 4998,
+     "major-damage": 1841,
+     "destroyed": 720
+    },
+    "mixed_label_blobs": 239,
+    "drop_reasons": {
+     "label_missing": 222,
+     "too_small": 14
+    }
+   },
+   "mexico-earthquake": {
+    "scenes": 121,
+    "scenes_without_buildings": 0,
+    "mask_errors": 0,
+    "blobs": 14373,
+    "buildings_kept": 14271,
+    "class_counts": {
+     "no-damage": 14209,
+     "minor-damage": 52,
+     "major-damage": 8,
+     "destroyed": 2
+    },
+    "mixed_label_blobs": 38,
+    "drop_reasons": {
+     "label_missing": 62,
+     "too_small": 40
+    }
+   },
+   "midwest-flooding": {
+    "scenes": 279,
+    "scenes_without_buildings": 35,
+    "mask_errors": 0,
+    "blobs": 7748,
+    "buildings_kept": 7488,
+    "class_counts": {
+     "no-damage": 7184,
+     "minor-damage": 124,
+     "major-damage": 108,
+     "destroyed": 72
+    },
+    "mixed_label_blobs": 16,
+    "drop_reasons": {
+     "label_missing": 259,
+     "too_small": 1
+    }
+   },
+   "palu-tsunami": {
+    "scenes": 113,
+    "scenes_without_buildings": 2,
+    "mask_errors": 0,
+    "blobs": 9343,
+    "buildings_kept": 9157,
+    "class_counts": {
+     "no-damage": 7360,
+     "minor-damage": 1,
+     "major-damage": 200,
+     "destroyed": 1596
+    },
+    "mixed_label_blobs": 170,
+    "drop_reasons": {
+     "label_missing": 182,
+     "too_small": 4
+    }
+   },
+   "santa-rosa-wildfire": {
+    "scenes": 226,
+    "scenes_without_buildings": 7,
+    "mask_errors": 0,
+    "blobs": 12143,
+    "buildings_kept": 12063,
+    "class_counts": {
+     "no-damage": 8653,
+     "minor-damage": 76,
+     "major-damage": 55,
+     "destroyed": 3279
+    },
+    "mixed_label_blobs": 11,
+    "drop_reasons": {
+     "label_missing": 52,
+     "too_small": 28
+    }
+   },
+   "socal-fire": {
+    "scenes": 823,
+    "scenes_without_buildings": 415,
+    "mask_errors": 0,
+    "blobs": 9347,
+    "buildings_kept": 8999,
+    "class_counts": {
+     "no-damage": 7711,
+     "minor-damage": 75,
+     "major-damage": 44,
+     "destroyed": 1169
+    },
+    "mixed_label_blobs": 10,
+    "drop_reasons": {
+     "label_missing": 342,
+     "too_small": 6
+    }
+   }
+  },
+  "mask_checks": {
+   "scope": "every scene of every event in the mirror",
+   "footprint_mask_values_px": {
+    "0": 2759510516,
+    "1": 175453708
+   },
+   "damage_mask_values_px": {
+    "0": 2761163864,
+    "1": 128235816,
+    "2": 15935603,
+    "3": 20121556,
+    "4": 9507385
+   },
+   "unexpected_damage_values_px": {},
+   "damage_value_mapping": {
+    "1": "no-damage",
+    "2": "minor-damage",
+    "3": "major-damage",
+    "4": "destroyed"
+   },
+   "footprint_px": 175453708,
+   "footprint_px_without_damage_value": 1738125,
+   "damage_px_outside_footprint": 84777
+  },
+  "totals": {
+   "scenes_discovered": 1239,
+   "pairs_complete": 1239,
+   "scenes_usable": 1239,
+   "scenes_without_buildings": 52,
+   "images_unreadable": 0,
+   "raw_footprints": 72791,
+   "buildings_kept": 71340,
+   "buildings_dropped": 1451,
+   "buildings_excluded_label": 0,
+   "buildings_repaired": 2674,
+   "buildings_clipped": 0,
+   "mixed_label_blobs": 782,
+   "mixed_label_blobs_kept": 781,
+   "buildings_touching_border": 9319,
+   "unexpected_files": 0
+  },
+  "drop_reasons": {
+   "label_missing": 1396,
+   "label_tie": 1,
+   "too_small": 54
+  },
+  "footprint_size": {
+   "min_area_px": 16.0,
+   "kept": {
+    "count": 71340,
+    "min": 22.0,
+    "p5": 134.0,
+    "p25": 453.0,
+    "median": 1040.0,
+    "p75": 1620.0,
+    "p95": 4170.050000000003,
+    "max": 648034.0,
+    "histogram": [
+     0,
+     0,
+     26,
+     473,
+     2749,
+     6607,
+     9884,
+     15370,
+     24731,
+     7841,
+     2462,
+     779,
+     418
+    ]
+   },
+   "all_blobs_before_filter": {
+    "count": 72791,
+    "min": 1.0,
+    "p5": 128.0,
+    "p25": 432.0,
+    "median": 1023.0,
+    "p75": 1607.0,
+    "p95": 4123.0,
+    "max": 648034.0,
+    "histogram": [
+     54,
+     0,
+     33,
+     538,
+     2990,
+     7039,
+     10185,
+     15558,
+     24849,
+     7870,
+     2471,
+     782,
+     422
+    ]
+   },
+   "bin_edges": [
+    0,
+    8,
+    16,
+    32,
+    64,
+    128,
+    256,
+    512,
+    1024,
+    2048,
+    4096,
+    8192,
+    16384
+   ]
+  },
+  "peak_rss_mb": 1168,
+  "raw_mb": 3798,
+  "alignment_flagged": 168
+ },
+ "features_meta": {
+  "n_buildings": 71340,
+  "n_scenes": 1239,
+  "class_counts": {
+   "no-damage": 41449,
+   "minor-damage": 11766,
+   "major-damage": 10270,
+   "destroyed": 7855
+  },
+  "buildings_by_event": {
+   "hurricane-harvey": 19121,
+   "hurricane-matthew": 9570,
+   "hurricane-michael": 21429,
+   "palu-tsunami": 9157,
+   "santa-rosa-wildfire": 12063
+  },
+  "nan_counts": {},
+  "inf_counts": {},
+  "timing": {
+   "workers": 4,
+   "wall_seconds": 28.46,
+   "seconds_per_1000_buildings": 0.399,
+   "scene_seconds_median": 0.07,
+   "scene_seconds_max": 0.2961
+  },
+  "table_bytes": 22792809
+ },
+ "per_event": [
+  {
+   "event": "hurricane-harvey",
+   "type": "flooding",
+   "scenes": 319,
+   "empty": 22,
+   "buildings": 19121,
+   "no-damage": 9463,
+   "minor-damage": 2251,
+   "major-damage": 7034,
+   "destroyed": 373
+  },
+  {
+   "event": "hurricane-matthew",
+   "type": "wind",
+   "scenes": 238,
+   "empty": 19,
+   "buildings": 9570,
+   "no-damage": 2103,
+   "minor-damage": 4440,
+   "major-damage": 1140,
+   "destroyed": 1887
+  },
+  {
+   "event": "hurricane-michael",
+   "type": "wind",
+   "scenes": 343,
+   "empty": 10,
+   "buildings": 21429,
+   "no-damage": 13870,
+   "minor-damage": 4998,
+   "major-damage": 1841,
+   "destroyed": 720
+  },
+  {
+   "event": "palu-tsunami",
+   "type": "tsunami",
+   "scenes": 113,
+   "empty": 2,
+   "buildings": 9157,
+   "no-damage": 7360,
+   "minor-damage": 1,
+   "major-damage": 200,
+   "destroyed": 1596
+  },
+  {
+   "event": "santa-rosa-wildfire",
+   "type": "fire",
+   "scenes": 226,
+   "empty": 7,
+   "buildings": 12063,
+   "no-damage": 8653,
+   "minor-damage": 76,
+   "major-damage": 55,
+   "destroyed": 3279
+  }
+ ],
+ "feature_rows": [
+  {
+   "name": "pre_mean_r",
+   "group": "colour",
+   "formula": "Average red value of the footprint pixels, pre-disaster",
+   "why": "Baseline roof colour; lets the model judge post values relative to it"
+  },
+  {
+   "name": "pre_mean_g",
+   "group": "colour",
+   "formula": "Average green, pre",
+   "why": "as above"
+  },
+  {
+   "name": "pre_mean_b",
+   "group": "colour",
+   "formula": "Average blue, pre",
+   "why": "as above"
+  },
+  {
+   "name": "pre_std_r",
+   "group": "colour",
+   "formula": "Standard deviation of red inside the footprint, pre",
+   "why": "Baseline roof uniformity"
+  },
+  {
+   "name": "pre_std_g",
+   "group": "colour",
+   "formula": "Std of green, pre",
+   "why": "as above"
+  },
+  {
+   "name": "pre_std_b",
+   "group": "colour",
+   "formula": "Std of blue, pre",
+   "why": "as above"
+  },
+  {
+   "name": "post_mean_r",
+   "group": "colour",
+   "formula": "Average red, post",
+   "why": "Debris, ash, mud or exposed timber change roof colour"
+  },
+  {
+   "name": "post_mean_g",
+   "group": "colour",
+   "formula": "Average green, post",
+   "why": "Vegetation or algae on wrecked roofs, mud"
+  },
+  {
+   "name": "post_mean_b",
+   "group": "colour",
+   "formula": "Average blue, post",
+   "why": "Tarps (blue) on damaged roofs, water"
+  },
+  {
+   "name": "post_std_r",
+   "group": "colour",
+   "formula": "Std of red, post",
+   "why": "Rubble is patchy, while intact roofs are uniform"
+  },
+  {
+   "name": "post_std_g",
+   "group": "colour",
+   "formula": "Std of green, post",
+   "why": "as above"
+  },
+  {
+   "name": "post_std_b",
+   "group": "colour",
+   "formula": "Std of blue, post",
+   "why": "as above"
+  },
+  {
+   "name": "abs_dmean_r",
+   "group": "change",
+   "formula": "|post mean red \u2212 pre mean red|",
+   "why": "Size of the colour change on the roof"
+  },
+  {
+   "name": "abs_dmean_g",
+   "group": "change",
+   "formula": "|post \u2212 pre| mean green",
+   "why": "as above"
+  },
+  {
+   "name": "abs_dmean_b",
+   "group": "change",
+   "formula": "|post \u2212 pre| mean blue",
+   "why": "as above"
+  },
+  {
+   "name": "dstd_r",
+   "group": "change",
+   "formula": "post std red \u2212 pre std red (signed)",
+   "why": "Positive = the roof became patchier (debris, holes)"
+  },
+  {
+   "name": "dstd_g",
+   "group": "change",
+   "formula": "post \u2212 pre std green",
+   "why": "as above"
+  },
+  {
+   "name": "dstd_b",
+   "group": "change",
+   "formula": "post \u2212 pre std blue",
+   "why": "as above"
+  },
+  {
+   "name": "gray_absdiff_mean",
+   "group": "change",
+   "formula": "Average of |post grey \u2212 pre grey| over footprint pixels (misalignment-sensitive)",
+   "why": "Large, local change anywhere on the roof"
+  },
+  {
+   "name": "brightness_ratio",
+   "group": "change",
+   "formula": "post grey mean \u00f7 max(pre grey mean, 1)",
+   "why": "Burnt or flooded roofs darken (< 1); exposed concrete or debris can brighten (> 1)"
+  },
+  {
+   "name": "gray_std_pre",
+   "group": "texture",
+   "formula": "Std of grey inside the footprint, pre",
+   "why": "Baseline texture"
+  },
+  {
+   "name": "gray_std_post",
+   "group": "texture",
+   "formula": "Std of grey, post",
+   "why": "Rubble is rough"
+  },
+  {
+   "name": "gray_std_delta",
+   "group": "texture",
+   "formula": "post \u2212 pre grey std",
+   "why": "Increase = new roughness"
+  },
+  {
+   "name": "edge_density_pre",
+   "group": "texture",
+   "formula": "Share of footprint pixels marked as edges by Canny (\u03c3 = 1.5, run on the footprint + margin)",
+   "why": "Baseline structure (roof ridges, panels)"
+  },
+  {
+   "name": "edge_density_post",
+   "group": "texture",
+   "formula": "Same, post",
+   "why": "Broken roofs and debris create many short edges"
+  },
+  {
+   "name": "edge_density_delta",
+   "group": "texture",
+   "formula": "post \u2212 pre edge density",
+   "why": "Increase = fragmentation; decrease = a roof replaced by flat ash or water"
+  },
+  {
+   "name": "glcm_contrast_pre",
+   "group": "texture",
+   "formula": "Mean of (i \u2212 j)\u00b2 over neighbouring pixel pairs inside the footprint (grey quantised to 32 levels; right and down neighbours)",
+   "why": "Baseline local contrast"
+  },
+  {
+   "name": "glcm_contrast_post",
+   "group": "texture",
+   "formula": "Same, post",
+   "why": "Rubble has high neighbour-to-neighbour contrast"
+  },
+  {
+   "name": "glcm_contrast_delta",
+   "group": "texture",
+   "formula": "post \u2212 pre",
+   "why": "Increase = rougher surface"
+  },
+  {
+   "name": "glcm_homogeneity_pre",
+   "group": "texture",
+   "formula": "Mean of 1 / (1 + (i \u2212 j)\u00b2) over the same pairs (1 = perfectly smooth)",
+   "why": "Baseline smoothness"
+  },
+  {
+   "name": "glcm_homogeneity_post",
+   "group": "texture",
+   "formula": "Same, post",
+   "why": "Intact roofs stay smooth"
+  },
+  {
+   "name": "glcm_homogeneity_delta",
+   "group": "texture",
+   "formula": "post \u2212 pre",
+   "why": "Decrease = surface broke up"
+  },
+  {
+   "name": "ring_dmean",
+   "group": "context",
+   "formula": "post ring grey mean \u2212 pre ring grey mean",
+   "why": "Surroundings changed: flood water, burn scar, debris field. Separates event-wide change from building change"
+  },
+  {
+   "name": "ring_absdiff_mean",
+   "group": "context",
+   "formula": "Average |post \u2212 pre| grey over ring pixels (misalignment-sensitive)",
+   "why": "Strength of change around the building"
+  },
+  {
+   "name": "contrast_change",
+   "group": "context",
+   "formula": "(post building \u2212 post ring) \u2212 (pre building \u2212 pre ring), grey means",
+   "why": "Did the building change *relative to* its surroundings? Large values point to damage to the building itself rather than a lighting change"
+  },
+  {
+   "name": "area_px",
+   "group": "shape",
+   "formula": "Number of pixels in the footprint blob (exact)",
+   "why": "Context: building size. Heavy right tail (largest = 648,034 px, a mall complex); scaling matters"
+  },
+  {
+   "name": "compactness",
+   "group": "shape",
+   "formula": "4\u03c0 \u00d7 area \u00f7 perimeter\u00b2 of the footprint polygon (1 = circle, 0.785 = square, \u2192 0 = thin or irregular)",
+   "why": "Context: very irregular blobs are often several merged buildings, whose label is less reliable"
+  }
+ ],
+ "comparisons": {
+  "within_event/four_class": {
+   "design": "within_event",
+   "design_label": "within-event generalisation",
+   "scheme": "four_class",
+   "scheme_label": "4-class damage (primary)",
+   "classes": [
+    "no-damage",
+    "minor-damage",
+    "major-damage",
+    "destroyed"
+   ],
+   "primary_metric": "test macro-F1",
+   "manifest_hash": "7bba8a9fbbd2740a",
+   "models": [
+    {
+     "model": "baseline",
+     "optional": false,
+     "hyperparameters": {
+      "feature": "glcm_homogeneity_delta",
+      "direction": -1,
+      "thresholds_raw": [
+       0.06810277446125416,
+       0.12590484753326453,
+       0.20186917143627306
+      ]
+     },
+     "val_macro_f1": 0.3323,
+     "test_macro_f1": 0.3829,
+     "test_accuracy": 0.5837,
+     "test_weighted_f1": 0.5256,
+     "test_recall": {
+      "no-damage": 0.8757,
+      "minor-damage": 0.1092,
+      "major-damage": 0.0565,
+      "destroyed": 0.4431
+     },
+     "train_seconds": 0.838,
+     "inference_seconds_per_1000": 2e-05,
+     "top_permutation_features": [
+      "glcm_homogeneity_delta",
+      "pre_mean_r",
+      "pre_mean_g",
+      "pre_mean_b",
+      "pre_std_r"
+     ]
+    },
+    {
+     "model": "logistic_regression",
+     "optional": false,
+     "hyperparameters": {
+      "C": 10.0
+     },
+     "val_macro_f1": 0.538,
+     "test_macro_f1": 0.5268,
+     "test_accuracy": 0.5522,
+     "test_weighted_f1": 0.5711,
+     "test_recall": {
+      "no-damage": 0.5248,
+      "minor-damage": 0.461,
+      "major-damage": 0.5656,
+      "destroyed": 0.8166
+     },
+     "train_seconds": 1.077,
+     "inference_seconds_per_1000": 0.00022,
+     "top_permutation_features": [
+      "gray_std_post",
+      "gray_std_delta",
+      "pre_mean_b",
+      "pre_mean_g",
+      "post_std_r"
+     ]
+    },
+    {
+     "model": "knn",
+     "optional": false,
+     "hyperparameters": {
+      "n_neighbors": 15,
+      "weights": "uniform"
+     },
+     "val_macro_f1": 0.5184,
+     "test_macro_f1": 0.5202,
+     "test_accuracy": 0.6363,
+     "test_weighted_f1": 0.6144,
+     "test_recall": {
+      "no-damage": 0.831,
+      "minor-damage": 0.2698,
+      "major-damage": 0.2539,
+      "destroyed": 0.6579
+     },
+     "train_seconds": 0.185,
+     "inference_seconds_per_1000": 0.01971,
+     "top_permutation_features": [
+      "glcm_homogeneity_delta",
+      "glcm_homogeneity_post",
+      "glcm_homogeneity_pre",
+      "glcm_contrast_post",
+      "edge_density_post"
+     ]
+    },
+    {
+     "model": "decision_tree",
+     "optional": false,
+     "hyperparameters": {
+      "max_depth": 8,
+      "min_samples_leaf": 100
+     },
+     "val_macro_f1": 0.511,
+     "test_macro_f1": 0.47,
+     "test_accuracy": 0.4839,
+     "test_weighted_f1": 0.5028,
+     "test_recall": {
+      "no-damage": 0.4339,
+      "minor-damage": 0.4491,
+      "major-damage": 0.4994,
+      "destroyed": 0.7801
+     },
+     "train_seconds": 1.177,
+     "inference_seconds_per_1000": 0.00027,
+     "top_permutation_features": [
+      "glcm_homogeneity_post",
+      "glcm_homogeneity_delta",
+      "post_std_b",
+      "gray_absdiff_mean",
+      "pre_mean_b"
+     ]
+    },
+    {
+     "model": "random_forest",
+     "optional": true,
+     "hyperparameters": {
+      "max_depth": null,
+      "min_samples_leaf": 10
+     },
+     "val_macro_f1": 0.5892,
+     "test_macro_f1": 0.5462,
+     "test_accuracy": 0.59,
+     "test_weighted_f1": 0.6034,
+     "test_recall": {
+      "no-damage": 0.617,
+      "minor-damage": 0.4864,
+      "major-damage": 0.4305,
+      "destroyed": 0.8115
+     },
+     "train_seconds": 4.711,
+     "inference_seconds_per_1000": 0.00389,
+     "top_permutation_features": [
+      "glcm_homogeneity_post",
+      "glcm_homogeneity_delta",
+      "post_mean_r",
+      "glcm_contrast_post",
+      "post_mean_b"
+     ]
+    }
+   ]
+  },
+  "within_event/three_class": {
+   "design": "within_event",
+   "design_label": "within-event generalisation",
+   "scheme": "three_class",
+   "scheme_label": "3-class experiment (no-damage / damaged / destroyed)",
+   "classes": [
+    "no-damage",
+    "damaged",
+    "destroyed"
+   ],
+   "primary_metric": "test macro-F1",
+   "manifest_hash": "7bba8a9fbbd2740a",
+   "models": [
+    {
+     "model": "baseline",
+     "optional": false,
+     "hyperparameters": {
+      "feature": "dstd_b",
+      "direction": -1,
+      "thresholds_raw": [
+       4.099199961120911,
+       18.932289785096586
+      ]
+     },
+     "val_macro_f1": 0.4355,
+     "test_macro_f1": 0.373,
+     "test_accuracy": 0.5025,
+     "test_weighted_f1": 0.4912,
+     "test_recall": {
+      "no-damage": 0.6371,
+      "damaged": 0.3975,
+      "destroyed": 0.0866
+     },
+     "train_seconds": 0.224,
+     "inference_seconds_per_1000": 2e-05,
+     "top_permutation_features": [
+      "dstd_b",
+      "pre_mean_r",
+      "pre_mean_g",
+      "pre_mean_b",
+      "pre_std_r"
+     ]
+    },
+    {
+     "model": "logistic_regression",
+     "optional": false,
+     "hyperparameters": {
+      "C": 10.0
+     },
+     "val_macro_f1": 0.6389,
+     "test_macro_f1": 0.6117,
+     "test_accuracy": 0.6206,
+     "test_weighted_f1": 0.6291,
+     "test_recall": {
+      "no-damage": 0.5944,
+      "damaged": 0.5949,
+      "destroyed": 0.8311
+     },
+     "train_seconds": 0.736,
+     "inference_seconds_per_1000": 0.00027,
+     "top_permutation_features": [
+      "gray_std_delta",
+      "dstd_g",
+      "gray_std_pre",
+      "pre_mean_b",
+      "gray_std_post"
+     ]
+    },
+    {
+     "model": "knn",
+     "optional": false,
+     "hyperparameters": {
+      "n_neighbors": 15,
+      "weights": "uniform"
+     },
+     "val_macro_f1": 0.6334,
+     "test_macro_f1": 0.6341,
+     "test_accuracy": 0.6548,
+     "test_weighted_f1": 0.6516,
+     "test_recall": {
+      "no-damage": 0.7682,
+      "damaged": 0.4565,
+      "destroyed": 0.6129
+     },
+     "train_seconds": 0.191,
+     "inference_seconds_per_1000": 0.02255,
+     "top_permutation_features": [
+      "glcm_homogeneity_delta",
+      "glcm_homogeneity_post",
+      "edge_density_delta",
+      "edge_density_post",
+      "dstd_b"
+     ]
+    },
+    {
+     "model": "decision_tree",
+     "optional": false,
+     "hyperparameters": {
+      "max_depth": 8,
+      "min_samples_leaf": 20
+     },
+     "val_macro_f1": 0.6145,
+     "test_macro_f1": 0.5585,
+     "test_accuracy": 0.5579,
+     "test_weighted_f1": 0.5669,
+     "test_recall": {
+      "no-damage": 0.5156,
+      "damaged": 0.5565,
+      "destroyed": 0.7852
+     },
+     "train_seconds": 1.181,
+     "inference_seconds_per_1000": 0.00025,
+     "top_permutation_features": [
+      "glcm_homogeneity_delta",
+      "glcm_homogeneity_post",
+      "post_std_b",
+      "gray_absdiff_mean",
+      "pre_mean_b"
+     ]
+    },
+    {
+     "model": "random_forest",
+     "optional": true,
+     "hyperparameters": {
+      "max_depth": null,
+      "min_samples_leaf": 10
+     },
+     "val_macro_f1": 0.6856,
+     "test_macro_f1": 0.6404,
+     "test_accuracy": 0.6469,
+     "test_weighted_f1": 0.6519,
+     "test_recall": {
+      "no-damage": 0.6624,
+      "damaged": 0.5617,
+      "destroyed": 0.8048
+     },
+     "train_seconds": 4.837,
+     "inference_seconds_per_1000": 0.00383,
+     "top_permutation_features": [
+      "glcm_homogeneity_post",
+      "glcm_homogeneity_delta",
+      "post_mean_b",
+      "area_px",
+      "post_mean_r"
+     ]
+    }
+   ]
+  },
+  "cross_event/four_class": {
+   "design": "cross_event",
+   "design_label": "cross-event generalisation",
+   "scheme": "four_class",
+   "scheme_label": "4-class damage (primary)",
+   "classes": [
+    "no-damage",
+    "minor-damage",
+    "major-damage",
+    "destroyed"
+   ],
+   "primary_metric": "test macro-F1",
+   "manifest_hash": "dd7d8566b7dbaf7a",
+   "models": [
+    {
+     "model": "baseline",
+     "optional": false,
+     "hyperparameters": {
+      "feature": "abs_dmean_r",
+      "direction": 1,
+      "thresholds_raw": [
+       9.432585637280473,
+       14.377826449065193,
+       26.135186733958196
+      ]
+     },
+     "val_macro_f1": 0.3619,
+     "test_macro_f1": 0.1934,
+     "test_accuracy": 0.2446,
+     "test_weighted_f1": 0.2985,
+     "test_recall": {
+      "no-damage": 0.2643,
+      "minor-damage": 0.1531,
+      "major-damage": 0.2602,
+      "destroyed": 0.4611
+     },
+     "train_seconds": 1.003,
+     "inference_seconds_per_1000": 2e-05,
+     "top_permutation_features": [
+      "abs_dmean_r",
+      "pre_mean_r",
+      "pre_mean_g",
+      "pre_mean_b",
+      "pre_std_r"
+     ]
+    },
+    {
+     "model": "logistic_regression",
+     "optional": false,
+     "hyperparameters": {
+      "C": 10.0
+     },
+     "val_macro_f1": 0.665,
+     "test_macro_f1": 0.2903,
+     "test_accuracy": 0.4331,
+     "test_weighted_f1": 0.4636,
+     "test_recall": {
+      "no-damage": 0.561,
+      "minor-damage": 0.1793,
+      "major-damage": 0.1526,
+      "destroyed": 0.4472
+     },
+     "train_seconds": 0.867,
+     "inference_seconds_per_1000": 0.00025,
+     "top_permutation_features": [
+      "gray_std_delta",
+      "gray_std_post",
+      "dstd_g",
+      "pre_mean_g",
+      "post_std_g"
+     ]
+    },
+    {
+     "model": "knn",
+     "optional": false,
+     "hyperparameters": {
+      "n_neighbors": 15,
+      "weights": "uniform"
+     },
+     "val_macro_f1": 0.5811,
+     "test_macro_f1": 0.2707,
+     "test_accuracy": 0.5544,
+     "test_weighted_f1": 0.5093,
+     "test_recall": {
+      "no-damage": 0.8083,
+      "minor-damage": 0.071,
+      "major-damage": 0.0326,
+      "destroyed": 0.3542
+     },
+     "train_seconds": 0.164,
+     "inference_seconds_per_1000": 0.01678,
+     "top_permutation_features": [
+      "glcm_homogeneity_delta",
+      "glcm_homogeneity_post",
+      "glcm_homogeneity_pre",
+      "ring_absdiff_mean",
+      "area_px"
+     ]
+    },
+    {
+     "model": "decision_tree",
+     "optional": false,
+     "hyperparameters": {
+      "max_depth": 8,
+      "min_samples_leaf": 100
+     },
+     "val_macro_f1": 0.5757,
+     "test_macro_f1": 0.2938,
+     "test_accuracy": 0.5019,
+     "test_weighted_f1": 0.5069,
+     "test_recall": {
+      "no-damage": 0.6631,
+      "minor-damage": 0.2413,
+      "major-damage": 0.0239,
+      "destroyed": 0.4278
+     },
+     "train_seconds": 1.0,
+     "inference_seconds_per_1000": 0.00024,
+     "top_permutation_features": [
+      "glcm_homogeneity_delta",
+      "glcm_homogeneity_pre",
+      "post_mean_r",
+      "glcm_homogeneity_post",
+      "post_mean_b"
+     ]
+    },
+    {
+     "model": "random_forest",
+     "optional": true,
+     "hyperparameters": {
+      "max_depth": null,
+      "min_samples_leaf": 2
+     },
+     "val_macro_f1": 0.6388,
+     "test_macro_f1": 0.2909,
+     "test_accuracy": 0.606,
+     "test_weighted_f1": 0.5313,
+     "test_recall": {
+      "no-damage": 0.8881,
+      "minor-damage": 0.0688,
+      "major-damage": 0.0081,
+      "destroyed": 0.4306
+     },
+     "train_seconds": 4.739,
+     "inference_seconds_per_1000": 0.00329,
+     "top_permutation_features": [
+      "glcm_homogeneity_delta",
+      "glcm_homogeneity_post",
+      "glcm_homogeneity_pre",
+      "post_mean_r",
+      "post_mean_b"
+     ]
+    }
+   ]
+  },
+  "cross_event/three_class": {
+   "design": "cross_event",
+   "design_label": "cross-event generalisation",
+   "scheme": "three_class",
+   "scheme_label": "3-class experiment (no-damage / damaged / destroyed)",
+   "classes": [
+    "no-damage",
+    "damaged",
+    "destroyed"
+   ],
+   "primary_metric": "test macro-F1",
+   "manifest_hash": "dd7d8566b7dbaf7a",
+   "models": [
+    {
+     "model": "baseline",
+     "optional": false,
+     "hyperparameters": {
+      "feature": "gray_absdiff_mean",
+      "direction": 1,
+      "thresholds_raw": [
+       20.850700759887694,
+       35.06568908691406
+      ]
+     },
+     "val_macro_f1": 0.4982,
+     "test_macro_f1": 0.3341,
+     "test_accuracy": 0.3976,
+     "test_weighted_f1": 0.4425,
+     "test_recall": {
+      "no-damage": 0.3443,
+      "damaged": 0.4942,
+      "destroyed": 0.5069
+     },
+     "train_seconds": 0.183,
+     "inference_seconds_per_1000": 2e-05,
+     "top_permutation_features": [
+      "gray_absdiff_mean",
+      "pre_mean_r",
+      "pre_mean_g",
+      "pre_mean_b",
+      "pre_std_r"
+     ]
+    },
+    {
+     "model": "logistic_regression",
+     "optional": false,
+     "hyperparameters": {
+      "C": 1.0
+     },
+     "val_macro_f1": 0.7432,
+     "test_macro_f1": 0.4134,
+     "test_accuracy": 0.518,
+     "test_weighted_f1": 0.5323,
+     "test_recall": {
+      "no-damage": 0.6039,
+      "damaged": 0.3442,
+      "destroyed": 0.5139
+     },
+     "train_seconds": 0.635,
+     "inference_seconds_per_1000": 0.00021,
+     "top_permutation_features": [
+      "gray_std_delta",
+      "gray_std_post",
+      "dstd_g",
+      "pre_mean_g",
+      "pre_mean_b"
+     ]
+    },
+    {
+     "model": "knn",
+     "optional": false,
+     "hyperparameters": {
+      "n_neighbors": 31,
+      "weights": "uniform"
+     },
+     "val_macro_f1": 0.6832,
+     "test_macro_f1": 0.3793,
+     "test_accuracy": 0.5648,
+     "test_weighted_f1": 0.5418,
+     "test_recall": {
+      "no-damage": 0.7677,
+      "damaged": 0.1813,
+      "destroyed": 0.3
+     },
+     "train_seconds": 0.171,
+     "inference_seconds_per_1000": 0.01801,
+     "top_permutation_features": [
+      "glcm_homogeneity_delta",
+      "glcm_homogeneity_post",
+      "glcm_contrast_post",
+      "ring_absdiff_mean",
+      "area_px"
+     ]
+    },
+    {
+     "model": "decision_tree",
+     "optional": false,
+     "hyperparameters": {
+      "max_depth": 8,
+      "min_samples_leaf": 20
+     },
+     "val_macro_f1": 0.654,
+     "test_macro_f1": 0.3707,
+     "test_accuracy": 0.4834,
+     "test_weighted_f1": 0.5005,
+     "test_recall": {
+      "no-damage": 0.5853,
+      "damaged": 0.2752,
+      "destroyed": 0.4972
+     },
+     "train_seconds": 0.987,
+     "inference_seconds_per_1000": 0.00024,
+     "top_permutation_features": [
+      "glcm_homogeneity_delta",
+      "post_std_b",
+      "pre_mean_r",
+      "gray_absdiff_mean",
+      "glcm_homogeneity_post"
+     ]
+    },
+    {
+     "model": "random_forest",
+     "optional": true,
+     "hyperparameters": {
+      "max_depth": null,
+      "min_samples_leaf": 2
+     },
+     "val_macro_f1": 0.7351,
+     "test_macro_f1": 0.414,
+     "test_accuracy": 0.5933,
+     "test_weighted_f1": 0.5597,
+     "test_recall": {
+      "no-damage": 0.8108,
+      "damaged": 0.1727,
+      "destroyed": 0.3972
+     },
+     "train_seconds": 4.845,
+     "inference_seconds_per_1000": 0.00304,
+     "top_permutation_features": [
+      "glcm_homogeneity_delta",
+      "glcm_homogeneity_post",
+      "post_mean_g",
+      "glcm_homogeneity_pre",
+      "post_mean_r"
+     ]
+    }
+   ]
+  }
+ },
+ "models": {
+  "within_event/baseline": {
+   "hyperparameters": {
+    "feature": "glcm_homogeneity_delta",
+    "direction": -1,
+    "thresholds_raw": [
+     0.06810277446125416,
+     0.12590484753326453,
+     0.20186917143627306
+    ]
+   },
+   "train_seconds": 0.838,
+   "infer_ms_per_1000": 0.02,
+   "val": {
+    "accuracy": 0.5496,
+    "macro_f1": 0.3323
+   },
+   "test": {
+    "accuracy": 0.5837,
+    "macro_f1": 0.3829,
+    "weighted_f1": 0.5256,
+    "per_class": {
+     "no-damage": {
+      "precision": 0.6337,
+      "recall": 0.8757,
+      "f1": 0.7353,
+      "support": 6220
+     },
+     "minor-damage": {
+      "precision": 0.213,
+      "recall": 0.1092,
+      "f1": 0.1444,
+      "support": 1768
+     },
+     "major-damage": {
+      "precision": 0.1593,
+      "recall": 0.0565,
+      "f1": 0.0834,
+      "support": 1540
+     },
+     "destroyed": {
+      "precision": 0.7921,
+      "recall": 0.4431,
+      "f1": 0.5683,
+      "support": 1178
+     }
+    }
+   },
+   "per_event": {
+    "hurricane-harvey": 0.1977,
+    "hurricane-matthew": 0.2208,
+    "hurricane-michael": 0.3773,
+    "palu-tsunami": 0.3209,
+    "santa-rosa-wildfire": 0.3989
+   },
+   "log1p": null
+  },
+  "within_event/logistic_regression": {
+   "hyperparameters": {
+    "C": 10.0
+   },
+   "train_seconds": 1.077,
+   "infer_ms_per_1000": 0.22,
+   "val": {
+    "accuracy": 0.5905,
+    "macro_f1": 0.538
+   },
+   "test": {
+    "accuracy": 0.5522,
+    "macro_f1": 0.5268,
+    "weighted_f1": 0.5711,
+    "per_class": {
+     "no-damage": {
+      "precision": 0.8234,
+      "recall": 0.5248,
+      "f1": 0.641,
+      "support": 6220
+     },
+     "minor-damage": {
+      "precision": 0.4229,
+      "recall": 0.461,
+      "f1": 0.4411,
+      "support": 1768
+     },
+     "major-damage": {
+      "precision": 0.2913,
+      "recall": 0.5656,
+      "f1": 0.3845,
+      "support": 1540
+     },
+     "destroyed": {
+      "precision": 0.5271,
+      "recall": 0.8166,
+      "f1": 0.6407,
+      "support": 1178
+     }
+    }
+   },
+   "per_event": {
+    "hurricane-harvey": 0.3326,
+    "hurricane-matthew": 0.3326,
+    "hurricane-michael": 0.363,
+    "palu-tsunami": 0.5289,
+    "santa-rosa-wildfire": 0.4596
+   },
+   "log1p": [
+    "abs_dmean_r",
+    "abs_dmean_g",
+    "abs_dmean_b",
+    "gray_absdiff_mean",
+    "glcm_contrast_pre",
+    "glcm_contrast_post",
+    "area_px"
+   ]
+  },
+  "within_event/knn": {
+   "hyperparameters": {
+    "n_neighbors": 15,
+    "weights": "uniform"
+   },
+   "train_seconds": 0.185,
+   "infer_ms_per_1000": 19.71,
+   "val": {
+    "accuracy": 0.657,
+    "macro_f1": 0.5184
+   },
+   "test": {
+    "accuracy": 0.6363,
+    "macro_f1": 0.5202,
+    "weighted_f1": 0.6144,
+    "per_class": {
+     "no-damage": {
+      "precision": 0.6957,
+      "recall": 0.831,
+      "f1": 0.7574,
+      "support": 6220
+     },
+     "minor-damage": {
+      "precision": 0.5064,
+      "recall": 0.2698,
+      "f1": 0.352,
+      "support": 1768
+     },
+     "major-damage": {
+      "precision": 0.3059,
+      "recall": 0.2539,
+      "f1": 0.2775,
+      "support": 1540
+     },
+     "destroyed": {
+      "precision": 0.7339,
+      "recall": 0.6579,
+      "f1": 0.6938,
+      "support": 1178
+     }
+    }
+   },
+   "per_event": {
+    "hurricane-harvey": 0.338,
+    "hurricane-matthew": 0.3384,
+    "hurricane-michael": 0.3671,
+    "palu-tsunami": 0.4696,
+    "santa-rosa-wildfire": 0.4935
+   },
+   "log1p": [
+    "abs_dmean_r",
+    "abs_dmean_g",
+    "abs_dmean_b",
+    "gray_absdiff_mean",
+    "glcm_contrast_pre",
+    "glcm_contrast_post",
+    "area_px"
+   ]
+  },
+  "within_event/decision_tree": {
+   "hyperparameters": {
+    "max_depth": 8,
+    "min_samples_leaf": 100
+   },
+   "train_seconds": 1.177,
+   "infer_ms_per_1000": 0.27,
+   "val": {
+    "accuracy": 0.5567,
+    "macro_f1": 0.511
+   },
+   "test": {
+    "accuracy": 0.4839,
+    "macro_f1": 0.47,
+    "weighted_f1": 0.5028,
+    "per_class": {
+     "no-damage": {
+      "precision": 0.7796,
+      "recall": 0.4339,
+      "f1": 0.5575,
+      "support": 6220
+     },
+     "minor-damage": {
+      "precision": 0.3679,
+      "recall": 0.4491,
+      "f1": 0.4045,
+      "support": 1768
+     },
+     "major-damage": {
+      "precision": 0.2441,
+      "recall": 0.4994,
+      "f1": 0.3279,
+      "support": 1540
+     },
+     "destroyed": {
+      "precision": 0.4747,
+      "recall": 0.7801,
+      "f1": 0.5902,
+      "support": 1178
+     }
+    }
+   },
+   "per_event": {
+    "hurricane-harvey": 0.2591,
+    "hurricane-matthew": 0.3235,
+    "hurricane-michael": 0.3292,
+    "palu-tsunami": 0.4204,
+    "santa-rosa-wildfire": 0.4101
+   },
+   "log1p": [
+    "abs_dmean_r",
+    "abs_dmean_g",
+    "abs_dmean_b",
+    "gray_absdiff_mean",
+    "glcm_contrast_pre",
+    "glcm_contrast_post",
+    "area_px"
+   ]
+  },
+  "within_event/random_forest": {
+   "hyperparameters": {
+    "max_depth": null,
+    "min_samples_leaf": 10
+   },
+   "train_seconds": 4.711,
+   "infer_ms_per_1000": 3.89,
+   "val": {
+    "accuracy": 0.6559,
+    "macro_f1": 0.5892
+   },
+   "test": {
+    "accuracy": 0.59,
+    "macro_f1": 0.5462,
+    "weighted_f1": 0.6034,
+    "per_class": {
+     "no-damage": {
+      "precision": 0.7849,
+      "recall": 0.617,
+      "f1": 0.6909,
+      "support": 6220
+     },
+     "minor-damage": {
+      "precision": 0.4543,
+      "recall": 0.4864,
+      "f1": 0.4698,
+      "support": 1768
+     },
+     "major-damage": {
+      "precision": 0.2916,
+      "recall": 0.4305,
+      "f1": 0.3477,
+      "support": 1540
+     },
+     "destroyed": {
+      "precision": 0.5797,
+      "recall": 0.8115,
+      "f1": 0.6763,
+      "support": 1178
+     }
+    }
+   },
+   "per_event": {
+    "hurricane-harvey": 0.3157,
+    "hurricane-matthew": 0.3639,
+    "hurricane-michael": 0.3895,
+    "palu-tsunami": 0.4915,
+    "santa-rosa-wildfire": 0.4903
+   },
+   "log1p": [
+    "abs_dmean_r",
+    "abs_dmean_g",
+    "abs_dmean_b",
+    "gray_absdiff_mean",
+    "glcm_contrast_pre",
+    "glcm_contrast_post",
+    "area_px"
+   ]
+  },
+  "cross_event/baseline": {
+   "hyperparameters": {
+    "feature": "abs_dmean_r",
+    "direction": 1,
+    "thresholds_raw": [
+     9.432585637280473,
+     14.377826449065193,
+     26.135186733958196
+    ]
+   },
+   "train_seconds": 1.003,
+   "infer_ms_per_1000": 0.02,
+   "val": {
+    "accuracy": 0.4626,
+    "macro_f1": 0.3619
+   },
+   "test": {
+    "accuracy": 0.2446,
+    "macro_f1": 0.1934,
+    "weighted_f1": 0.2985,
+    "per_class": {
+     "no-damage": {
+      "precision": 0.6408,
+      "recall": 0.2643,
+      "f1": 0.3743,
+      "support": 13870
+     },
+     "minor-damage": {
+      "precision": 0.2314,
+      "recall": 0.1531,
+      "f1": 0.1842,
+      "support": 4998
+     },
+     "major-damage": {
+      "precision": 0.0738,
+      "recall": 0.2602,
+      "f1": 0.1149,
+      "support": 1841
+     },
+     "destroyed": {
+      "precision": 0.0562,
+      "recall": 0.4611,
+      "f1": 0.1002,
+      "support": 720
+     }
+    }
+   },
+   "per_event": {
+    "hurricane-michael": 0.1934
+   },
+   "log1p": null
+  },
+  "cross_event/logistic_regression": {
+   "hyperparameters": {
+    "C": 10.0
+   },
+   "train_seconds": 0.867,
+   "infer_ms_per_1000": 0.25,
+   "val": {
+    "accuracy": 0.7116,
+    "macro_f1": 0.665
+   },
+   "test": {
+    "accuracy": 0.4331,
+    "macro_f1": 0.2903,
+    "weighted_f1": 0.4636,
+    "per_class": {
+     "no-damage": {
+      "precision": 0.6844,
+      "recall": 0.561,
+      "f1": 0.6166,
+      "support": 13870
+     },
+     "minor-damage": {
+      "precision": 0.2499,
+      "recall": 0.1793,
+      "f1": 0.2088,
+      "support": 4998
+     },
+     "major-damage": {
+      "precision": 0.061,
+      "recall": 0.1526,
+      "f1": 0.0872,
+      "support": 1841
+     },
+     "destroyed": {
+      "precision": 0.1723,
+      "recall": 0.4472,
+      "f1": 0.2487,
+      "support": 720
+     }
+    }
+   },
+   "per_event": {
+    "hurricane-michael": 0.2903
+   },
+   "log1p": [
+    "abs_dmean_r",
+    "abs_dmean_g",
+    "abs_dmean_b",
+    "gray_absdiff_mean",
+    "glcm_contrast_pre",
+    "glcm_contrast_post",
+    "area_px"
+   ]
+  },
+  "cross_event/knn": {
+   "hyperparameters": {
+    "n_neighbors": 15,
+    "weights": "uniform"
+   },
+   "train_seconds": 0.164,
+   "infer_ms_per_1000": 16.78,
+   "val": {
+    "accuracy": 0.6758,
+    "macro_f1": 0.5811
+   },
+   "test": {
+    "accuracy": 0.5544,
+    "macro_f1": 0.2707,
+    "weighted_f1": 0.5093,
+    "per_class": {
+     "no-damage": {
+      "precision": 0.6682,
+      "recall": 0.8083,
+      "f1": 0.7316,
+      "support": 13870
+     },
+     "minor-damage": {
+      "precision": 0.2483,
+      "recall": 0.071,
+      "f1": 0.1105,
+      "support": 4998
+     },
+     "major-damage": {
+      "precision": 0.0416,
+      "recall": 0.0326,
+      "f1": 0.0365,
+      "support": 1841
+     },
+     "destroyed": {
+      "precision": 0.1436,
+      "recall": 0.3542,
+      "f1": 0.2043,
+      "support": 720
+     }
+    }
+   },
+   "per_event": {
+    "hurricane-michael": 0.2707
+   },
+   "log1p": [
+    "abs_dmean_r",
+    "abs_dmean_g",
+    "abs_dmean_b",
+    "gray_absdiff_mean",
+    "glcm_contrast_pre",
+    "glcm_contrast_post",
+    "area_px"
+   ]
+  },
+  "cross_event/decision_tree": {
+   "hyperparameters": {
+    "max_depth": 8,
+    "min_samples_leaf": 100
+   },
+   "train_seconds": 1.0,
+   "infer_ms_per_1000": 0.24,
+   "val": {
+    "accuracy": 0.6182,
+    "macro_f1": 0.5757
+   },
+   "test": {
+    "accuracy": 0.5019,
+    "macro_f1": 0.2938,
+    "weighted_f1": 0.5069,
+    "per_class": {
+     "no-damage": {
+      "precision": 0.6891,
+      "recall": 0.6631,
+      "f1": 0.6758,
+      "support": 13870
+     },
+     "minor-damage": {
+      "precision": 0.2748,
+      "recall": 0.2413,
+      "f1": 0.257,
+      "support": 4998
+     },
+     "major-damage": {
+      "precision": 0.0281,
+      "recall": 0.0239,
+      "f1": 0.0258,
+      "support": 1841
+     },
+     "destroyed": {
+      "precision": 0.1449,
+      "recall": 0.4278,
+      "f1": 0.2164,
+      "support": 720
+     }
+    }
+   },
+   "per_event": {
+    "hurricane-michael": 0.2938
+   },
+   "log1p": [
+    "abs_dmean_r",
+    "abs_dmean_g",
+    "abs_dmean_b",
+    "gray_absdiff_mean",
+    "glcm_contrast_pre",
+    "glcm_contrast_post",
+    "area_px"
+   ]
+  },
+  "cross_event/random_forest": {
+   "hyperparameters": {
+    "max_depth": null,
+    "min_samples_leaf": 2
+   },
+   "train_seconds": 4.739,
+   "infer_ms_per_1000": 3.29,
+   "val": {
+    "accuracy": 0.7276,
+    "macro_f1": 0.6388
+   },
+   "test": {
+    "accuracy": 0.606,
+    "macro_f1": 0.2909,
+    "weighted_f1": 0.5313,
+    "per_class": {
+     "no-damage": {
+      "precision": 0.6719,
+      "recall": 0.8881,
+      "f1": 0.765,
+      "support": 13870
+     },
+     "minor-damage": {
+      "precision": 0.2763,
+      "recall": 0.0688,
+      "f1": 0.1102,
+      "support": 4998
+     },
+     "major-damage": {
+      "precision": 0.0482,
+      "recall": 0.0081,
+      "f1": 0.0139,
+      "support": 1841
+     },
+     "destroyed": {
+      "precision": 0.2014,
+      "recall": 0.4306,
+      "f1": 0.2745,
+      "support": 720
+     }
+    }
+   },
+   "per_event": {
+    "hurricane-michael": 0.2909
+   },
+   "log1p": [
+    "abs_dmean_r",
+    "abs_dmean_g",
+    "abs_dmean_b",
+    "gray_absdiff_mean",
+    "glcm_contrast_pre",
+    "glcm_contrast_post",
+    "area_px"
+   ]
+  }
+ },
+ "confounding": {
+  "hyperparameters": {
+   "C": 10.0
+  },
+  "majority_class": "hurricane-michael",
+  "majority_class_accuracy": 0.2524,
+  "chance_accuracy_uniform": 0.2,
+  "accuracy": 0.8294,
+  "macro_f1": 0.8186
+ },
+ "kmeans": {
+  "chosen": 2,
+  "elbow": 3,
+  "per_k": {
+   "2": {
+    "silhouette": 0.2533,
+    "ari": 0.0414,
+    "sizes": [
+     17691,
+     32238
+    ]
+   },
+   "3": {
+    "silhouette": 0.2392,
+    "ari": 0.0699,
+    "sizes": [
+     9864,
+     29499,
+     10566
+    ]
+   },
+   "4": {
+    "silhouette": 0.196,
+    "ari": 0.0954,
+    "sizes": [
+     8191,
+     25382,
+     8474,
+     7882
+    ]
+   },
+   "5": {
+    "silhouette": 0.1425,
+    "ari": 0.0576,
+    "sizes": [
+     4735,
+     13928,
+     6675,
+     18355,
+     6236
+    ]
+   },
+   "6": {
+    "silhouette": 0.1247,
+    "ari": 0.0545,
+    "sizes": [
+     12617,
+     4699,
+     11298,
+     12214,
+     5289,
+     3812
+    ]
+   },
+   "7": {
+    "silhouette": 0.1182,
+    "ari": 0.0521,
+    "sizes": [
+     12253,
+     4556,
+     8793,
+     10665,
+     4757,
+     6520,
+     2385
+    ]
+   },
+   "8": {
+    "silhouette": 0.1179,
+    "ari": 0.0519,
+    "sizes": [
+     2967,
+     10318,
+     2840,
+     4331,
+     9299,
+     2287,
+     6222,
+     11665
+    ]
+   },
+   "9": {
+    "silhouette": 0.1169,
+    "ari": 0.0426,
+    "sizes": [
+     2080,
+     2901,
+     10204,
+     7088,
+     2796,
+     4946,
+     6815,
+     9576,
+     3523
+    ]
+   },
+   "10": {
+    "silhouette": 0.1004,
+    "ari": 0.0384,
+    "sizes": [
+     8698,
+     6318,
+     2890,
+     4627,
+     7673,
+     1570,
+     2864,
+     7164,
+     4739,
+     3386
+    ]
+   }
+  }
+ },
+ "phase3b": [
+  {
+   "variant": "change_only",
+   "n_features": 17,
+   "design": "within_event",
+   "model": "logistic_regression",
+   "val_macro_f1": 0.4636,
+   "test_macro_f1": 0.4501,
+   "test_recall_major": 0.5006,
+   "test_recall_destroyed": 0.764,
+   "hyperparameters": {
+    "C": 10.0
+   },
+   "top_permutation_features": [
+    "dstd_g",
+    "gray_std_delta",
+    "dstd_r",
+    "dstd_b",
+    "glcm_homogeneity_delta"
+   ],
+   "per_event_test_macro_f1": {
+    "hurricane-harvey": 0.2899,
+    "hurricane-matthew": 0.3127,
+    "hurricane-michael": 0.2815,
+    "palu-tsunami": 0.3904,
+    "santa-rosa-wildfire": 0.449
+   },
+   "event_prediction_accuracy_within_event": 0.6324
+  },
+  {
+   "variant": "change_only",
+   "n_features": 17,
+   "design": "within_event",
+   "model": "decision_tree",
+   "val_macro_f1": 0.4711,
+   "test_macro_f1": 0.4361,
+   "test_recall_major": 0.4416,
+   "test_recall_destroyed": 0.7165,
+   "hyperparameters": {
+    "max_depth": 8,
+    "min_samples_leaf": 20
+   },
+   "top_permutation_features": [
+    "glcm_homogeneity_delta",
+    "gray_absdiff_mean",
+    "area_px",
+    "edge_density_delta",
+    "glcm_contrast_delta"
+   ],
+   "per_event_test_macro_f1": {
+    "hurricane-harvey": 0.2648,
+    "hurricane-matthew": 0.3134,
+    "hurricane-michael": 0.2857,
+    "palu-tsunami": 0.3362,
+    "santa-rosa-wildfire": 0.4247
+   },
+   "event_prediction_accuracy_within_event": 0.6324
+  },
+  {
+   "variant": "change_only",
+   "n_features": 17,
+   "design": "cross_event",
+   "model": "logistic_regression",
+   "val_macro_f1": 0.5708,
+   "test_macro_f1": 0.2432,
+   "test_recall_major": 0.0875,
+   "test_recall_destroyed": 0.5792,
+   "hyperparameters": {
+    "C": 1.0
+   },
+   "top_permutation_features": [
+    "gray_std_delta",
+    "dstd_g",
+    "dstd_r",
+    "glcm_homogeneity_delta",
+    "dstd_b"
+   ],
+   "per_event_test_macro_f1": {
+    "hurricane-michael": 0.2432
+   },
+   "event_prediction_accuracy_within_event": 0.6324
+  },
+  {
+   "variant": "change_only",
+   "n_features": 17,
+   "design": "cross_event",
+   "model": "decision_tree",
+   "val_macro_f1": 0.5349,
+   "test_macro_f1": 0.2776,
+   "test_recall_major": 0.0217,
+   "test_recall_destroyed": 0.3139,
+   "hyperparameters": {
+    "max_depth": 4,
+    "min_samples_leaf": 20
+   },
+   "top_permutation_features": [
+    "glcm_homogeneity_delta",
+    "area_px",
+    "gray_absdiff_mean",
+    "ring_absdiff_mean",
+    "ring_dmean"
+   ],
+   "per_event_test_macro_f1": {
+    "hurricane-michael": 0.2776
+   },
+   "event_prediction_accuracy_within_event": 0.6324
+  },
+  {
+   "variant": "scene_normalised",
+   "n_features": 37,
+   "design": "within_event",
+   "model": "logistic_regression",
+   "val_macro_f1": 0.35,
+   "test_macro_f1": 0.3304,
+   "test_recall_major": 0.511,
+   "test_recall_destroyed": 0.4083,
+   "hyperparameters": {
+    "C": 0.1
+   },
+   "top_permutation_features": [
+    "glcm_contrast_pre_vs_scene",
+    "contrast_change_vs_scene",
+    "ring_dmean_vs_scene",
+    "gray_std_pre_vs_scene",
+    "pre_mean_g_vs_scene"
+   ],
+   "per_event_test_macro_f1": {
+    "hurricane-harvey": 0.2099,
+    "hurricane-matthew": 0.2234,
+    "hurricane-michael": 0.3463,
+    "palu-tsunami": 0.2995,
+    "santa-rosa-wildfire": 0.2195
+   },
+   "event_prediction_accuracy_within_event": 0.5178
+  },
+  {
+   "variant": "scene_normalised",
+   "n_features": 37,
+   "design": "within_event",
+   "model": "decision_tree",
+   "val_macro_f1": 0.3798,
+   "test_macro_f1": 0.3415,
+   "test_recall_major": 0.4377,
+   "test_recall_destroyed": 0.6163,
+   "hyperparameters": {
+    "max_depth": 12,
+    "min_samples_leaf": 100
+   },
+   "top_permutation_features": [
+    "glcm_contrast_post_vs_scene",
+    "area_px",
+    "glcm_contrast_delta_vs_scene",
+    "glcm_homogeneity_post_vs_scene",
+    "post_mean_b_vs_scene"
+   ],
+   "per_event_test_macro_f1": {
+    "hurricane-harvey": 0.209,
+    "hurricane-matthew": 0.2523,
+    "hurricane-michael": 0.2859,
+    "palu-tsunami": 0.3195,
+    "santa-rosa-wildfire": 0.2892
+   },
+   "event_prediction_accuracy_within_event": 0.5178
+  },
+  {
+   "variant": "scene_normalised",
+   "n_features": 37,
+   "design": "cross_event",
+   "model": "logistic_regression",
+   "val_macro_f1": 0.3951,
+   "test_macro_f1": 0.2361,
+   "test_recall_major": 0.2004,
+   "test_recall_destroyed": 0.8042,
+   "hyperparameters": {
+    "C": 0.01
+   },
+   "top_permutation_features": [
+    "glcm_homogeneity_delta_vs_scene",
+    "post_std_b_vs_scene",
+    "area_px",
+    "glcm_homogeneity_pre_vs_scene",
+    "pre_mean_g_vs_scene"
+   ],
+   "per_event_test_macro_f1": {
+    "hurricane-michael": 0.2361
+   },
+   "event_prediction_accuracy_within_event": 0.5178
+  },
+  {
+   "variant": "scene_normalised",
+   "n_features": 37,
+   "design": "cross_event",
+   "model": "decision_tree",
+   "val_macro_f1": 0.4416,
+   "test_macro_f1": 0.2406,
+   "test_recall_major": 0.1684,
+   "test_recall_destroyed": 0.5056,
+   "hyperparameters": {
+    "max_depth": 12,
+    "min_samples_leaf": 20
+   },
+   "top_permutation_features": [
+    "glcm_contrast_post_vs_scene",
+    "abs_dmean_g_vs_scene",
+    "area_px",
+    "glcm_contrast_delta_vs_scene",
+    "brightness_ratio_vs_scene"
+   ],
+   "per_event_test_macro_f1": {
+    "hurricane-michael": 0.2406
+   },
+   "event_prediction_accuracy_within_event": 0.5178
+  },
+  {
+   "variant": "change_only_scene_normalised",
+   "n_features": 17,
+   "design": "within_event",
+   "model": "logistic_regression",
+   "val_macro_f1": 0.3192,
+   "test_macro_f1": 0.3087,
+   "test_recall_major": 0.3883,
+   "test_recall_destroyed": 0.4312,
+   "hyperparameters": {
+    "C": 0.1
+   },
+   "top_permutation_features": [
+    "gray_std_delta_vs_scene",
+    "dstd_g_vs_scene",
+    "dstd_b_vs_scene",
+    "dstd_r_vs_scene",
+    "area_px"
+   ],
+   "per_event_test_macro_f1": {
+    "hurricane-harvey": 0.2523,
+    "hurricane-matthew": 0.2176,
+    "hurricane-michael": 0.3155,
+    "palu-tsunami": 0.2667,
+    "santa-rosa-wildfire": 0.2073
+   },
+   "event_prediction_accuracy_within_event": 0.3741
+  },
+  {
+   "variant": "change_only_scene_normalised",
+   "n_features": 17,
+   "design": "within_event",
+   "model": "decision_tree",
+   "val_macro_f1": 0.362,
+   "test_macro_f1": 0.3743,
+   "test_recall_major": 0.1292,
+   "test_recall_destroyed": 0.5229,
+   "hyperparameters": {
+    "max_depth": 6,
+    "min_samples_leaf": 100
+   },
+   "top_permutation_features": [
+    "abs_dmean_b_vs_scene",
+    "abs_dmean_g_vs_scene",
+    "abs_dmean_r_vs_scene",
+    "brightness_ratio_vs_scene",
+    "glcm_homogeneity_delta_vs_scene"
+   ],
+   "per_event_test_macro_f1": {
+    "hurricane-harvey": 0.2928,
+    "hurricane-matthew": 0.2443,
+    "hurricane-michael": 0.3322,
+    "palu-tsunami": 0.3903,
+    "santa-rosa-wildfire": 0.3455
+   },
+   "event_prediction_accuracy_within_event": 0.3741
+  },
+  {
+   "variant": "change_only_scene_normalised",
+   "n_features": 17,
+   "design": "cross_event",
+   "model": "logistic_regression",
+   "val_macro_f1": 0.352,
+   "test_macro_f1": 0.2482,
+   "test_recall_major": 0.3303,
+   "test_recall_destroyed": 0.7111,
+   "hyperparameters": {
+    "C": 0.01
+   },
+   "top_permutation_features": [
+    "area_px",
+    "brightness_ratio_vs_scene",
+    "gray_std_delta_vs_scene",
+    "dstd_b_vs_scene",
+    "contrast_change_vs_scene"
+   ],
+   "per_event_test_macro_f1": {
+    "hurricane-michael": 0.2482
+   },
+   "event_prediction_accuracy_within_event": 0.3741
+  },
+  {
+   "variant": "change_only_scene_normalised",
+   "n_features": 17,
+   "design": "cross_event",
+   "model": "decision_tree",
+   "val_macro_f1": 0.4454,
+   "test_macro_f1": 0.2617,
+   "test_recall_major": 0.1879,
+   "test_recall_destroyed": 0.4639,
+   "hyperparameters": {
+    "max_depth": 8,
+    "min_samples_leaf": 20
+   },
+   "top_permutation_features": [
+    "abs_dmean_g_vs_scene",
+    "brightness_ratio_vs_scene",
+    "abs_dmean_r_vs_scene",
+    "area_px",
+    "glcm_contrast_delta_vs_scene"
+   ],
+   "per_event_test_macro_f1": {
+    "hurricane-michael": 0.2617
+   },
+   "event_prediction_accuracy_within_event": 0.3741
+  }
+ ],
+ "phase3b_variants": {
+  "change_only": "17 change / texture-delta / ring / shape features (no absolute pre or post levels)",
+  "scene_normalised": "all 37 features, image features minus their scene median (shape raw)",
+  "change_only_scene_normalised": "the 17 change-only features, scene-normalised (shape raw)"
+ },
+ "review": {
+  "chosen_on": "validation split",
+  "rule": "lowest t with accuracy(confidence >= t) >= 0.7",
+  "target_accuracy": 0.7,
+  "design": "within_event",
+  "scheme": "four_class",
+  "created_at": "2026-10-22T12:48:46+00:00",
+  "models": {
+   "logistic_regression": {
+    "threshold": 0.4836,
+    "flagged_share_val": 0.4,
+    "accuracy_at_or_above_val": 0.7034,
+    "accuracy_below_val": 0.4211,
+    "n_val": 10705,
+    "confidence": "probability (not calibrated)"
+   },
+   "knn": {
+    "threshold": 0.5333,
+    "flagged_share_val": 0.2177,
+    "accuracy_at_or_above_val": 0.7246,
+    "accuracy_below_val": 0.414,
+    "n_val": 10705,
+    "confidence": "vote fraction of neighbours"
+   },
+   "decision_tree": {
+    "threshold": 0.5257,
+    "flagged_share_val": 0.5503,
+    "accuracy_at_or_above_val": 0.7059,
+    "accuracy_below_val": 0.4349,
+    "n_val": 10705,
+    "confidence": "class fraction in the leaf"
+   },
+   "random_forest": {
+    "threshold": 0.3865,
+    "flagged_share_val": 0.14,
+    "accuracy_at_or_above_val": 0.7008,
+    "accuracy_below_val": 0.3796,
+    "n_val": 10705,
+    "confidence": "mean of tree leaf fractions"
+   }
+  }
+ },
+ "demo": [
+  {
+   "scene_id": "hurricane-matthew_00000185",
+   "event": "hurricane-matthew",
+   "disaster_type": "wind",
+   "n_buildings": 37,
+   "ground_truth_counts": {
+    "no-damage": 12,
+    "minor-damage": 10,
+    "major-damage": 8,
+    "destroyed": 7
+   },
+   "evenness": 0.985,
+   "analyses": {
+    "logistic_regression": {
+     "analysis_id": "843f2a37d06ff92a",
+     "scene_macro_f1": 0.2239,
+     "scene_accuracy": 0.2973,
+     "suggested_for_review": 10
+    },
+    "knn": {
+     "analysis_id": "9dd4c6fd37d4b559",
+     "scene_macro_f1": 0.3489,
+     "scene_accuracy": 0.4054,
+     "suggested_for_review": 18
+    },
+    "decision_tree": {
+     "analysis_id": "b2410b9cd3a038fb",
+     "scene_macro_f1": 0.1588,
+     "scene_accuracy": 0.2432,
+     "suggested_for_review": 12
+    },
+    "random_forest": {
+     "analysis_id": "687b4fbba9989977",
+     "scene_macro_f1": 0.1994,
+     "scene_accuracy": 0.2703,
+     "suggested_for_review": 7
+    }
+   }
+  },
+  {
+   "scene_id": "hurricane-harvey_00000356",
+   "event": "hurricane-harvey",
+   "disaster_type": "flooding",
+   "n_buildings": 115,
+   "ground_truth_counts": {
+    "no-damage": 25,
+    "minor-damage": 61,
+    "major-damage": 27,
+    "destroyed": 2
+   },
+   "evenness": 0.778,
+   "analyses": {
+    "logistic_regression": {
+     "analysis_id": "269a923320fa9ec7",
+     "scene_macro_f1": 0.2145,
+     "scene_accuracy": 0.2783,
+     "suggested_for_review": 62
+    },
+    "knn": {
+     "analysis_id": "2ed1775defcc9238",
+     "scene_macro_f1": 0.1727,
+     "scene_accuracy": 0.2522,
+     "suggested_for_review": 29
+    },
+    "decision_tree": {
+     "analysis_id": "0599045953b88e08",
+     "scene_macro_f1": 0.2605,
+     "scene_accuracy": 0.3304,
+     "suggested_for_review": 61
+    },
+    "random_forest": {
+     "analysis_id": "842acd42bd9e665d",
+     "scene_macro_f1": 0.2319,
+     "scene_accuracy": 0.2957,
+     "suggested_for_review": 14
+    }
+   }
+  },
+  {
+   "scene_id": "santa-rosa-wildfire_00000006",
+   "event": "santa-rosa-wildfire",
+   "disaster_type": "fire",
+   "n_buildings": 36,
+   "ground_truth_counts": {
+    "no-damage": 14,
+    "minor-damage": 1,
+    "major-damage": 2,
+    "destroyed": 19
+   },
+   "evenness": 0.696,
+   "analyses": {
+    "logistic_regression": {
+     "analysis_id": "068527454bebc6bf",
+     "scene_macro_f1": 0.7347,
+     "scene_accuracy": 0.8611,
+     "suggested_for_review": 8
+    },
+    "knn": {
+     "analysis_id": "0d1fea8a466bfa5a",
+     "scene_macro_f1": 0.5544,
+     "scene_accuracy": 0.8611,
+     "suggested_for_review": 6
+    },
+    "decision_tree": {
+     "analysis_id": "65f0db83de94742e",
+     "scene_macro_f1": 0.5808,
+     "scene_accuracy": 0.8611,
+     "suggested_for_review": 10
+    },
+    "random_forest": {
+     "analysis_id": "514d30212ab5eefe",
+     "scene_macro_f1": 0.7845,
+     "scene_accuracy": 0.8889,
+     "suggested_for_review": 5
+    }
+   }
+  }
+ ],
+ "splits": {
+  "within_event": {
+   "hash": "7bba8a9fbbd2740a",
+   "label": "within-event generalisation",
+   "counts": {
+    "train": {
+     "scenes": 821,
+     "buildings": 49929,
+     "building_share": 0.6999,
+     "classes": {
+      "no-damage": 29008,
+      "minor-damage": 8232,
+      "major-damage": 7190,
+      "destroyed": 5499
+     },
+     "events": {
+      "hurricane-harvey": 12842,
+      "hurricane-matthew": 6330,
+      "hurricane-michael": 15660,
+      "palu-tsunami": 6734,
+      "santa-rosa-wildfire": 8363
+     }
+    },
+    "val": {
+     "scenes": 181,
+     "buildings": 10705,
+     "building_share": 0.1501,
+     "classes": {
+      "no-damage": 6221,
+      "minor-damage": 1766,
+      "major-damage": 1540,
+      "destroyed": 1178
+     },
+     "events": {
+      "hurricane-harvey": 2480,
+      "hurricane-matthew": 1841,
+      "hurricane-michael": 3067,
+      "palu-tsunami": 1289,
+      "santa-rosa-wildfire": 2028
+     }
+    },
+    "test": {
+     "scenes": 177,
+     "buildings": 10706,
+     "building_share": 0.1501,
+     "classes": {
+      "no-damage": 6220,
+      "minor-damage": 1768,
+      "major-damage": 1540,
+      "destroyed": 1178
+     },
+     "events": {
+      "hurricane-harvey": 3799,
+      "hurricane-matthew": 1399,
+      "hurricane-michael": 2702,
+      "palu-tsunami": 1134,
+      "santa-rosa-wildfire": 1672
+     }
+    }
+   }
+  },
+  "cross_event": {
+   "hash": "dd7d8566b7dbaf7a",
+   "label": "cross-event generalisation",
+   "counts": {
+    "train": {
+     "scenes": 716,
+     "buildings": 42425,
+     "building_share": 0.5947,
+     "classes": {
+      "no-damage": 23442,
+      "minor-damage": 5753,
+      "major-damage": 7165,
+      "destroyed": 6065
+     },
+     "events": {
+      "hurricane-harvey": 16310,
+      "hurricane-matthew": 8161,
+      "palu-tsunami": 7982,
+      "santa-rosa-wildfire": 9972
+     }
+    },
+    "val": {
+     "scenes": 130,
+     "buildings": 7486,
+     "building_share": 0.1049,
+     "classes": {
+      "no-damage": 4137,
+      "minor-damage": 1015,
+      "major-damage": 1264,
+      "destroyed": 1070
+     },
+     "events": {
+      "hurricane-harvey": 2811,
+      "hurricane-matthew": 1409,
+      "palu-tsunami": 1175,
+      "santa-rosa-wildfire": 2091
+     }
+    },
+    "test": {
+     "scenes": 333,
+     "buildings": 21429,
+     "building_share": 0.3004,
+     "classes": {
+      "no-damage": 13870,
+      "minor-damage": 4998,
+      "major-damage": 1841,
+      "destroyed": 720
+     },
+     "events": {
+      "hurricane-michael": 21429
+     }
+    }
+   }
+  }
+ },
+ "grids": {
+  "baseline": null,
+  "logistic_regression": {
+   "C": [
+    0.01,
+    0.1,
+    1.0,
+    10.0
+   ]
+  },
+  "knn": {
+   "n_neighbors": [
+    5,
+    15,
+    31
+   ],
+   "weights": [
+    "uniform",
+    "distance"
+   ]
+  },
+  "decision_tree": {
+   "max_depth": [
+    4,
+    6,
+    8,
+    12
+   ],
+   "min_samples_leaf": [
+    20,
+    100
+   ]
+  },
+  "random_forest": {
+   "max_depth": [
+    12,
+    null
+   ],
+   "min_samples_leaf": [
+    2,
+    10
+   ]
+  },
+  "rf_trees": 200
+ },
+ "feature_lab_top": [
+  {
+   "feature": "glcm_homogeneity_post",
+   "eta2": 0.18538,
+   "group": "texture",
+   "median": {
+    "no-damage": 0.71966,
+    "minor-damage": 0.67556,
+    "major-damage": 0.76676,
+    "destroyed": 0.53431
+   }
+  },
+  {
+   "feature": "glcm_homogeneity_delta",
+   "eta2": 0.13634,
+   "group": "texture",
+   "median": {
+    "no-damage": 0.00787,
+    "minor-damage": 0.01967,
+    "major-damage": 0.06979,
+    "destroyed": -0.13162
+   }
+  },
+  {
+   "feature": "glcm_contrast_post",
+   "eta2": 0.09589,
+   "group": "texture",
+   "median": {
+    "no-damage": 1.22485,
+    "minor-damage": 1.61348,
+    "major-damage": 0.77618,
+    "destroyed": 3.24559
+   }
+  },
+  {
+   "feature": "gray_absdiff_mean",
+   "eta2": 0.0792,
+   "group": "change",
+   "median": {
+    "no-damage": 20.93849,
+    "minor-damage": 26.85519,
+    "major-damage": 22.93179,
+    "destroyed": 34.53248
+   }
+  },
+  {
+   "feature": "edge_density_post",
+   "eta2": 0.07367,
+   "group": "texture",
+   "median": {
+    "no-damage": 0.10455,
+    "minor-damage": 0.12125,
+    "major-damage": 0.07989,
+    "destroyed": 0.16788
+   }
+  },
+  {
+   "feature": "abs_dmean_g",
+   "eta2": 0.07019,
+   "group": "change",
+   "median": {
+    "no-damage": 9.25416,
+    "minor-damage": 13.14671,
+    "major-damage": 9.92483,
+    "destroyed": 23.30652
+   }
+  },
+  {
+   "feature": "abs_dmean_r",
+   "eta2": 0.06699,
+   "group": "change",
+   "median": {
+    "no-damage": 10.84086,
+    "minor-damage": 15.13824,
+    "major-damage": 11.18412,
+    "destroyed": 25.29651
+   }
+  },
+  {
+   "feature": "ring_absdiff_mean",
+   "eta2": 0.06586,
+   "group": "context",
+   "median": {
+    "no-damage": 22.93708,
+    "minor-damage": 26.10703,
+    "major-damage": 23.82926,
+    "destroyed": 28.90258
+   }
+  }
+ ],
+ "feature_lab_bottom": [
+  {
+   "feature": "gray_std_post",
+   "eta2": 0.00453
+  },
+  {
+   "feature": "post_std_r",
+   "eta2": 0.00292
+  },
+  {
+   "feature": "area_px",
+   "eta2": 0.0024
+  }
+ ],
+ "requirements": [
+  "fastapi==0.153.0",
+  "uvicorn[standard]==0.54.0",
+  "pydantic==2.14.1",
+  "pydantic-settings==2.16.1",
+  "numpy==2.4.6",
+  "pandas==3.0.6",
+  "pyarrow==26.0.0",
+  "pillow==13.0.0",
+  "opencv-python-headless==5.0.0.93",
+  "scikit-image==0.26.0",
+  "scipy==1.17.1",
+  "shapely==2.2.0",
+  "PyYAML==6.0.3",
+  "scikit-learn==1.9.1",
+  "joblib==1.6.0",
+  "matplotlib==3.11.2",
+  "reportlab==5.0.1",
+  "pytest==9.1.1",
+  "httpx2==2.15.1   # used by starlette.testclient (replaces deprecated httpx)"
+ ],
+ "npm": {
+  "@fontsource/ibm-plex-mono": "5.3.0",
+  "@fontsource/ibm-plex-sans": "5.3.0",
+  "@tanstack/react-query": "5.104.5",
+  "react": "19.3.1",
+  "react-dom": "19.3.1",
+  "react-router-dom": "7.18.4",
+  "@tailwindcss/vite": "4.3.3",
+  "@testing-library/jest-dom": "7.0.1",
+  "@testing-library/react": "16.3.3",
+  "@testing-library/user-event": "14.6.8",
+  "@types/node": "24.19.2",
+  "@types/react": "19.3.0",
+  "@types/react-dom": "19.3.0",
+  "@vitejs/plugin-react": "6.1.2",
+  "jsdom": "30.1.3",
+  "oxlint": "1.89.0",
+  "tailwindcss": "4.3.3",
+  "typescript": "6.0.3",
+  "vite": "8.3.4",
+  "vitest": "5.0.5"
+ },
+ "commits": [
+  {
+   "hash": "92f6ba8",
+   "date": "2026-10-22",
+   "subject": "Set up AfterSight skeleton and xBD data-readiness pipeline (Phases 0-1)"
+  },
+  {
+   "hash": "2fa2d0a",
+   "date": "2026-10-22",
+   "subject": "Add per-building features and scene-grouped split manifests (Phase 2)"
+  },
+  {
+   "hash": "d443e90",
+   "date": "2026-10-22",
+   "subject": "Train and evaluate classical damage models on both split designs (Phase 3)"
+  },
+  {
+   "hash": "1a5ff14",
+   "date": "2026-10-22",
+   "subject": "Add Phase 3b confounding-reduction experiment (separate from Phase 3)"
+  },
+  {
+   "hash": "e289f03",
+   "date": "2026-10-22",
+   "subject": "Add the FastAPI backend serving real artifacts (Phase 4)"
+  },
+  {
+   "hash": "87f2a04",
+   "date": "2026-10-22",
+   "subject": "Add the \"field case file\" design system, Readiness board and Scene Library (Phase 5A)"
+  },
+  {
+   "hash": "70f3768",
+   "date": "2026-10-22",
+   "subject": "Add Triage Desk, Case File, Arena, Feature Lab, Cluster Atlas, Review Queue and Reports (Phase 5B)"
+  },
+  {
+   "hash": "38e3cd0",
+   "date": "2026-10-22",
+   "subject": "Integration and polish: e2e check, one-command pipeline and start, demo cache (Phase 6)"
+  },
+  {
+   "hash": "f3e0787",
+   "date": "2026-10-22",
+   "subject": "Write the Phase 7 documentation"
+  }
+ ]
+}

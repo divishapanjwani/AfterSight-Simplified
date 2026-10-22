@@ -1,0 +1,90 @@
+{
+ "fig_class_distribution.png": [
+  1800,
+  585
+ ],
+ "fig_cm_lr_cross.png": [
+  924,
+  700
+ ],
+ "fig_cm_lr_pair.png": [
+  1888,
+  700
+ ],
+ "fig_cm_lr_within.png": [
+  924,
+  700
+ ],
+ "fig_cm_rf_within.png": [
+  924,
+  700
+ ],
+ "fig_confounding.png": [
+  1099,
+  819
+ ],
+ "fig_footprint_sizes.png": [
+  1350,
+  540
+ ],
+ "fig_git_graph.png": [
+  1980,
+  712
+ ],
+ "fig_kmeans_contingency.png": [
+  924,
+  700
+ ],
+ "fig_kmeans_curves.png": [
+  1400,
+  476
+ ],
+ "fig_pipeline.png": [
+  1745,
+  994
+ ],
+ "fig_sample_fire.png": [
+  1210,
+  671
+ ],
+ "r01_readiness.png": [
+  1280,
+  1250
+ ],
+ "r02_library.png": [
+  1280,
+  820
+ ],
+ "r03_triage.png": [
+  1280,
+  1100
+ ],
+ "r04_casefile.png": [
+  1280,
+  1350
+ ],
+ "r05_case_knn.png": [
+  1280,
+  1450
+ ],
+ "r06_arena_top.png": [
+  1280,
+  1000
+ ],
+ "r07_feature_lab.png": [
+  1280,
+  1060
+ ],
+ "r08_cluster_atlas.png": [
+  1280,
+  1200
+ ],
+ "r09_review.png": [
+  1280,
+  760
+ ],
+ "r10_reports.png": [
+  1280,
+  640
+ ]
+}

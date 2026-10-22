@@ -1,0 +1,11 @@
+{
+  "name": "aftersight-report-builder",
+  "private": true,
+  "description": "Builds report/AfterSight_Mini_Project_Report.docx from data.json and assets/",
+  "scripts": {
+    "build": "node build_report.js"
+  },
+  "dependencies": {
+    "docx": "9.13.0"
+  }
+}

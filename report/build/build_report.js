@@ -388,12 +388,13 @@ function body() {
   out.push(H1('AutoML / MLOps', false))
   out.push(P('**No AutoML was used.** All models, grids and features were chosen by hand so that every decision can be explained in the viva. Hyperparameters were tuned with small, explicit grids on the validation split. The project does follow several MLOps practices:'))
   for (const b of [
-    `**Automated tests:** ${123} backend tests (pytest), ${26} frontend tests (Vitest) and an end-to-end check with 22 assertions. They cover the parser, features with known answers, split leakage, saving and reloading models, the API (including path-traversal attempts) and the user interface.`,
+    `**Automated tests:** ${123} backend tests (pytest), ${27} frontend tests (Vitest) and an end-to-end check with 22 assertions. They cover the parser, features with known answers, split leakage, saving and reloading models, the API (including path-traversal attempts) and the user interface.`,
     '**Reproducible pipeline:** one command (`scripts/run_pipeline.sh`) rebuilds everything from the raw shards. A fresh clone following only the README reproduced every test score exactly.',
     '**Model metadata and loading checks:** a model refuses to load if the feature schema, the scikit-learn version or the split manifest differs from what it was trained with.',
     '**Test-set guard:** a code object raises an error if any model’s test set is evaluated a second time.',
     '**Versioned, fingerprinted data products:** the feature table records a fingerprint of its settings and is rebuilt only when they change. Split manifests carry a hash that detects hand edits.',
     '**Pinned dependencies:** exact versions in requirements.txt and package-lock.json.',
+    '**Behaviour snapshots for refactoring:** `scripts/snapshot_behaviour.py` records the API output (demo-scene predictions and confidences, every explanation, the Feature Lab numbers) from the saved models. The v1.1 simplification of the Case File and Feature Lab code was checked to give identical output.',
   ]) out.push(bullet(b))
   out.push(P('Not done: continuous integration, model monitoring in production and automated retraining. The system runs locally and is not deployed for operational use.'))
 

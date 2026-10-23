@@ -1,0 +1,517 @@
+{
+ "scene": "santa-rosa-wildfire_00000006",
+ "uid": "santa-rosa-wildfire_00000006_b0002",
+ "event": "santa-rosa-wildfire",
+ "disaster_type": "fire",
+ "parquet": {
+  "shard": "train-00002-of-00017.parquet",
+  "row": 58,
+  "image_name": "train/images/santa-rosa-wildfire_00000006",
+  "bytes": {
+   "t1_image": 1495114,
+   "t2_image": 1593407,
+   "t1_mask": 8814,
+   "t2_mask": 8944
+  },
+  "image_size": [
+   1024,
+   1024
+  ],
+  "image_mode": "RGB",
+  "t1_values": {
+   "0": 902934,
+   "1": 145642
+  },
+  "t2_values": {
+   "0": 902969,
+   "1": 65338,
+   "2": 224,
+   "3": 53432,
+   "4": 26613
+  }
+ },
+ "blobs": {
+  "n_blobs": 36,
+  "n_kept": 36,
+  "n_dropped": 0,
+  "dropped_reasons": {}
+ },
+ "building": {
+  "index": 2,
+  "bbox_rows": [
+   123,
+   185
+  ],
+  "bbox_cols": [
+   859,
+   893
+  ],
+  "pixel_count": 1952,
+  "area_px_scene_json": 1952.0,
+  "votes": {
+   "4": 1952
+  },
+  "label": "destroyed",
+  "purity": 1.0,
+  "mixed": false,
+  "touches_border": false,
+  "polygon_vertices": 15,
+  "polygon_area": 1859.0,
+  "wkt_start": "POLYGON ((872.5 123.5, 872.5 127.5, 871.5 128.5, 859.5 128.5, 859.5 156.5, 860.5",
+  "pre_pixel_example": [
+   98,
+   103,
+   97
+  ],
+  "post_pixel_example": [
+   171,
+   168,
+   151
+  ]
+ },
+ "features": {
+  "pre_mean_r": 89.1603,
+  "post_mean_r": 155.4298,
+  "abs_dmean_r": 66.2695,
+  "gray_absdiff_mean": 60.0937,
+  "brightness_ratio": 1.6423,
+  "gray_std_pre": 11.3901,
+  "gray_std_post": 23.3945,
+  "gray_std_delta": 12.0044,
+  "edge_density_pre": 0.0231,
+  "edge_density_post": 0.1814,
+  "glcm_homogeneity_pre": 0.755,
+  "glcm_homogeneity_post": 0.515,
+  "glcm_homogeneity_delta": -0.24,
+  "ring_dmean": 32.1409,
+  "contrast_change": 27.5385,
+  "area_px": 1952.0,
+  "compactness": 0.6777
+ },
+ "n_features": 37,
+ "scene_building_count": 36,
+ "split": {
+  "within_event": "test",
+  "cross_event": "train"
+ },
+ "scaling": {
+  "logged_features": [
+   "abs_dmean_r",
+   "abs_dmean_g",
+   "abs_dmean_b",
+   "gray_absdiff_mean",
+   "glcm_contrast_pre",
+   "glcm_contrast_post",
+   "area_px"
+  ],
+  "examples": {
+   "gray_std_delta": {
+    "raw": 12.0044,
+    "after_log1p": 12.0044,
+    "train_mean": -0.923,
+    "train_std": 10.9101,
+    "z": 1.185
+   },
+   "glcm_homogeneity_delta": {
+    "raw": -0.24,
+    "after_log1p": -0.24,
+    "train_mean": 0.0056,
+    "train_std": 0.1102,
+    "z": -2.229
+   },
+   "area_px": {
+    "raw": 1952.0,
+    "after_log1p": 7.5771,
+    "train_mean": 6.7827,
+    "train_std": 1.0321,
+    "z": 0.77
+   },
+   "gray_absdiff_mean": {
+    "raw": 60.0937,
+    "after_log1p": 4.1124,
+    "train_mean": 3.2339,
+    "train_std": 0.4656,
+    "z": 1.887
+   }
+  }
+ },
+ "proba": {
+  "logistic_regression": {
+   "destroyed": 0.9509,
+   "major-damage": 0.0097,
+   "minor-damage": 0.031,
+   "no-damage": 0.0084
+  },
+  "knn": {
+   "destroyed": 1.0,
+   "major-damage": 0.0,
+   "minor-damage": 0.0,
+   "no-damage": 0.0
+  },
+  "decision_tree": {
+   "destroyed": 0.9976,
+   "major-damage": 0.0016,
+   "minor-damage": 0.0,
+   "no-damage": 0.0008
+  },
+  "random_forest": {
+   "destroyed": 0.9968,
+   "major-damage": 0.0021,
+   "minor-damage": 0.0009,
+   "no-damage": 0.0002
+  }
+ },
+ "thresholds": {
+  "logistic_regression": 0.4836,
+  "knn": 0.5333,
+  "decision_tree": 0.5257,
+  "random_forest": 0.3865
+ },
+ "lr": {
+  "C": 10.0,
+  "predicted_class": "destroyed",
+  "intercept": -0.849123,
+  "score": 3.185614,
+  "top_features": [
+   {
+    "feature": "gray_std_delta",
+    "value_raw": 12.004358,
+    "standardised": 1.1849,
+    "coefficient": 5.5696,
+    "contribution": 6.5994
+   },
+   {
+    "feature": "dstd_g",
+    "value_raw": 11.238466,
+    "standardised": 1.1505,
+    "coefficient": -2.7384,
+    "contribution": -3.1504
+   },
+   {
+    "feature": "post_mean_b",
+    "value_raw": 137.529201,
+    "standardised": 1.3204,
+    "coefficient": -2.2782,
+    "contribution": -3.0082
+   },
+   {
+    "feature": "dstd_r",
+    "value_raw": 12.883869,
+    "standardised": 1.1718,
+    "coefficient": -2.1129,
+    "contribution": -2.4759
+   },
+   {
+    "feature": "brightness_ratio",
+    "value_raw": 1.642343,
+    "standardised": 2.9759,
+    "coefficient": -0.763,
+    "contribution": -2.2707
+   },
+   {
+    "feature": "ring_dmean",
+    "value_raw": 32.140915,
+    "standardised": 1.9522,
+    "coefficient": 1.0403,
+    "contribution": 2.0308
+   }
+  ],
+  "note": "contribution = coefficient x standardised value; positive pushes toward the predicted class"
+ },
+ "knn": {
+  "k": 15,
+  "weights": "uniform",
+  "neighbours": [
+   {
+    "sample_id": "santa-rosa-wildfire_00000007_b0047",
+    "label": "destroyed",
+    "distance": 1.4471
+   },
+   {
+    "sample_id": "santa-rosa-wildfire_00000007_b0051",
+    "label": "destroyed",
+    "distance": 1.5099
+   },
+   {
+    "sample_id": "santa-rosa-wildfire_00000189_b0051",
+    "label": "destroyed",
+    "distance": 1.5531
+   },
+   {
+    "sample_id": "santa-rosa-wildfire_00000189_b0078",
+    "label": "destroyed",
+    "distance": 1.6089
+   },
+   {
+    "sample_id": "santa-rosa-wildfire_00000007_b0008",
+    "label": "destroyed",
+    "distance": 1.6342
+   },
+   {
+    "sample_id": "santa-rosa-wildfire_00000015_b0045",
+    "label": "destroyed",
+    "distance": 1.6778
+   },
+   {
+    "sample_id": "santa-rosa-wildfire_00000129_b0103",
+    "label": "destroyed",
+    "distance": 1.7343
+   },
+   {
+    "sample_id": "santa-rosa-wildfire_00000015_b0115",
+    "label": "destroyed",
+    "distance": 1.7598
+   },
+   {
+    "sample_id": "santa-rosa-wildfire_00000007_b0085",
+    "label": "destroyed",
+    "distance": 1.7684
+   },
+   {
+    "sample_id": "santa-rosa-wildfire_00000015_b0025",
+    "label": "destroyed",
+    "distance": 1.8498
+   },
+   {
+    "sample_id": "santa-rosa-wildfire_00000155_b0128",
+    "label": "destroyed",
+    "distance": 1.8675
+   },
+   {
+    "sample_id": "santa-rosa-wildfire_00000129_b0079",
+    "label": "destroyed",
+    "distance": 1.8738
+   },
+   {
+    "sample_id": "santa-rosa-wildfire_00000161_b0142",
+    "label": "destroyed",
+    "distance": 1.905
+   },
+   {
+    "sample_id": "santa-rosa-wildfire_00000189_b0094",
+    "label": "destroyed",
+    "distance": 1.9354
+   },
+   {
+    "sample_id": "santa-rosa-wildfire_00000129_b0092",
+    "label": "destroyed",
+    "distance": 1.9588
+   }
+  ]
+ },
+ "dt": {
+  "steps": [
+   {
+    "feature": "glcm_homogeneity_delta",
+    "value_raw": -0.240027,
+    "op": "<=",
+    "threshold_raw": -0.146295
+   },
+   {
+    "feature": "glcm_homogeneity_post",
+    "value_raw": 0.514986,
+    "op": "<=",
+    "threshold_raw": 0.575548
+   },
+   {
+    "feature": "area_px",
+    "value_raw": 1952.0,
+    "op": ">",
+    "threshold_raw": 520.999048
+   },
+   {
+    "feature": "glcm_homogeneity_delta",
+    "value_raw": -0.240027,
+    "op": "<=",
+    "threshold_raw": -0.194044
+   },
+   {
+    "feature": "brightness_ratio",
+    "value_raw": 1.642343,
+    "op": ">",
+    "threshold_raw": 0.978041
+   },
+   {
+    "feature": "post_mean_r",
+    "value_raw": 155.429816,
+    "op": ">",
+    "threshold_raw": 127.815622
+   },
+   {
+    "feature": "ring_dmean",
+    "value_raw": 32.140915,
+    "op": ">",
+    "threshold_raw": 5.676681
+   },
+   {
+    "feature": "contrast_change",
+    "value_raw": 27.53849,
+    "op": ">",
+    "threshold_raw": -6.153473
+   }
+  ],
+  "leaf_id": 37,
+  "leaf_samples": 971,
+  "prediction": "destroyed",
+  "leaf_class_fractions": {
+   "destroyed": 0.9976,
+   "major-damage": 0.0016,
+   "minor-damage": 0.0,
+   "no-damage": 0.0008
+  }
+ },
+ "analysis": {
+  "analysis_id": "068527454bebc6bf",
+  "predicted": "destroyed",
+  "confidence": 0.9509,
+  "needs_review": false,
+  "scene_metrics": 0.7347,
+  "scene_accuracy": 0.8611,
+  "counts": {
+   "ground_truth": {
+    "no-damage": 14,
+    "minor-damage": 1,
+    "major-damage": 2,
+    "destroyed": 19
+   },
+   "predicted": {
+    "no-damage": 15,
+    "minor-damage": 3,
+    "major-damage": 1,
+    "destroyed": 17
+   }
+  }
+ },
+ "cm_lr_within": {
+  "labels": [
+   "no-damage",
+   "minor-damage",
+   "major-damage",
+   "destroyed"
+  ],
+  "rows_true_cols_pred": [
+   [
+    3264,
+    779,
+    1757,
+    420
+   ],
+   [
+    363,
+    815,
+    297,
+    293
+   ],
+   [
+    276,
+    243,
+    871,
+    150
+   ],
+   [
+    61,
+    90,
+    65,
+    962
+   ]
+  ]
+ },
+ "metrics_lr_within": {
+  "accuracy": 0.5522,
+  "macro_f1": 0.5268,
+  "weighted_f1": 0.5711,
+  "per_class": {
+   "no-damage": {
+    "precision": 0.8234,
+    "recall": 0.5248,
+    "f1": 0.641,
+    "support": 6220
+   },
+   "minor-damage": {
+    "precision": 0.4229,
+    "recall": 0.461,
+    "f1": 0.4411,
+    "support": 1768
+   },
+   "major-damage": {
+    "precision": 0.2913,
+    "recall": 0.5656,
+    "f1": 0.3845,
+    "support": 1540
+   },
+   "destroyed": {
+    "precision": 0.5271,
+    "recall": 0.8166,
+    "f1": 0.6407,
+    "support": 1178
+   }
+  },
+  "n": 10706
+ },
+ "class_examples": {
+  "no-damage": {
+   "scene": "hurricane-michael_00000009",
+   "building": "hurricane-michael_00000009_b0008",
+   "area_px": 1246.0
+  },
+  "minor-damage": {
+   "scene": "hurricane-matthew_00000060",
+   "building": "hurricane-matthew_00000060_b0016",
+   "area_px": 1228.0
+  },
+  "major-damage": {
+   "scene": "hurricane-harvey_00000029",
+   "building": "hurricane-harvey_00000029_b0041",
+   "area_px": 3332.0
+  },
+  "destroyed": {
+   "scene": "santa-rosa-wildfire_00000006",
+   "building": "santa-rosa-wildfire_00000006_b0002",
+   "area_px": 1952.0
+  }
+ },
+ "rgb_patch_first_pixel": [
+  91,
+  91,
+  72
+ ],
+ "baseline": {
+  "feature": "glcm_homogeneity_delta",
+  "direction": -1,
+  "thresholds_raw": [
+   0.06810277446125416,
+   0.12590484753326453,
+   0.20186917143627306
+  ]
+ },
+ "split_counts": {
+  "within_event": {
+   "train": {
+    "scenes": 821,
+    "buildings": 49929
+   },
+   "val": {
+    "scenes": 181,
+    "buildings": 10705
+   },
+   "test": {
+    "scenes": 177,
+    "buildings": 10706
+   }
+  },
+  "cross_event": {
+   "train": {
+    "scenes": 716,
+    "buildings": 42425
+   },
+   "val": {
+    "scenes": 130,
+    "buildings": 7486
+   },
+   "test": {
+    "scenes": 333,
+    "buildings": 21429
+   }
+  }
+ }
+}

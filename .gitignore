@@ -40,3 +40,4 @@ Thumbs.db
 # Generated synthetic fixture (python scripts/make_fixture.py)
 backend/tests/fixtures/xbd_synthetic/
 backend/tests/fixtures/xbd_synthetic_parquet/
+report/build/guide.html

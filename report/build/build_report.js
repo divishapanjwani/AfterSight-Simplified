@@ -473,7 +473,7 @@ function body() {
   out.push(bullet(`**${f3(lrX.test_macro_f1)} is the realistic figure for a new disaster.** All learned models converge to about this value on hurricane-michael, still above the ${f3(row(cross, 'baseline').test_macro_f1)} baseline.`))
   out.push(bullet(`**Domain shift, not just a shortcut.** Removing the event signature did not help transfer. Roofs, imagery and the appearance of damage differ between disasters, and hurricane-michael has a different class mix: ${pct(sx.test.classes['minor-damage'] / sum(sx.test.classes), 0)} of its buildings are minor damage, against ${pct(sx.train.classes['minor-damage'] / sum(sx.train.classes), 0)} in the training events.`))
   out.push(bullet('**What works:** destroyed buildings are recognised well within-event, texture change is the most informative signal across all models, and every model beats the non-ML baseline.'))
-  out.push(bullet('**What does not:** separating minor from major damage at about 0.5 m per pixel, and transferring to new events. Balanced class weights also push some undamaged buildings into damaged classes.'))
+  out.push(bullet('**What does not:** separating minor from major damage at sub-metre resolution (xBD targeted imagery below 0.8 m per pixel [1]), and transferring to new events. Balanced class weights also push some undamaged buildings into damaged classes.'))
   out.push(bullet('**Explainability is a real benefit.** Every prediction can be traced to features, tree questions or similar examples, which makes these failure modes visible instead of hidden.'))
 
   // 13 ------------------------------------------------------------ Future scope

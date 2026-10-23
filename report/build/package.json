@@ -6,6 +6,8 @@
     "build": "node build_report.js"
   },
   "dependencies": {
-    "docx": "9.13.0"
+    "docx": "9.13.0",
+    "marked": "14.1.4",
+    "mermaid": "11.4.1"
   }
 }

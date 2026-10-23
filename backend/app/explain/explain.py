@@ -96,19 +96,29 @@ def decision_path(pipe: Pipeline, row: pd.DataFrame) -> dict[str, Any]:
 def lr_contributions(pipe: Pipeline, row: pd.DataFrame, top_k: int = 5) -> dict[str, Any]:
     """Top features pushing the predicted class: coefficient x standardised value (log-odds units)."""
     model = pipe.named_steps["model"]
-    z = _transform(pipe, row)[0]
-    scores = model.decision_function(z[None, :])[0]
-    k = int(np.argmax(scores))
-    contrib = model.coef_[k] * z
+    z = _transform(pipe, row)[0]  # the building's 37 values after log1p + imputation + standardisation
+    scores = model.decision_function(z[None, :])[0]  # one linear score per class
+    k = int(np.argmax(scores))  # the predicted class (highest score, same as highest probability)
+    coefficients = model.coef_[k]
+    contrib = coefficients * z
+    # the features with the biggest push in EITHER direction, so sort by absolute size
     order = np.argsort(-np.abs(contrib))[:top_k]
     names = feature_names(pipe)
+
+    top_features = []
+    for j in order:
+        top_features.append({
+            "feature": names[j],
+            "value_raw": round(float(row.iloc[0, j]), 6),
+            "standardised": round(float(z[j]), 4),
+            "coefficient": round(float(coefficients[j]), 4),
+            "contribution": round(float(contrib[j]), 4),
+        })
     return {
         "predicted_class": str(model.classes_[k]),
         "intercept": round(float(model.intercept_[k]), 6),
         "score": round(float(scores[k]), 6),
-        "top_features": [{"feature": names[j], "value_raw": round(float(row.iloc[0, j]), 6),
-                          "standardised": round(float(z[j]), 4), "coefficient": round(float(model.coef_[k][j]), 4),
-                          "contribution": round(float(contrib[j]), 4)} for j in order],
+        "top_features": top_features,
         "note": "contribution = coefficient x standardised value; positive pushes toward the predicted class",
     }
 

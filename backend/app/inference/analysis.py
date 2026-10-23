@@ -108,6 +108,22 @@ def load_analysis(store: Store, analysis_id: str) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def crop_urls(building_uid: str) -> dict[str, str]:
+    return {phase: f"/api/buildings/{building_uid}/crop/{phase}" for phase in ("pre", "post")}
+
+
+def feature_row(store: Store, building_uid: str):
+    """The building's one-row feature frame (a DataFrame, because the pipeline needs column names)."""
+    table = store.feature_table
+
+    def build_row_lookup() -> dict[str, int]:
+        return {sample_id: i for i, sample_id in enumerate(table.ids["sample_id"])}
+
+    # the lookup over all ~71k rows is built once and kept in memory
+    row_of_sample = store.memoised("row_of_sample", build_row_lookup)
+    return table.X.iloc[[row_of_sample[building_uid]]]
+
+
 def explain_building(store: Store, analysis_id: str, building_uid: str) -> dict[str, Any]:
     analysis = load_analysis(store, analysis_id)
     building = next((b for b in analysis["buildings"] if b["building_uid"] == building_uid), None)
@@ -115,20 +131,19 @@ def explain_building(store: Store, analysis_id: str, building_uid: str) -> dict[
         raise NotFound("That building is not part of this analysis.", code="building_not_found")
     name = analysis["model"]["name"]
     pipe, meta = store.model(name)
+    # explaining an old analysis with a newer model would describe a prediction it never made
     if meta["created_at"] != analysis["model"]["trained_at"]:
         raise Conflict("The model was retrained after this analysis; run the analysis again.", code="analysis_stale")
-    table = store.feature_table
-    row_index = store.memoised("row_of_sample", lambda: {s: i for i, s in enumerate(table.ids["sample_id"])})[building_uid]
-    row = table.X.iloc[[row_index]]
+    row = feature_row(store, building_uid)
     if name == "logistic_regression":
         kind, detail = "lr_contributions", lr_contributions(pipe, row, top_k=8)
     elif name == "decision_tree":
         kind, detail = "decision_path", decision_path(pipe, row)
     elif name == "knn":
         kind, detail = "nearest_neighbours", knn_neighbours(pipe, row, store.knn_index())
-        for n in detail["neighbours"]:
-            n["crop_urls"] = {p: f"/api/buildings/{n['sample_id']}/crop/{p}" for p in ("pre", "post")}
-            n["split"] = "train"
+        for neighbour in detail["neighbours"]:
+            neighbour["crop_urls"] = crop_urls(neighbour["sample_id"])
+            neighbour["split"] = "train"  # KNN only ever searches the training buildings
     else:
         kind, detail = "none", {"note": "Random forests have no compact per-building explanation here; "
                                         "see the global feature importances below."}
@@ -138,7 +153,7 @@ def explain_building(store: Store, analysis_id: str, building_uid: str) -> dict[
         "predicted": building["predicted"], "true_label": building["true_label"],
         "confidence": building["confidence"], "confidence_kind": analysis["confidence_kind"], "detail": detail,
         "global_top_features": explain.get("permutation_importance_val", [])[:5],
-        "crop_urls": {p: f"/api/buildings/{building_uid}/crop/{p}" for p in ("pre", "post")},
+        "crop_urls": crop_urls(building_uid),
     }
 
 

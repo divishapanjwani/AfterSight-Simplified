@@ -4,6 +4,12 @@ import { fmtValue } from '../theme/features'
 import type { DamageClass } from '../types/api'
 
 type Stats = { n: number; p5: number | null; q1: number | null; median: number | null; q3: number | null; p95: number | null }
+type CompleteStats = Stats & { p5: number; q1: number; median: number; q3: number; p95: number }
+
+/** True when every number needed to draw the box is present (the API sends nulls for a class with no buildings). */
+function hasStats(s: Stats | undefined): s is CompleteStats {
+  return s !== undefined && s.p5 !== null && s.q1 !== null && s.median !== null && s.q3 !== null && s.p95 !== null
+}
 
 export function BoxPlot({ perClass, width = 620, label }: { perClass: Record<string, Stats>; width?: number; label: string }) {
   const left = 120
@@ -28,7 +34,7 @@ export function BoxPlot({ perClass, width = 620, label }: { perClass: Record<str
       {DAMAGE_CLASSES.map((c, i) => {
         const s = perClass[c]
         const y = 10 + i * rowH
-        if (!s || s.q1 === null || s.q3 === null || s.median === null || s.p5 === null || s.p95 === null) {
+        if (!hasStats(s)) {
           return <text key={c} x={left} y={y + 12} fontSize="11" fill="var(--ink-3)">no {DAMAGE[c as DamageClass].label.toLowerCase()} buildings</text>
         }
         return (

@@ -35,6 +35,19 @@ describe('Readiness board', () => {
     expect(within(table).getByText('DEFAULT')).toBeInTheDocument()
   })
 
+  it('models table shows test macro-F1, confidence meaning and review threshold, but no validation column', async () => {
+    mockApi({ '/api/health': { body: health }, '/api/dataset/status': { body: readyStatus }, '/api/models': { body: models },
+      '/api/results/comparison': { body: comparison('within_event', 0.5, 0.5) } })
+    page()
+    const table = (await screen.findByText('Models served to the Triage Desk')).closest('section')!
+    expect(await within(table).findByText('0.622')).toBeInTheDocument() // test macro-F1 from /api/models
+    expect(within(table).getByText('probability (not calibrated)')).toBeInTheDocument()
+    expect(within(table).getByText('0.44')).toBeInTheDocument()
+    // val_macro_f1 is still in the API response (0.611) but is no longer displayed here
+    expect(within(table).queryByText('0.611')).not.toBeInTheDocument()
+    expect(within(table).queryByText('VALIDATION')).not.toBeInTheDocument()
+  })
+
   it('dataset-missing mode: every missing tile says NOT READY with its fix command', async () => {
     mockApi({
       '/api/health': { body: health }, '/api/dataset/status': { body: missingStatus }, '/api/models': { body: models },

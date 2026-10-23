@@ -177,7 +177,6 @@ export function ReadinessPage() {
               <tr className="border-b border-rule text-left text-xs text-ink-3">
                 <th className="py-1.5 font-normal">Model</th>
                 <th className="py-1.5 font-normal">State</th>
-                <th className="py-1.5 text-right font-normal">macro-F1 <Chip kind="validation" /></th>
                 <th className="py-1.5 text-right font-normal">macro-F1 <Chip kind="test" /></th>
                 <th className="py-1.5 pl-6 font-normal">Confidence means</th>
                 <th className="py-1.5 text-right font-normal">Review below</th>
@@ -191,7 +190,6 @@ export function ReadinessPage() {
                     {m.default && <span className="ml-2 rounded-[3px] border border-ink-3 px-1 font-mono text-[10px] tracking-wider text-ink-2">DEFAULT</span>}
                   </td>
                   <td className="py-2">{m.trained ? <span className="text-ink-2">trained</span> : <Chip kind="not-available" label="NOT TRAINED" />}</td>
-                  <td className="num py-2 text-right">{fmt(m.val_macro_f1)}</td>
                   <td className="num py-2 text-right">{fmt(m.test_macro_f1)}</td>
                   <td className="py-2 pl-6 text-xs text-ink-2">{m.confidence}</td>
                   <td className="num py-2 text-right">{fmt(m.review_threshold, 2)}</td>

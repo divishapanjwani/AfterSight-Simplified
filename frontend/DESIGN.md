@@ -104,13 +104,16 @@ Train and val scenes also get a full-width caution banner. Chips alone are not e
   selection.
 - **Line width:** stays constant on screen at any zoom, because the stroke is divided by the zoom factor.
 - **Crops:** the Case File crops come from the cached view JPEG with the footprint outlined in the same
-  pixel coordinates. KNN neighbour thumbnails (other scenes) use the server crop endpoint.
+  pixel coordinates. The window (`cropWindow()` in `CaseFile.tsx`) is the footprint's bounding square plus a
+  margin of max(16 px, 35% of its size), kept inside the 1024 px image. KNN neighbour thumbnails (other
+  scenes) use the server crop endpoint.
 
 ## Charts
 
 All charts are hand-built SVG components (`src/charts/`) rather than Recharts, which the original stack
 listed. This deviation gives exact control over pattern fills, direct labels and theme tokens, and makes
-the charts testable in jsdom.
+the charts testable in jsdom. In the Feature Lab scatter, the 7 features that the training pipeline log-transforms
+are drawn on a log axis (`LOG_AXIS_FEATURES` in `FeatureLabPage.tsx`). This only affects drawing; values stay raw.
 
 | Need | Encoding |
 |---|---|

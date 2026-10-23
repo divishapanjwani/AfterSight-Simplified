@@ -769,7 +769,7 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 
 | Page | Shows | Why it exists |
 |---|---|---|
-| **Readiness** | what is built and trained; the 0.527 vs 0.290 headline; served models | know at a glance whether the system is ready, and how good it honestly is |
+| **Readiness** | what is built and trained; the 0.527 vs 0.290 headline; served models with their test macro-F1, confidence meaning and review threshold | know at a glance whether the system is ready, and how good it honestly is |
 | **Library** | scenes, held-out **test** scenes by default, with ground-truth damage bars | choose a scene; training scenes carry a warning |
 | **Triage Desk** | swipe between pre and post, zoom, overlays (ground truth / prediction / correct vs wrong), building list | the main workspace |
 | **Case File** | one building: crops, predicted vs true, confidence, explanation | understand a single decision |
@@ -814,6 +814,7 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 | `scripts/run_phase3b.py` | the feature-variant experiments |
 | `scripts/prepare_demo.py` | picks and pre-caches the 3 demo scenes |
 | `scripts/e2e_check.py` | end-to-end test on synthetic data |
+| `scripts/snapshot_behaviour.py` | proves a refactor changed no prediction, explanation or Feature Lab number |
 | `config/events.yaml` | which events, disaster types, mask settings |
 | `config/features.yaml` | feature settings (ring width, Canny, GLCM) |
 | `config/training.yaml` | splits, model grids, serving models, review target |
@@ -836,6 +837,7 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 | `backend/app/core/store.py` | file-based data access, ID validation |
 | `backend/app/inference/analysis.py` | runs and caches an analysis; explanations |
 | `backend/app/inference/review_queue.py` | builds the review queue |
+| `backend/app/inference/feature_lab.py` | Feature Lab statistics (η², per-class percentiles, scatter sample), training split only |
 | `backend/app/reports/reports.py` | CSV and PDF reports |
 | `frontend/src/pages/` | one file per page (Triage Desk, Arena, …) |
 | `frontend/src/viewer/SceneViewer.tsx` | the swipe/zoom/overlay viewer |
@@ -843,7 +845,8 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 | `frontend/src/charts/` | hand-made SVG charts |
 | `frontend/DESIGN.md` | the visual design system |
 | `docs/FEATURES.md`, `docs/RESULTS.md`, `docs/ML_EXPLAINED.md`, `docs/API.md`, `docs/VIVA_NOTES.md` | detailed references |
-| `backend/tests/`, `frontend/src/**/*.test.tsx` | 123 backend and 26 frontend tests |
+| `docs/SIMPLIFICATION_NOTES.md` | what the v1.1 simplification changed and how behaviour was kept identical |
+| `backend/tests/`, `frontend/src/**/*.test.tsx` | 123 backend and 27 frontend tests |
 
 ---
 

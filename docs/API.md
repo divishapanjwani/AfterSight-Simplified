@@ -51,6 +51,10 @@ every value it returns is read from an artifact written by the pipeline scripts.
 | POST | `/training/run` | background training job; requires `confirm: true`; one at a time |
 | GET | `/jobs/{job_id}` | job status + last 40 log lines (server paths redacted) |
 
+> Since v1.1 the frontend no longer displays `val_macro_f1` from `/models` (it was the Readiness table's
+> validation column). The field is still returned, so the API contract is unchanged. Validation macro-F1 is still
+> shown in the Model Arena from `/results/comparison`.
+
 ## Confidence
 
 `confidence` is the model's highest class score. Its meaning comes from the model metadata (`confidence_kind`):

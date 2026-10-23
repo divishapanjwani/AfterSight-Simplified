@@ -65,6 +65,11 @@ domain shift.
   threshold chosen on validation. LR flags 40% of buildings as low-confidence; the queue also adds model
   disagreements.
 - **Is it ready for real disasters?** No. It is a research and teaching tool, with no rescue or routing use.
+- **What changed in v1.1, and how do you know nothing broke?** We simplified the Case File and Feature Lab code
+  (named helper functions, plain loops, fewer repeated expressions) and removed the validation column from the
+  Readiness models table. `scripts/snapshot_behaviour.py` recorded every demo-scene prediction and confidence,
+  all 752 explanations, the Feature Lab numbers and `/models` before the change, and they were identical after
+  it. See [SIMPLIFICATION_NOTES.md](SIMPLIFICATION_NOTES.md).
 
 ## 5-minute demo script
 

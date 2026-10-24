@@ -337,23 +337,21 @@ export interface Scatter {
   points: { x: number; y: number; label: DamageClass }[]
 }
 
+/**
+ * The fields of GET /clusters that the Cluster Atlas shows. The API also returns chosen_k_by_silhouette,
+ * elbow_k_heuristic, inertia, curves, pca_points, pca_explained_variance and pca_note; since v1.3 they are not
+ * displayed (see docs/API.md), so they are not typed here.
+ */
 export interface Clusters {
   design_label: string
   classes: string[]
   k_values: number[]
-  chosen_k_by_silhouette: number
-  elbow_k_heuristic: number
-  pca_explained_variance: number[]
-  pca_note: string
   interpretation_note: string
   k: number
-  inertia: number
   silhouette_sampled: number
   adjusted_rand_index: number
   cluster_sizes: number[]
   contingency_rows_cluster_cols_class: number[][]
-  pca_points: { x: number; y: number; cluster: number; label: DamageClass }[]
-  curves: Record<string, { inertia: number; silhouette: number }>
   never_predictions: true
 }
 

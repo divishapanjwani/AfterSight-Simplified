@@ -136,6 +136,37 @@ describe('Cluster Atlas', () => {
     expect(await screen.findByText('cluster 2', { selector: 'span' })).toBeInTheDocument()
     expect(calls.at(-1)!.searchParams.get('k')).toBe('3')
   })
+
+  it('shows sizes, silhouette and ARI with their meaning, the contingency heatmap, and no PCA or elbow charts', async () => {
+    mockApi({ '/api/clusters': { body: { design_label: 'w', classes: ['no-damage', 'destroyed'], k_values: [2, 3, 4], chosen_k_by_silhouette: 2, elbow_k_heuristic: 3,
+      pca_explained_variance: [0.32, 0.24], pca_note: '2-D PCA projection — for visualisation only', interpretation_note: 'Clusters are never used as damage predictions.',
+      k: 2, inertia: 10, silhouette_sampled: 0.253, adjusted_rand_index: 0.041, cluster_sizes: [7, 5], contingency_rows_cluster_cols_class: [[4, 3], [1, 4]],
+      pca_points: [{ x: 0, y: 0, cluster: 0, label: 'no-damage' }], curves: { 2: { inertia: 10, silhouette: 0.25 } }, never_predictions: true } } })
+    renderAt(<ClusterAtlasPage />, '/clusters?k=2')
+    expect(await screen.findByText('0.253')).toBeInTheDocument()
+    expect(screen.getByText('How well separated the clusters are, from −1 to 1.')).toBeInTheDocument()
+    expect(screen.getByText(/0 = random, 1 = identical\. It is not prediction accuracy\./)).toBeInTheDocument()
+    expect(screen.getByText(/A cluster ID is not a damage class/)).toBeInTheDocument()
+    expect(screen.getByText(/Results exist only for the precomputed values/)).toHaveTextContent('k = 2, 3, 4')
+    expect(screen.getByText('Which damage classes fall into each cluster')).toBeInTheDocument()
+    expect(screen.getByText('ANALYSIS ONLY · CLUSTERS ARE NEVER PREDICTIONS')).toBeInTheDocument()
+    for (const removed of [/principal component/i, /Elbow/i, /Inertia/i, /2-D projection/i]) {
+      expect(screen.queryByText(removed)).not.toBeInTheDocument()
+    }
+  })
+
+  it('missing artifact: says K-Means has not been run, with the command', async () => {
+    mockApi({ '/api/clusters': { status: 404, body: { error: { code: 'results_not_found', message: 'K-Means has not been run.', fix: 'python scripts/run_kmeans.py' } } } })
+    renderAt(<ClusterAtlasPage />, '/clusters')
+    expect(await screen.findByText('Not available yet: the cluster analysis')).toBeInTheDocument()
+    expect(screen.getByText('$ python scripts/run_kmeans.py')).toBeInTheDocument()
+  })
+
+  it('a k that was not precomputed says which k values exist', async () => {
+    mockApi({ '/api/clusters': { status: 404, body: { error: { code: 'k_not_available', message: 'k=11 was not computed; available: [2, 3, 4].' } } } })
+    renderAt(<ClusterAtlasPage />, '/clusters?k=11')
+    expect(await screen.findByText('k=11 was not computed; available: [2, 3, 4].')).toBeInTheDocument()
+  })
 })
 
 describe('Feature Lab', () => {

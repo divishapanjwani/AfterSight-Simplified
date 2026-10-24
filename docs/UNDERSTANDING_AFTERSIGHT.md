@@ -836,7 +836,9 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 | `backend/app/api/routes.py` | all API endpoints |
 | `backend/app/core/store.py` | file-based data access, ID validation |
 | `backend/app/inference/analysis.py` | runs and caches an analysis; explanations |
+| `backend/app/inference/review.py` | review thresholds: calibration on validation, which thresholds are usable, READY / PARTIAL / NOT READY |
 | `backend/app/inference/review_queue.py` | builds the review queue |
+| `backend/app/experiments/summary.py` | reads and checks the saved Phase 3b summary for the Model Arena |
 | `backend/app/inference/feature_lab.py` | Feature Lab statistics (η², per-class percentiles, scatter sample), training split only |
 | `backend/app/reports/reports.py` | CSV and PDF reports |
 | `frontend/src/pages/` | one file per page (Triage Desk, Arena, …) |
@@ -846,7 +848,8 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 | `frontend/DESIGN.md` | the visual design system |
 | `docs/FEATURES.md`, `docs/RESULTS.md`, `docs/ML_EXPLAINED.md`, `docs/API.md`, `docs/VIVA_NOTES.md` | detailed references |
 | `docs/SIMPLIFICATION_NOTES.md` | what the v1.1 simplification changed and how behaviour was kept identical |
-| `backend/tests/`, `frontend/src/**/*.test.tsx` | 123 backend and 27 frontend tests |
+| `docs/FIXES_V1_2.md` | the v1.2 status, wording and missing-file fixes |
+| `backend/tests/`, `frontend/src/**/*.test.tsx` | 146 backend and 33 frontend tests |
 
 ---
 

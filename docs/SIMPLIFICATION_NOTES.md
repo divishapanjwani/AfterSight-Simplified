@@ -363,3 +363,7 @@ does, change the code, and confirm the output is the same.
    - positive controls (making sure a test can fail);
    - API contracts;
    - git tags and branches (`v1.0`, `simplify`).
+
+---
+
+The later v1.2 fixes (status, wording and missing-file handling) are explained in [FIXES_V1_2.md](FIXES_V1_2.md).

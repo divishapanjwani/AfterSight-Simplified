@@ -65,6 +65,9 @@ domain shift.
   threshold chosen on validation. LR flags 40% of buildings as low-confidence; the queue also adds model
   disagreements.
 - **Is it ready for real disasters?** No. It is a research and teaching tool, with no rescue or routing use.
+- **What does PARTIAL on the Readiness board mean?** Some served models have a usable review threshold and some
+  don't (the tile names them). A model without one gets no low-confidence flags; only model disagreement is
+  flagged. The thresholds are still chosen on validation only. See [FIXES_V1_2.md](FIXES_V1_2.md).
 - **What changed in v1.1, and how do you know nothing broke?** We simplified the Case File and Feature Lab code
   (named helper functions, plain loops, fewer repeated expressions) and removed the validation column from the
   Readiness models table. `scripts/snapshot_behaviour.py` recorded every demo-scene prediction and confidence,

@@ -46,14 +46,31 @@ every value it returns is read from an artifact written by the pipeline scripts.
 | GET | `/analysis/{id}` | a cached analysis |
 | GET | `/analysis/{id}/buildings/{uid}/explain` | LR contributions / DT decision path / KNN neighbours (+ crop URLs); RF: global importances only |
 | GET | `/analysis/{id}/export.csv` | per-building CSV |
-| GET | `/analysis/{id}/report.pdf` | PDF summary with provenance, counts, metrics, confusion matrix, limitations |
-| GET | `/review-queue` | `model`, `split` (default test): low confidence (threshold chosen on validation) or model disagreement; counts per reason and `target_accuracy` |
+| GET | `/analysis/{id}/report.pdf` | PDF summary with provenance, counts, scene-level metrics, confusion matrix, review flags, limitations. Cached as `outputs/reports/<id>.r<REPORT_VERSION>.pdf` (see `reports.py`) |
+| GET | `/review-queue` | `model`, `split` (default test): low confidence (threshold chosen on validation) or model disagreement; counts per reason. Without a usable threshold: `threshold`, `threshold_rule` and `target_accuracy` are null, no low-confidence flags, and `threshold_note` says why |
 | POST | `/training/run` | background training job; requires `confirm: true`; one at a time |
 | GET | `/jobs/{job_id}` | job status + last 40 log lines (server paths redacted) |
 
 > Since v1.1 the frontend no longer displays `val_macro_f1` from `/models` (it was the Readiness table's
 > validation column). The field is still returned, so the API contract is unchanged. Validation macro-F1 is still
 > shown in the Model Arena from `/results/comparison`.
+
+## Changes in v1.2 (additive; existing fields keep their meaning)
+
+- `/dataset/status`: tiles may carry `state` (`ready` / `partial` / `not_ready`) and `reason` (one line naming the
+  models). The **models** tile counts required served models only (an untrained optional model, e.g.
+  `random_forest`, is named in the reason); its `ready` still means "at least one trained". The
+  **review_thresholds** tile is `ready` only when every counted served model has a usable threshold, and its
+  `detail.thresholds` lists each model's threshold or null. A missing, invalid-JSON or wrongly-shaped
+  thresholds file is `not_ready` with the reason (it used to return HTTP 500 on four endpoints).
+- A **usable threshold** is a number between 0 and 1. Missing entries and `null` (calibration found none that
+  reaches the target) mean no low-confidence flags for that model.
+- `/review-queue`: new `threshold_note`.
+- `/results/experiments`: `404 results_not_found` when Phase 3b was never run (unchanged); **`503 results_invalid`**
+  with the reason and `fix` when `summary.json` is not valid JSON or lacks what the Arena shows (`label`,
+  `variants`, rows with `variant`, `design`, `model`, `n_features`, test macro-F1, recall major/destroyed and
+  `event_prediction_accuracy_within_event`, which may be null). Valid summaries are returned unchanged.
+  `/results/overview.experiments` is true only for a usable summary.
 
 ## Confidence
 

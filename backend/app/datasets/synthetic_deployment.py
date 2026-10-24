@@ -53,7 +53,9 @@ def build_deployment(base: Path) -> Store:
         "models": {"logistic_regression": ModelSettings(grid={"C": [1.0]}),
                    "knn": ModelSettings(grid={"n_neighbors": [5], "weights": ["distance"]}),
                    "decision_tree": ModelSettings(grid={"max_depth": [4], "min_samples_leaf": [5]}),
-                   "baseline": ModelSettings(quantile_step=0.1)},
+                   "baseline": ModelSettings(quantile_step=0.1),
+                   # kept from the real config so random_forest stays marked optional (it is left untrained here)
+                   "random_forest": real.models["random_forest"]},
         "explain": real.explain.model_copy(update={"permutation_sample": 100, "permutation_repeats": 1}),
         "kmeans": real.kmeans.model_copy(update={"k_values": [2, 3, 4], "silhouette_sample": 100, "pca_sample": 100}),
     })

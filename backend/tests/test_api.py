@@ -1,6 +1,8 @@
 """API tests against a synthetic end-to-end deployment (NOT xBD data) and an empty, not-built store."""
 
+import contextlib
 import io
+import json
 import time
 
 import pytest
@@ -68,6 +70,10 @@ def test_status_ready_on_built_deployment(client) -> None:
     assert all(tiles[t]["ready"] for t in ("scene_cache", "features", "splits", "models", "review_thresholds"))
     assert tiles["models"]["detail"]["trained"] == {"logistic_regression": True, "knn": True, "decision_tree": True, "random_forest": False}
     assert tiles["models"]["fix"] == "python scripts/train.py"  # RF missing
+    # RF is optional (config), so its absence must not make the tiles PARTIAL; it is named in the reason instead
+    assert tiles["models"]["state"] == "ready" and "random_forest (optional) not trained" in tiles["models"]["reason"]
+    assert tiles["review_thresholds"]["state"] == "ready"
+    assert "random_forest (optional) not trained" in tiles["review_thresholds"]["reason"]
 
 
 def test_dataset_missing_mode(empty_client) -> None:
@@ -218,6 +224,80 @@ def test_review_queue(client) -> None:
     assert body["flagged_low_confidence"] + body["flagged_disagreement_only"] == body["total_flagged"]
     _assert_clean_error(client.get("/api/review-queue", params={"model": "random_forest"}), 409, "model_not_trained")
     _assert_clean_error(client.get("/api/review-queue", params={"split": "everything"}), 422)
+
+
+@contextlib.contextmanager
+def thresholds_file(store, content):
+    """Temporarily replace the deployment's review_thresholds.json (None = delete, str = raw text, dict = JSON)."""
+    path = store.model_dir() / "review_thresholds.json"
+    original = path.read_bytes()
+    try:
+        if content is None:
+            path.unlink()
+        else:
+            path.write_text(content if isinstance(content, str) else json.dumps(content), encoding="utf-8")
+        yield
+    finally:
+        path.write_bytes(original)
+
+
+def _thresholds_with(store, **changes):
+    doc = json.loads((store.model_dir() / "review_thresholds.json").read_text(encoding="utf-8"))
+    for model, value in changes.items():
+        if value == "drop":
+            doc["models"].pop(model)
+        else:
+            doc["models"][model]["threshold"] = value
+    return doc
+
+
+@pytest.mark.parametrize("content, state, words", [
+    (None, "not_ready", "has not been created"),
+    ("{not json", "not_ready", "not valid JSON"),
+    ({"rule": "r"}, "not_ready", "no 'models' section"),
+])
+def test_threshold_tile_when_file_unusable(client, store, content, state, words) -> None:
+    with thresholds_file(store, content):
+        tile = client.get("/api/dataset/status").json()["tiles"]["review_thresholds"]
+        assert (tile["ready"], tile["state"]) == (False, state) and words in tile["reason"]
+        assert tile["fix"] == "python scripts/calibrate_review.py"
+        # a broken file never breaks the other endpoints (it used to return HTTP 500)
+        assert client.get("/api/models").status_code == 200
+        assert all(m["review_threshold"] is None for m in client.get("/api/models").json()["models"])
+
+
+def test_threshold_tile_partial_ready_and_not_ready(client, store) -> None:
+    tile = lambda: client.get("/api/dataset/status").json()["tiles"]["review_thresholds"]  # noqa: E731
+    with thresholds_file(store, _thresholds_with(store, knn="drop")):
+        t = tile()
+        assert t["state"] == "partial" and t["ready"] is False and "missing for knn" in t["reason"]
+    with thresholds_file(store, _thresholds_with(store, decision_tree=None)):
+        t = tile()
+        assert t["state"] == "partial" and "missing for decision_tree" in t["reason"]
+        assert t["detail"]["thresholds"]["decision_tree"] is None
+    with thresholds_file(store, _thresholds_with(store, logistic_regression=None, knn=None, decision_tree=None)):
+        t = tile()
+        assert t["state"] == "not_ready" and "no served model has a usable threshold" in t["reason"]
+    t = tile()  # the real (all present) file again
+    assert t["state"] == "ready" and t["ready"] is True and t["fix"] is None
+
+
+def test_review_queue_without_a_usable_threshold(client, store) -> None:
+    params = {"model": "logistic_regression", "limit": 200}
+    with_threshold = client.get("/api/review-queue", params=params).json()
+    assert with_threshold["threshold"] is not None and with_threshold["threshold_note"] is None
+    for doc in (_thresholds_with(store, logistic_regression=None), _thresholds_with(store, logistic_regression="drop"), None):
+        with thresholds_file(store, doc):
+            body = client.get("/api/review-queue", params=params).json()
+            # no threshold -> no low-confidence flags, no rule quoted, and a note saying why
+            assert body["threshold"] is None and body["threshold_rule"] is None and body["target_accuracy"] is None
+            assert body["flagged_low_confidence"] == 0 and body["threshold_note"]
+            assert not any("low confidence" in r for item in body["items"] for r in item["reasons"])
+            # model disagreement still works, and the counts agree with the items
+            assert body["total_flagged"] == body["flagged_disagreement_only"] and len(body["items"]) == min(200, body["total_flagged"])
+            assert all(r.startswith("other models disagree") for item in body["items"] for r in item["reasons"])
+            other = client.get("/api/models").json()["models"]
+            assert next(m for m in other if m["name"] == "logistic_regression")["review_threshold"] is None
 
 
 # ---------------------------------------------------------------- models, results, feature lab, clusters

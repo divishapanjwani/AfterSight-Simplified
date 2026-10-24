@@ -9,8 +9,14 @@ export interface Health {
   scope: string
 }
 
+export type TileState = 'ready' | 'partial' | 'not_ready'
+
 export interface StatusTile {
   ready: boolean
+  /** Three-way state for tiles that can be partly ready (models, review thresholds); absent on the others. */
+  state?: TileState | null
+  /** One line naming the affected models. */
+  reason?: string | null
   detail: Record<string, unknown>
   fix: string | null
 }
@@ -369,6 +375,8 @@ export interface ReviewQueue {
   threshold: number | null
   threshold_rule: string | null
   target_accuracy: number | null
+  /** Why this model has no usable review threshold (null when it has one). */
+  threshold_note?: string | null
   total_buildings: number
   total_flagged: number
   flagged_low_confidence: number

@@ -14,6 +14,7 @@ from app.core.store import FIX, Store
 from app.features.schema import FEATURE_COLUMNS
 from app.inference import feature_lab, images, review_queue, scenes
 from app.inference.analysis import MODEL_LABELS, explain_building, list_analyses, load_analysis, run_analysis
+from app.inference.review import usable_threshold
 from app.reports.reports import report_context, write_csv, write_pdf
 from app.schemas.api import (
     AnalysisRequest, AnalysisResult, DatasetStatus, ErrorResponse, Explanation, Job, ModelList, ReviewQueue,
@@ -52,20 +53,42 @@ def dataset_status(store: StoreDep) -> dict[str, Any]:
     tile("features", lambda: {"buildings": len(store.feature_table.ids), "features": len(FEATURE_COLUMNS),
                               "schema_version": store.feature_table.meta["fingerprint"]["feature_schema_version"]}, FIX["features"])
     tile("splits", lambda: {d: store.manifest(d)["manifest_hash"] for d in store.training_config.splits.designs}, FIX["splits"])
-    trained = {}
-    for name in store.serving.models:
-        trained[name] = store.model_meta(name) is not None
-    tiles["models"] = StatusTile(ready=any(trained.values()), detail={"serving_design": store.serving.design, "trained": trained,
-                                                                       "default_model": store.training_config.default_model},
-                                 fix=None if all(trained.values()) else FIX["models"])
-    thresholds = store.review_thresholds()
-    tiles["review_thresholds"] = StatusTile(ready=thresholds is not None, detail={"rule": thresholds["rule"]} if thresholds else {},
-                                            fix=None if thresholds else FIX["review"])
+    tiles["models"] = models_tile(store)
+    tiles["review_thresholds"] = review_thresholds_tile(store)
     runs = sorted(store.paths.analysis_runs.glob("*.json"), key=lambda p: p.stat().st_mtime) if store.paths.analysis_runs.is_dir() else []
     tiles["last_analysis"] = StatusTile(ready=bool(runs), detail={"analysis_id": runs[-1].stem, "count": len(runs)} if runs else {},
                                         fix=None if runs else "POST /api/analysis")
     events = store.events_config
     return {"scope": SCOPE_LABEL, "source": events.source if events else None, "demo_mode": False, "tiles": tiles}
+
+
+def models_tile(store) -> StatusTile:
+    """READY when every REQUIRED served model is trained. Optional ones (config: optional: true) never cause PARTIAL."""
+    trained = {name: store.model_meta(name) is not None for name in store.serving.models}
+    optional_untrained = store.optional_untrained()
+    required = [m for m in trained if m not in optional_untrained]
+    missing = [m for m in required if not trained[m]]
+    trained_required = [m for m in required if trained[m]]
+    if not trained_required:
+        state, reason = "not_ready", "no served model is trained"
+    elif missing:
+        state, reason = "partial", "not trained: " + ", ".join(missing)
+    else:
+        state, reason = "ready", "all required served models are trained"
+    if optional_untrained:
+        reason += "; " + "; ".join(f"{m} (optional) not trained" for m in optional_untrained)
+    return StatusTile(ready=any(trained.values()), state=state, reason=reason,  # `ready` keeps its v1 meaning
+                      detail={"serving_design": store.serving.design, "trained": trained,
+                              "default_model": store.training_config.default_model},
+                      fix=None if all(trained.values()) else FIX["models"])
+
+
+def review_thresholds_tile(store) -> StatusTile:
+    """READY only when every served model has a usable validation-chosen threshold (see inference/review.py)."""
+    status = store.review_threshold_status()
+    return StatusTile(ready=status["state"] == "ready", state=status["state"], reason=status["reason"],
+                      detail={"rule": status["rule"], "thresholds": status["thresholds"]},
+                      fix=None if status["state"] == "ready" else FIX["review"])
 
 
 # ---------------------------------------------------------------- scenes & images
@@ -113,7 +136,7 @@ def features_scatter(store: StoreDep, x: Annotated[str, Query(max_length=40)], y
 # ---------------------------------------------------------------- models & saved results
 @router.get("/models", response_model=ModelList, tags=["models"])
 def list_models(store: StoreDep) -> dict[str, Any]:
-    thresholds = (store.review_thresholds() or {}).get("models", {})
+    thresholds = store.review_thresholds()
     models = []
     for name in store.serving.models:
         meta = store.model_meta(name)
@@ -125,7 +148,7 @@ def list_models(store: StoreDep) -> dict[str, Any]:
             "val_macro_f1": meta["metrics"]["val"]["macro_f1"] if meta else None,
             "test_macro_f1": meta["metrics"]["test"]["macro_f1"] if meta else None,
             "trained_at": meta["created_at"] if meta else None,
-            "review_threshold": (thresholds.get(name) or {}).get("threshold"),
+            "review_threshold": usable_threshold(thresholds, name),
             "fix": None if meta else FIX["models"],
         })
     design = store.serving.design

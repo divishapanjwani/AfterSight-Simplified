@@ -55,6 +55,29 @@ describe('Review Queue', () => {
   })
 })
 
+describe('Review Queue without a usable threshold', () => {
+  it('says why there are no low-confidence flags and never quotes a validation threshold', async () => {
+    mockApi({
+      '/api/models': { body: models },
+      '/api/review-queue': { body: { model: 'logistic_regression', split: 'test', framing: 'Suggested for human review — low confidence or model disagreement, not confirmed errors.',
+        threshold: null, threshold_rule: null, target_accuracy: null,
+        threshold_note: 'calibration found no threshold for logistic_regression that reaches 70% accuracy on validation',
+        total_buildings: 100, total_flagged: 30, flagged_low_confidence: 0, flagged_disagreement_only: 30, offset: 0, limit: 25,
+        items: [{ building_uid: 'ev-a_00000001_b0003', scene_id: 'ev-a_00000001', event: 'ev-a', predicted: 'minor-damage', true_label: 'no-damage', confidence: 0.31,
+          reasons: ['other models disagree: knn says no-damage'], other_models: { knn: 'no-damage' } }] } },
+    })
+    renderAt(<ReviewQueuePage />, '/review')
+    const note = await screen.findByRole('note')
+    expect(note).toHaveTextContent('No low-confidence flags for this model.')
+    expect(note).toHaveTextContent('calibration found no threshold for logistic_regression that reaches 70% accuracy on validation')
+    expect(note).toHaveTextContent('Only model-disagreement flags are listed.')
+    const summary = screen.getByText(/test buildings/).closest('p')!
+    expect(summary).toHaveTextContent('30 of 100 test buildings (30%) are suggested for human review with this model: another model disagrees with it.')
+    expect(summary).not.toHaveTextContent('chosen on validation')
+    expect(screen.getByText(/low confidence ·/).closest('p')).toHaveTextContent('0 low confidence · 30 confident, but another model disagrees')
+  })
+})
+
 describe('Cluster Atlas', () => {
   it('is labelled analysis-only and refetches when k changes', async () => {
     const body = (k: number) => ({ design_label: 'w', classes: ['no-damage', 'destroyed'], k_values: [2, 3], chosen_k_by_silhouette: 2, elbow_k_heuristic: 3,

@@ -11,6 +11,7 @@ import numpy as np
 from app.core.errors import AppError
 from app.core.store import Store
 from app.inference.analysis import predict_rows
+from app.inference.review import read_thresholds, usable_threshold, why_unusable
 
 
 def _split_predictions(store: Store, name: str, split: str) -> dict[str, Any]:
@@ -36,8 +37,11 @@ def review_queue(store: Store, model: str, split: str, offset: int, limit: int) 
             others[other] = _split_predictions(store, other, split)
         except AppError:
             continue  # untrained optional models simply don't take part in the disagreement check
-    thresholds = store.review_thresholds() or {}
-    threshold = (thresholds.get("models", {}).get(name) or {}).get("threshold")
+    doc, problem = read_thresholds(store.model_dir() / "review_thresholds.json")
+    thresholds = doc or {}
+    threshold = usable_threshold(doc, name)
+    # Without a usable threshold nothing is flagged for low confidence; say why instead of implying one exists.
+    threshold_note = why_unusable(doc, problem, name)
 
     table = store.feature_table
     ids, y = table.ids.iloc[main["rows"]], table.y.iloc[main["rows"]].to_numpy()
@@ -58,8 +62,10 @@ def review_queue(store: Store, model: str, split: str, offset: int, limit: int) 
         items.append({"building_uid": ids["sample_id"].iloc[i], "scene_id": ids["scene_id"].iloc[i], "event": ids["event"].iloc[i],
                       "predicted": str(main["pred"][i]), "true_label": str(y[i]), "confidence": round(float(main["conf"][i]), 4),
                       "reasons": reasons, "other_models": {k: str(o["pred"][i]) for k, o in others.items()}})
-    return {"model": name, "split": split, "threshold": threshold, "threshold_rule": thresholds.get("rule"),
-            "target_accuracy": thresholds.get("target_accuracy"),
+    return {"model": name, "split": split, "threshold": threshold,
+            "threshold_rule": thresholds.get("rule") if threshold is not None else None,
+            "target_accuracy": thresholds.get("target_accuracy") if threshold is not None else None,
+            "threshold_note": threshold_note,
             "total_buildings": int(len(y)), "total_flagged": int(len(flagged)),
             "flagged_low_confidence": int(low.sum()), "flagged_disagreement_only": int((disagree & ~low).sum()), "items": items,
             "offset": offset, "limit": limit}

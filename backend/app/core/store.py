@@ -21,6 +21,7 @@ from app.core.errors import ModelNotTrained, NotFound, NotReady
 from app.core.events_config import ConfigError, EventsConfig, load_events_config
 from app.features.schema import FEATURE_SCHEMA_VERSION
 from app.features.table import FeatureTable, FeatureTableError, load_feature_table
+from app.inference.review import read_thresholds, threshold_status
 from app.training.config import TrainingConfig, load_training_config
 from app.training.persistence import ModelLoadError, load_model
 from app.training.splits import SplitLeakageError, load_manifest
@@ -232,8 +233,19 @@ class Store:
         return pd.read_parquet(path)
 
     def review_thresholds(self) -> dict[str, Any] | None:
-        path = self.model_dir() / "review_thresholds.json"
-        return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
+        """The validation-chosen review thresholds, or None if the file is missing or unreadable."""
+        doc, _problem = read_thresholds(self.model_dir() / "review_thresholds.json")
+        return doc
+
+    def optional_untrained(self) -> list[str]:
+        """Served models marked optional in config/training.yaml that have no saved model yet."""
+        settings = self.training_config.models
+        return [m for m in self.serving.models
+                if m in settings and settings[m].optional and self.model_meta(m) is None]
+
+    def review_threshold_status(self) -> dict[str, Any]:
+        doc, problem = read_thresholds(self.model_dir() / "review_thresholds.json")
+        return threshold_status(doc, problem, list(self.serving.models), self.optional_untrained())
 
     # ------------------------------------------------------------ saved results (Model Arena)
     def read_json(self, relative: str) -> dict[str, Any] | None:

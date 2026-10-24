@@ -31,10 +31,10 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 
 function TileBody({ name, tile }: { name: string; tile: StatusTile }) {
   const d = tile.detail as Record<string, unknown>
-  if (!tile.ready) {
+  if (tile.state === 'not_ready' || (!tile.ready && !tile.state)) {
     return (
       <>
-        <p className="text-sm text-ink-2">{String(d.reason ?? 'Not built yet.')}</p>
+        <p className="text-sm text-ink-2">{String(tile.reason ?? d.reason ?? 'Not built yet.')}</p>
         {tile.fix && <CommandBlock command={tile.fix} />}
       </>
     )
@@ -71,12 +71,25 @@ function TileBody({ name, tile }: { name: string; tile: StatusTile }) {
           {Object.entries(trained).map(([m, ok]) => (
             <Fact key={m} label={m.replaceAll('_', ' ')}>{ok ? 'trained' : <span className="text-ink-3">not trained</span>}</Fact>
           ))}
+          {tile.reason && <p className="mt-2 text-xs text-ink-3">{tile.reason}</p>}
           {tile.fix && <CommandBlock command={tile.fix} />}
         </dl>
       )
     }
-    case 'review_thresholds':
-      return <p className="text-sm text-ink-2">Chosen on validation: <span className="num text-xs text-ink">{String(d.rule)}</span></p>
+    case 'review_thresholds': {
+      // per served model: the validation-chosen threshold, or "not available" when there is no usable one
+      const thresholds = (d.thresholds ?? {}) as Record<string, number | null>
+      return (
+        <dl>
+          {Object.entries(thresholds).map(([m, t]) => (
+            <Fact key={m} label={m.replaceAll('_', ' ')}>{t === null ? <span className="text-ink-3">not available</span> : t.toFixed(2)}</Fact>
+          ))}
+          {d.rule != null && <p className="mt-2 text-xs text-ink-3">Chosen on validation: <span className="num">{String(d.rule)}</span></p>}
+          {tile.state === 'partial' && tile.reason && <p className="mt-1 text-xs text-ink-2">{tile.reason}</p>}
+          {tile.fix && <CommandBlock command={tile.fix} />}
+        </dl>
+      )
+    }
     case 'last_analysis':
       return <dl><Fact label="analysis id">{String(d.analysis_id)}</Fact><Fact label="cached analyses">{count(d.count)}</Fact></dl>
     default:
@@ -84,10 +97,16 @@ function TileBody({ name, tile }: { name: string; tile: StatusTile }) {
   }
 }
 
-function ReadyBadge({ ready }: { ready: boolean }) {
-  return ready
-    ? <span className="inline-flex items-center gap-1 rounded-[3px] bg-ok-soft px-1.5 py-px font-mono text-[10px] tracking-wider text-ok">✓ READY</span>
-    : <span className="inline-flex items-center gap-1 rounded-[3px] border border-dashed border-ink-3 px-1.5 py-px font-mono text-[10px] tracking-wider text-ink-3">○ NOT READY</span>
+/** The tile's own three-way state when the API sends one; otherwise ready / not ready. */
+function ReadyBadge({ tile }: { tile: StatusTile }) {
+  const state = tile.state ?? (tile.ready ? 'ready' : 'not_ready')
+  if (state === 'ready') {
+    return <span className="inline-flex items-center gap-1 rounded-[3px] bg-ok-soft px-1.5 py-px font-mono text-[10px] tracking-wider text-ok">✓ READY</span>
+  }
+  if (state === 'partial') {
+    return <span title={tile.reason ?? undefined} className="inline-flex items-center gap-1 rounded-[3px] border border-caution bg-caution-soft px-1.5 py-px font-mono text-[10px] tracking-wider text-caution">◐ PARTIAL</span>
+  }
+  return <span className="inline-flex items-center gap-1 rounded-[3px] border border-dashed border-ink-3 px-1.5 py-px font-mono text-[10px] tracking-wider text-ink-3">○ NOT READY</span>
 }
 
 function Headline({ within, cross }: { within: Comparison; cross: Comparison }) {
@@ -143,7 +162,7 @@ export function ReadinessPage() {
             const tile = status.data.tiles[key]
             if (!tile) return null
             return (
-              <CaseFolder key={key} tab={`STATUS · ${String(i + 1).padStart(2, '0')}`} title={title} aside={<ReadyBadge ready={tile.ready} />}>
+              <CaseFolder key={key} tab={`STATUS · ${String(i + 1).padStart(2, '0')}`} title={title} aside={<ReadyBadge tile={tile} />}>
                 <TileBody name={key} tile={tile} />
               </CaseFolder>
             )

@@ -41,10 +41,20 @@ export function ReviewQueuePage() {
             <p className="text-sm text-ink-2">{d.framing}</p>
             <p className="mt-1 text-sm text-ink-2">
               <span className="num text-ink">{d.total_flagged.toLocaleString('en-GB')}</span> of <span className="num text-ink">{d.total_buildings.toLocaleString('en-GB')}</span> test buildings
-              (<span className="num">{((d.total_flagged / Math.max(d.total_buildings, 1)) * 100).toFixed(0)}%</span>) are suggested for human review with this model: confidence below{' '}
-              <span className="num">{d.threshold?.toFixed(2) ?? '—'}</span> (chosen on validation{d.target_accuracy !== null && <>: the lowest threshold at which confident buildings were at least <span className="num">{(d.target_accuracy * 100).toFixed(0)}%</span> correct</>}), or another model disagrees.
-              A suggestion is a prompt for a human to check, not a confirmed mistake.
+              (<span className="num">{((d.total_flagged / Math.max(d.total_buildings, 1)) * 100).toFixed(0)}%</span>) are suggested for human review with this model:{' '}
+              {d.threshold !== null ? (
+                <>confidence below <span className="num">{d.threshold.toFixed(2)}</span> (chosen on validation{d.target_accuracy != null && <>: the lowest threshold at which confident buildings were at least <span className="num">{(d.target_accuracy * 100).toFixed(0)}%</span> correct</>}), or another model disagrees.</>
+              ) : (
+                <>another model disagrees with it.</>
+              )}
+              {' '}A suggestion is a prompt for a human to check, not a confirmed mistake.
             </p>
+            {d.threshold === null && (
+              <p role="note" className="mt-2 rounded-[3px] border border-dashed border-ink-3 px-2 py-1.5 text-xs text-ink-2">
+                <b className="text-ink">No low-confidence flags for this model.</b> It has no usable review threshold
+                {d.threshold_note ? <>: {d.threshold_note}</> : null}. Only model-disagreement flags are listed.
+              </p>
+            )}
             <p className="mt-1 text-xs text-ink-3">
               Breakdown: <span className="num">{d.flagged_low_confidence.toLocaleString('en-GB')}</span> low confidence ·{' '}
               <span className="num">{d.flagged_disagreement_only.toLocaleString('en-GB')}</span> confident, but another model disagrees.

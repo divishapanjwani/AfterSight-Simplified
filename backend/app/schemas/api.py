@@ -44,6 +44,9 @@ class Health(BaseModel):
 
 class StatusTile(BaseModel):
     ready: bool
+    state: Literal["ready", "partial", "not_ready"] | None = Field(
+        None, description="Three-way state where a tile can be partly ready (models, review thresholds)")
+    reason: str | None = Field(None, description="One line naming the affected models")
     detail: dict[str, Any] = {}
     fix: str | None = Field(None, description="Command that makes this tile ready")
 
@@ -207,6 +210,7 @@ class ReviewQueue(BaseModel):
     threshold: float | None
     threshold_rule: str | None
     target_accuracy: float | None = None
+    threshold_note: str | None = Field(None, description="Why this model has no usable review threshold (null when it has one)")
     total_buildings: int
     total_flagged: int
     flagged_low_confidence: int

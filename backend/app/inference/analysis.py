@@ -16,6 +16,7 @@ from app.core.errors import Conflict, NotFound
 from app.core.store import ANALYSIS_ID, Store
 from app.evaluation.metrics import classification_metrics
 from app.explain.explain import decision_path, knn_neighbours, lr_contributions
+from app.inference.review import usable_threshold
 from app.inference.scenes import polygon_parts, provenance
 from app.training.models import CONFIDENCE_KIND
 
@@ -55,7 +56,7 @@ def run_analysis(store: Store, scene_id: str, model_name: str) -> dict[str, Any]
     table = store.feature_table
     rows = store.rows_by_scene.get(sid)
     thresholds = store.review_thresholds() or {}
-    threshold = (thresholds.get("models", {}).get(name) or {}).get("threshold")
+    threshold = usable_threshold(thresholds, name)  # None -> no low-confidence flags for this model
     by_id = {b["building_id"]: b for b in doc["buildings"]}
     buildings, counts_true, counts_pred = [], {}, {}
     classes = list(pipe.classes_)

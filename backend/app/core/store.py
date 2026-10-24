@@ -237,15 +237,18 @@ class Store:
         doc, _problem = read_thresholds(self.model_dir() / "review_thresholds.json")
         return doc
 
-    def optional_untrained(self) -> list[str]:
-        """Served models marked optional in config/training.yaml that have no saved model yet."""
+    def optional_models(self) -> list[str]:
+        """Served models marked optional in config/training.yaml (they never make a status tile PARTIAL)."""
         settings = self.training_config.models
-        return [m for m in self.serving.models
-                if m in settings and settings[m].optional and self.model_meta(m) is None]
+        return [m for m in self.serving.models if m in settings and settings[m].optional]
+
+    def optional_untrained(self) -> list[str]:
+        """Optional served models that have no saved model yet."""
+        return [m for m in self.optional_models() if self.model_meta(m) is None]
 
     def review_threshold_status(self) -> dict[str, Any]:
         doc, problem = read_thresholds(self.model_dir() / "review_thresholds.json")
-        return threshold_status(doc, problem, list(self.serving.models), self.optional_untrained())
+        return threshold_status(doc, problem, list(self.serving.models), self.optional_models(), self.optional_untrained())
 
     # ------------------------------------------------------------ saved results (Model Arena)
     def read_json(self, relative: str) -> dict[str, Any] | None:

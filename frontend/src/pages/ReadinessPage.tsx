@@ -85,7 +85,7 @@ function TileBody({ name, tile }: { name: string; tile: StatusTile }) {
             <Fact key={m} label={m.replaceAll('_', ' ')}>{t === null ? <span className="text-ink-3">not available</span> : t.toFixed(2)}</Fact>
           ))}
           {d.rule != null && <p className="mt-2 text-xs text-ink-3">Chosen on validation: <span className="num">{String(d.rule)}</span></p>}
-          {tile.state === 'partial' && tile.reason && <p className="mt-1 text-xs text-ink-2">{tile.reason}</p>}
+          {tile.reason && <p className="mt-1 text-xs text-ink-2">{tile.reason}</p>}
           {tile.fix && <CommandBlock command={tile.fix} />}
         </dl>
       )

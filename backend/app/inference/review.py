@@ -94,20 +94,27 @@ def why_unusable(doc: dict[str, Any] | None, problem: str | None, model: str) ->
 
 
 def threshold_status(doc: dict[str, Any] | None, problem: str | None, served: list[str],
-                     optional_untrained: list[str]) -> dict[str, Any]:
-    """READY / PARTIAL / NOT READY for the review thresholds of the served models.
+                     optional: list[str], optional_untrained: list[str]) -> dict[str, Any]:
+    """READY / PARTIAL / NOT READY for the review thresholds of the REQUIRED served models.
 
-    An optional model that is not trained cannot have a threshold, so it is left out of the count and only
-    mentioned in the reason (it must not hold the tile at PARTIAL).
+    Optional models (config: optional: true, e.g. random_forest) never decide the state; they are only
+    mentioned in the reason (not trained, or trained without a usable threshold).
     """
-    counted = [m for m in served if m not in optional_untrained]
-    with_threshold = [m for m in counted if usable_threshold(doc, m) is not None]
-    without = [m for m in counted if m not in with_threshold]
-    notes = [f"{m} (optional) not trained" for m in optional_untrained]
+    required = [m for m in served if m not in optional]
+    with_threshold = [m for m in required if usable_threshold(doc, m) is not None]
+    without = [m for m in required if m not in with_threshold]
+    notes = []
+    for m in served:
+        if m in optional_untrained:
+            notes.append(f"{m} (optional) not trained")
+        elif m in optional and usable_threshold(doc, m) is None:
+            notes.append(f"{m} (optional) has no usable threshold")
+    # shown on the tile: every served model that is trained (an untrained optional model can't have one)
+    listed = [m for m in served if m not in optional_untrained]
 
     if doc is None or not with_threshold:
         state = "not_ready"
-        reason = problem if doc is None else "no served model has a usable threshold: " + ", ".join(without)
+        reason = problem if doc is None else "no required served model has a usable threshold: " + ", ".join(without)
     elif without:
         state = "partial"
         reason = f"usable for {', '.join(with_threshold)}; missing for {', '.join(without)}"
@@ -117,5 +124,5 @@ def threshold_status(doc: dict[str, Any] | None, problem: str | None, served: li
     if notes:
         reason += "; " + "; ".join(notes)
     return {"state": state, "reason": reason,
-            "thresholds": {m: usable_threshold(doc, m) for m in counted},
+            "thresholds": {m: usable_threshold(doc, m) for m in listed},
             "rule": (doc or {}).get("rule")}

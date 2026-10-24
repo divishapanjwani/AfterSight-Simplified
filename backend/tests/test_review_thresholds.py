@@ -45,25 +45,41 @@ def test_reasons_name_the_problem() -> None:
 
 
 def test_status_all_present_partial_and_none() -> None:
-    ready = threshold_status(_doc(**ALL), None, SERVED, [])
+    ready = threshold_status(_doc(**ALL), None, SERVED, [], [])
     assert ready["state"] == "ready" and ready["thresholds"]["random_forest"] == 0.3865
 
-    partial = threshold_status(_doc(**{**ALL, "knn": None}), None, SERVED, [])
+    partial = threshold_status(_doc(**{**ALL, "knn": None}), None, SERVED, [], [])
     assert partial["state"] == "partial" and partial["reason"].endswith("missing for knn")
 
     missing_entry = _doc(**ALL)
     del missing_entry["models"]["decision_tree"]
-    assert threshold_status(missing_entry, None, SERVED, [])["state"] == "partial"
+    assert threshold_status(missing_entry, None, SERVED, [], [])["state"] == "partial"
 
-    none_usable = threshold_status(_doc(**{m: None for m in ALL}), None, SERVED, [])
-    assert none_usable["state"] == "not_ready" and "no served model has a usable threshold" in none_usable["reason"]
+    none_usable = threshold_status(_doc(**{m: None for m in ALL}), None, SERVED, [], [])
+    assert none_usable["state"] == "not_ready" and "no required served model has a usable threshold" in none_usable["reason"]
 
-    no_file = threshold_status(None, "the review threshold file has not been created", SERVED, [])
+    no_file = threshold_status(None, "the review threshold file has not been created", SERVED, [], [])
     assert no_file["state"] == "not_ready" and no_file["reason"] == "the review threshold file has not been created"
 
 
 def test_untrained_optional_model_does_not_make_it_partial() -> None:
     doc = _doc(logistic_regression=0.48, knn=0.53, decision_tree=0.53)  # RF skipped by calibration
-    status = threshold_status(doc, None, SERVED, ["random_forest"])
+    status = threshold_status(doc, None, SERVED, ["random_forest"], ["random_forest"])
     assert status["state"] == "ready" and "random_forest (optional) not trained" in status["reason"]
     assert "random_forest" not in status["thresholds"]
+
+
+def test_trained_optional_model_without_threshold_does_not_make_it_partial() -> None:
+    # random_forest is trained, but calibration found no threshold for it (null) or skipped it (missing)
+    for doc in (_doc(**{**ALL, "random_forest": None}), _doc(logistic_regression=0.48, knn=0.53, decision_tree=0.53)):
+        status = threshold_status(doc, None, SERVED, ["random_forest"], [])
+        assert status["state"] == "ready", status
+        assert "random_forest (optional) has no usable threshold" in status["reason"]
+        assert status["thresholds"]["random_forest"] is None  # still listed, as "not available"
+
+
+def test_required_models_still_decide_partial_and_not_ready() -> None:
+    partial = threshold_status(_doc(**{**ALL, "knn": None}), None, SERVED, ["random_forest"], [])
+    assert partial["state"] == "partial" and "missing for knn" in partial["reason"]
+    only_optional = threshold_status(_doc(random_forest=0.39), None, SERVED, ["random_forest"], [])
+    assert only_optional["state"] == "not_ready"  # an optional model alone cannot make it ready

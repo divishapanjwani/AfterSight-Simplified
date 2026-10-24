@@ -51,6 +51,20 @@ describe('Readiness board', () => {
     expect(within(tile).queryByText('✓ READY')).not.toBeInTheDocument()
   })
 
+  it('review thresholds stay READY when only the optional model lacks one, and the tile says so', async () => {
+    const status = { ...readyStatus, tiles: { ...readyStatus.tiles,
+      review_thresholds: { ready: true, state: 'ready' as const,
+        reason: 'usable for logistic_regression, knn, decision_tree; random_forest (optional) has no usable threshold',
+        detail: { rule: 'lowest t', thresholds: { logistic_regression: 0.4836, knn: 0.5333, decision_tree: 0.5257, random_forest: null } }, fix: null } } }
+    mockApi({ '/api/health': { body: health }, '/api/dataset/status': { body: status }, '/api/models': { body: models },
+      '/api/results/comparison': { body: comparison('within_event', 0.5, 0.5) } })
+    page()
+    const tile = (await screen.findByText('Review thresholds')).closest('section')!
+    expect(within(tile).getByText('✓ READY')).toBeInTheDocument()
+    expect(within(tile).getByText('not available')).toBeInTheDocument()
+    expect(within(tile).getByText(/random_forest \(optional\) has no usable threshold/)).toBeInTheDocument()
+  })
+
   it('models tile stays READY when only an optional model is untrained, and says so', async () => {
     const status = { ...readyStatus, tiles: { ...readyStatus.tiles,
       models: { ready: true, state: 'ready' as const, reason: 'all required served models are trained; random_forest (optional) not trained',

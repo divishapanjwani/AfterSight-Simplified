@@ -279,7 +279,7 @@ def test_threshold_tile_partial_ready_and_not_ready(client, store) -> None:
         assert t["detail"]["thresholds"]["decision_tree"] is None
     with thresholds_file(store, _thresholds_with(store, logistic_regression=None, knn=None, decision_tree=None)):
         t = tile()
-        assert t["state"] == "not_ready" and "no served model has a usable threshold" in t["reason"]
+        assert t["state"] == "not_ready" and "no required served model has a usable threshold" in t["reason"]
     t = tile()  # the real (all present) file again
     assert t["state"] == "ready" and t["ready"] is True and t["fix"] is None
 

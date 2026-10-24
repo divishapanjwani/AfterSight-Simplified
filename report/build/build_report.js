@@ -388,7 +388,7 @@ function body() {
   out.push(H1('AutoML / MLOps', false))
   out.push(P('**No AutoML was used.** All models, grids and features were chosen by hand so that every decision can be explained in the viva. Hyperparameters were tuned with small, explicit grids on the validation split. The project does follow several MLOps practices:'))
   for (const b of [
-    `**Automated tests:** ${146} backend tests (pytest), ${33} frontend tests (Vitest) and an end-to-end check with 22 assertions. They cover the parser, features with known answers, split leakage, saving and reloading models, the API (including path-traversal attempts), missing or broken saved files (review thresholds, Phase 3b summary) and the user interface.`,
+    `**Automated tests:** ${148} backend tests (pytest), ${37} frontend tests (Vitest) and an end-to-end check with 22 assertions. They cover the parser, features with known answers, split leakage, saving and reloading models, the API (including path-traversal attempts), missing or broken saved files (review thresholds, Phase 3b summary) and the user interface.`,
     '**Reproducible pipeline:** one command (`scripts/run_pipeline.sh`) rebuilds everything from the raw shards. A fresh clone following only the README reproduced every test score exactly.',
     '**Model metadata and loading checks:** a model refuses to load if the feature schema, the scikit-learn version or the split manifest differs from what it was trained with.',
     '**Test-set guard:** a code object raises an error if any model’s test set is evaluated a second time.',

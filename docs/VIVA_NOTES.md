@@ -54,7 +54,9 @@ domain shift.
 - **What does the baseline show?** One feature (texture-smoothness change) with three thresholds already gets
   0.383 within-event. Learned models add about 0.14.
 - **What does K-Means tell you?** That the strongest natural grouping is *not* damage (ARI 0.04–0.10).
-  Clusters are never used as predictions.
+  Clusters are never used as predictions. In the Cluster Atlas, silhouette (−1 to 1) says how well separated the
+  clusters are, and ARI (0 = random, 1 = identical) says how well they match the reference labels; ARI is not
+  prediction accuracy. Results exist only for the precomputed k = 2…10.
 
 **Honesty and limits**
 

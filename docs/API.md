@@ -40,7 +40,7 @@ every value it returns is read from an artifact written by the pipeline scripts.
 | GET | `/results/comparison` | model comparison per `design` × `scheme` (3-class flagged as an experiment), with `holdout_event` and `test_events` |
 | GET | `/results/confounding` | event-prediction check (analysis only) |
 | GET | `/results/experiments` | Phase 3b, labelled "Experiments", not selectable |
-| GET | `/clusters` | K-Means for `k` (and `design`): sizes, contingency, ARI, PCA points; `never_predictions: true` |
+| GET | `/clusters` | precomputed K-Means for `k` (and `design`): sizes, contingency, ARI, silhouette, PCA points, inertia curves; `never_predictions: true`. 404 `results_not_found` if not run, 404 `k_not_available` for a k that was not computed |
 | POST | `/analysis` | `{scene_id, model_name}` → predictions, scores, review flags, counts, scene metrics, provenance |
 | GET | `/analyses` | recent cached analyses (newest first) for the Reports page |
 | GET | `/analysis/{id}` | a cached analysis |
@@ -71,6 +71,14 @@ every value it returns is read from an artifact written by the pipeline scripts.
   `variants`, rows with `variant`, `design`, `model`, `n_features`, test macro-F1, recall major/destroyed and
   `event_prediction_accuracy_within_event`, which may be null). Valid summaries are returned unchanged.
   `/results/overview.experiments` is true only for a usable summary.
+
+## Changes in v1.3
+
+- `/clusters` is unchanged, but the Cluster Atlas no longer **displays** `curves` (inertia and silhouette per k),
+  `inertia`, `elbow_k_heuristic`, `chosen_k_by_silhouette`, `pca_points`, `pca_explained_variance` or `pca_note`.
+  They are still returned (and still in `artifacts/analyses/kmeans/<design>.json`).
+- `/dataset/status` → `review_thresholds`: only **required** served models decide the state; an optional one
+  (config `optional: true`) is named in the reason when it is untrained or has no usable threshold.
 
 ## Confidence
 

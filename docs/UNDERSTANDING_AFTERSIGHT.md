@@ -775,7 +775,7 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 | **Case File** | one building: crops, predicted vs true, confidence, explanation | understand a single decision |
 | **Arena** | every model, both designs, confusion matrices, per-event scores, tree, confounding, experiments | compare models honestly |
 | **Feature Lab** | which features separate the classes (training split) | see *why* the models work or fail |
-| **Cluster Atlas** | K-Means results, clearly marked "never predictions" | unsupervised view of the data |
+| **Cluster Atlas** | precomputed K-Means for k = 2…10: cluster sizes, silhouette, ARI and which damage classes fall into each cluster; clearly marked "never predictions" | unsupervised view of the data; a cluster ID is not a damage class |
 | **Review Queue** | buildings *suggested for human review* (low confidence or models disagree) | where a person should look first |
 | **Reports** | CSV and PDF per analysis | take the results away |
 
@@ -849,7 +849,8 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 | `docs/FEATURES.md`, `docs/RESULTS.md`, `docs/ML_EXPLAINED.md`, `docs/API.md`, `docs/VIVA_NOTES.md` | detailed references |
 | `docs/SIMPLIFICATION_NOTES.md` | what the v1.1 simplification changed and how behaviour was kept identical |
 | `docs/FIXES_V1_2.md` | the v1.2 status, wording and missing-file fixes |
-| `backend/tests/`, `frontend/src/**/*.test.tsx` | 146 backend and 33 frontend tests |
+| `docs/CHANGES_V1_3.md` | the v1.3 audit, environment diagnosis and Cluster Atlas changes |
+| `backend/tests/`, `frontend/src/**/*.test.tsx` | 148 backend and 37 frontend tests |
 
 ---
 

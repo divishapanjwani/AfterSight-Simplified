@@ -107,8 +107,9 @@ useless. So:
   0.04 at k=2 and 0.10 at k=4.
 - **Can:** show that the strongest structure in the features is *not* damage. It is more likely roof type,
   scene appearance or disaster.
-- **Cannot:** label damage. Clusters have no names and are **never** used as predictions. The PCA plot in
-  the Cluster Atlas is for visualisation only.
+- **Cannot:** label damage. Clusters have no names and are **never** used as predictions. The Cluster Atlas shows
+  the precomputed results per k (sizes, silhouette, ARI and the cluster-vs-label table); a cluster ID is not a
+  damage class.
 
 ## 9. Explanations
 

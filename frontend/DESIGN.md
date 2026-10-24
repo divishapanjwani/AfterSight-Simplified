@@ -118,7 +118,7 @@ are drawn on a log axis (`LOG_AXIS_FEATURES` in `FeatureLabPage.tsx`). This only
 | Need | Encoding |
 |---|---|
 | model identity (Arena dumbbell) | categorical palette `--cat-1` blue (●) / `--cat-2` aqua (■). These are the first slots of the validated reference palette, which pass all-pairs; its orange slot is skipped because orange means "action" here |
-| clusters (Cluster Atlas) | `--cat-1…7` + marker shape; more than 7 clusters cycle the shape |
+| clusters | `--cat-3…7` are kept in the palette but unused since v1.3 (the Cluster Atlas PCA scatter was removed; clusters are shown as plain rows) |
 | magnitude (confusion, contingency) | single-hue blue `--mag-0…4`; every cell also prints its count and row % |
 | damage class (box plots, scatter) | damage ramp + pattern (boxes) or ramp + marker shape (scatter) |
 

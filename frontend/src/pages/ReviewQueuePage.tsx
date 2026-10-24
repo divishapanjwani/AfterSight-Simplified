@@ -57,7 +57,8 @@ export function ReviewQueuePage() {
             )}
             <p className="mt-1 text-xs text-ink-3">
               Breakdown: <span className="num">{d.flagged_low_confidence.toLocaleString('en-GB')}</span> low confidence ·{' '}
-              <span className="num">{d.flagged_disagreement_only.toLocaleString('en-GB')}</span> confident, but another model disagrees.
+              <span className="num">{d.flagged_disagreement_only.toLocaleString('en-GB')}</span>{' '}
+              {d.threshold !== null ? 'confident, but another model disagrees.' : 'where another model disagrees (no threshold, so none are called confident).'}
             </p>
           </CaseFolder>
           {d.total_flagged === 0 && <EmptyState title="Nothing is suggested for human review with this model." />}

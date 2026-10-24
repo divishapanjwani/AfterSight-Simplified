@@ -101,7 +101,9 @@ describe('Review Queue without a usable threshold', () => {
     const summary = screen.getByText(/test buildings/).closest('p')!
     expect(summary).toHaveTextContent('30 of 100 test buildings (30%) are suggested for human review with this model: another model disagrees with it.')
     expect(summary).not.toHaveTextContent('chosen on validation')
-    expect(screen.getByText(/low confidence ·/).closest('p')).toHaveTextContent('0 low confidence · 30 confident, but another model disagrees')
+    const breakdown = screen.getByText(/low confidence ·/).closest('p')!
+    expect(breakdown).toHaveTextContent('0 low confidence · 30 where another model disagrees (no threshold, so none are called confident).')
+    expect(breakdown).not.toHaveTextContent('30 confident')
   })
 })
 

@@ -60,7 +60,13 @@ export function ReviewQueuePage() {
               <span className="num">{d.flagged_disagreement_only.toLocaleString('en-GB')}</span> confident, but another model disagrees.
             </p>
           </CaseFolder>
-          {d.items.length === 0 ? <EmptyState title="Nothing is suggested for human review with this model." /> : (
+          {d.total_flagged === 0 && <EmptyState title="Nothing is suggested for human review with this model." />}
+          {d.total_flagged > 0 && d.items.length === 0 && (
+            // e.g. ?page=99: the queue is not empty, this page is past its end
+            <EmptyState title={`Page ${page} is past the end of the queue (${pages} ${pages === 1 ? 'page' : 'pages'}).`}
+              action={<button type="button" onClick={() => set('page', '1')} className="text-xs text-ink underline underline-offset-2">Go to page 1</button>} />
+          )}
+          {d.items.length > 0 && (
             <CaseFolder tab={`QUEUE · PAGE ${page} / ${pages}`}>
               <table className="w-full text-xs">
                 <thead><tr className="border-b border-rule text-left text-ink-3">

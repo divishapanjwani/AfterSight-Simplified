@@ -105,6 +105,20 @@ describe('Review Queue without a usable threshold', () => {
   })
 })
 
+describe('Review Queue paging', () => {
+  it('a page past the end is not reported as an empty queue', async () => {
+    mockApi({
+      '/api/models': { body: models },
+      '/api/review-queue': { body: { model: 'logistic_regression', split: 'test', framing: 'Suggested for human review — low confidence or model disagreement, not confirmed errors.',
+        threshold: 0.48, threshold_rule: 'r', target_accuracy: 0.7, threshold_note: null, total_buildings: 100, total_flagged: 30,
+        flagged_low_confidence: 20, flagged_disagreement_only: 10, offset: 2450, limit: 25, items: [] } },
+    })
+    renderAt(<ReviewQueuePage />, '/review?page=99')
+    expect(await screen.findByText('Page 99 is past the end of the queue (2 pages).')).toBeInTheDocument()
+    expect(screen.queryByText('Nothing is suggested for human review with this model.')).not.toBeInTheDocument()
+  })
+})
+
 describe('Cluster Atlas', () => {
   it('is labelled analysis-only and refetches when k changes', async () => {
     const body = (k: number) => ({ design_label: 'w', classes: ['no-damage', 'destroyed'], k_values: [2, 3], chosen_k_by_silhouette: 2, elbow_k_heuristic: 3,

@@ -31,6 +31,12 @@ class NotReady(AppError):
     status, code = 503, "not_ready"
 
 
+class ResultsInvalid(AppError):
+    """A saved results file exists but cannot be used (bad JSON, missing keys). The file is at fault, not the request."""
+
+    status, code = 503, "results_invalid"
+
+
 class ModelNotTrained(AppError):
     status, code = 409, "model_not_trained"
 

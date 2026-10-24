@@ -14,6 +14,7 @@ from app.core.store import FIX, Store
 from app.features.schema import FEATURE_COLUMNS
 from app.inference import feature_lab, images, review_queue, scenes
 from app.inference.analysis import MODEL_LABELS, explain_building, list_analyses, load_analysis, run_analysis
+from app.experiments import summary as phase3b_summary
 from app.inference.review import usable_threshold
 from app.reports.reports import report_context, write_csv, write_pdf
 from app.schemas.api import (
@@ -194,7 +195,7 @@ def results_overview(store: StoreDep) -> dict[str, Any]:
     return {"comparisons": available, "primary": "within_event/four_class and cross_event/four_class",
             "confounding": store.read_json("analyses/confounding/within_event.json") is not None,
             "kmeans": {d: store.read_json(f"analyses/kmeans/{d}.json") is not None for d in ("within_event", "cross_event")},
-            "experiments": store.read_json("experiments/phase3b/summary.json") is not None}
+            "experiments": phase3b_summary.summary_state(store)[0] == "available"}
 
 
 @router.get("/results/comparison", tags=["results"])
@@ -220,9 +221,7 @@ def results_confounding(store: StoreDep) -> dict[str, Any]:
 
 @router.get("/results/experiments", tags=["results"])
 def results_experiments(store: StoreDep) -> dict[str, Any]:
-    doc = store.read_json("experiments/phase3b/summary.json")
-    if doc is None:
-        raise NotFound("No experiments have been run.", code="results_not_found", fix=FIX["experiments"])
+    doc = phase3b_summary.load_summary(store)  # 404 if never run, 503 results_invalid if the file is broken
     return {**doc, "section": "Experiments", "selectable": False,
             "note": "Separate models for analysis only; they are not served in the Triage Desk."}
 

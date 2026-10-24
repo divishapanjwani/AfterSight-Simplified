@@ -35,6 +35,33 @@ describe('Model Arena', () => {
   })
 })
 
+describe('Model Arena: Phase 3b results not usable', () => {
+  const routes = (experiments: { status: number; body: unknown }) => ({
+    '/api/results/comparison': (url: URL) => ({ body: url.searchParams.get('design') === 'cross_event' ? comparison('cross_event', 0.291, 0.301) : comparison('within_event', 0.532, 0.481) }),
+    '/api/results/confounding': { body: { design_label: 'within-event generalisation', target: 'event', test_metrics: { ...metrics, accuracy: 0.829, confusion_matrix: { labels: ['ev-a', 'ev-b'], rows_true_cols_pred: [[5, 1], [2, 4]] } }, majority_class: 'ev-a', majority_class_accuracy: 0.252, chance_accuracy_uniform: 0.2 } },
+    '/api/results/experiments': experiments,
+  })
+
+  it('a malformed or incomplete summary gets its own state, the reason and the command, and no numbers', async () => {
+    mockApi(routes({ status: 503, body: { error: { code: 'results_invalid', message: "The saved Phase 3b summary can't be used: row 3 (scene_normalised, decision_tree) is missing 'test_macro_f1'.", fix: 'python scripts/run_phase3b.py' } } }))
+    renderAt(<ModelArenaPage />, '/arena')
+    expect(await screen.findByText('Saved Phase 3b results are malformed or incomplete')).toBeInTheDocument()
+    expect(screen.getByText(/row 3 \(scene_normalised, decision_tree\) is missing 'test_macro_f1'/)).toBeInTheDocument()
+    expect(screen.getByText('$ python scripts/run_phase3b.py')).toBeInTheDocument()
+    expect(screen.queryByText(/Phase 3b · /)).not.toBeInTheDocument() // no Phase 3b bars in the confounding chart
+    expect(screen.getByText(/Phase 3b results are not available/)).toBeInTheDocument()
+    expect(screen.queryByText(/reduced that signature/)).not.toBeInTheDocument()
+  })
+
+  it('a missing summary says it has not been run yet, with the command', async () => {
+    mockApi(routes({ status: 404, body: { error: { code: 'results_not_found', message: 'No experiments have been run.', fix: 'python scripts/run_phase3b.py' } } }))
+    renderAt(<ModelArenaPage />, '/arena')
+    expect(await screen.findByText('Not available yet: the experiments')).toBeInTheDocument()
+    expect(screen.getByText('No experiments have been run.')).toBeInTheDocument()
+    expect(screen.queryByText('Saved Phase 3b results are malformed or incomplete')).not.toBeInTheDocument()
+  })
+})
+
 describe('Review Queue', () => {
   it('frames flags neutrally and reconciles the totals', async () => {
     const calls = mockApi({

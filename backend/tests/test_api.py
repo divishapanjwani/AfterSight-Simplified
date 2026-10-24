@@ -300,6 +300,54 @@ def test_review_queue_without_a_usable_threshold(client, store) -> None:
             assert next(m for m in other if m["name"] == "logistic_regression")["review_threshold"] is None
 
 
+def _summary_row(**changes):
+    row = {"variant": "change_only", "n_features": 17, "design": "within_event", "model": "logistic_regression",
+           "val_macro_f1": 0.4636, "test_macro_f1": 0.4501, "test_recall_major": 0.5006, "test_recall_destroyed": 0.764,
+           "event_prediction_accuracy_within_event": 0.6324}
+    row.update(changes)
+    return {k: v for k, v in row.items() if v != "drop"}
+
+
+VALID_SUMMARY = {"label": "Phase 3b experiment", "created_at": "t", "variants": {"change_only": "17 features"}, "models": [],
+                 "test_evaluations": [], "rows": [_summary_row(), _summary_row(design="cross_event", event_prediction_accuracy_within_event=None)]}
+
+
+@contextlib.contextmanager
+def summary_file(store, content):
+    """Temporarily create the Phase 3b summary in the deployment (it has none by default)."""
+    path = store.paths.artifacts / "experiments" / "phase3b" / "summary.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content if isinstance(content, str) else json.dumps(content), encoding="utf-8")
+    try:
+        yield
+    finally:
+        path.unlink()
+
+
+def test_phase3b_summary_valid_is_passed_through_exactly(client, store) -> None:
+    with summary_file(store, VALID_SUMMARY):
+        body = client.get("/api/results/experiments").json()
+        assert body["rows"] == VALID_SUMMARY["rows"] and body["variants"] == VALID_SUMMARY["variants"]
+        assert client.get("/api/results/overview").json()["experiments"] is True
+    assert client.get("/api/results/overview").json()["experiments"] is False  # missing again
+
+
+@pytest.mark.parametrize("content, words", [
+    ("{not json", "not valid JSON"),
+    ({k: v for k, v in VALID_SUMMARY.items() if k != "rows"}, "no valid 'rows'"),
+    ({k: v for k, v in VALID_SUMMARY.items() if k != "variants"}, "no valid 'variants'"),
+    ({**VALID_SUMMARY, "rows": []}, "no result rows"),
+    ({**VALID_SUMMARY, "rows": [_summary_row(test_macro_f1="drop")]}, "row 1 (change_only, logistic_regression) is missing 'test_macro_f1'"),
+    ({**VALID_SUMMARY, "rows": [_summary_row(event_prediction_accuracy_within_event="drop")]}, "missing 'event_prediction_accuracy_within_event'"),
+    ({**VALID_SUMMARY, "rows": [_summary_row(variant="other")]}, "not described in 'variants'"),
+])
+def test_phase3b_summary_malformed_or_incomplete(client, store, content, words) -> None:
+    with summary_file(store, content):
+        error = _assert_clean_error(client.get("/api/results/experiments"), 503, "results_invalid")
+        assert words in error["message"] and "run_phase3b.py" in error["fix"]
+        assert client.get("/api/results/overview").json()["experiments"] is False  # never shown as a successful run
+
+
 # ---------------------------------------------------------------- models, results, feature lab, clusters
 def test_models_and_results(client) -> None:
     body = client.get("/api/models").json()

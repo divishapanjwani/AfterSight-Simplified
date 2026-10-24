@@ -9,6 +9,7 @@ import pytest
 from app.features.schema import FEATURE_COLUMNS, SHAPE
 from app.features.variants import CHANGE_ONLY, SUFFIX, VARIANTS, scene_normalise, variant_frame
 from app.experiments.phase3b import run_phase3b
+from app.experiments.summary import summary_problem
 from app.training.persistence import ModelLoadError, load_model
 from app.training.splits import build_manifest, split_of_buildings
 from test_models import cfg, table  # noqa: F401  (shared synthetic fixtures)
@@ -61,6 +62,8 @@ def test_runner_trains_separately_and_reloads(table, cfg, tmp_path) -> None:
     assert all(k.startswith("phase3b/change_only/") for k in summary["test_evaluations"])
     assert summary["rows"][0]["n_features"] == 17 and summary["rows"][0]["event_prediction_accuracy_within_event"] is not None
     assert json.loads((tmp_path / "exp" / "summary.json").read_text())["label"].startswith("Phase 3b experiment")
+    # what the writer produces is exactly what the API's reader accepts (same keys, same shape)
+    assert summary_problem(json.loads((tmp_path / "exp" / "summary.json").read_text())) is None
 
     folder = tmp_path / "exp" / "change_only"
     model_path = folder / "models" / "within_event" / "four_class" / "logistic_regression.joblib"

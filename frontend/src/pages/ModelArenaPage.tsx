@@ -9,8 +9,8 @@ import { Dumbbell } from '../charts/Dumbbell'
 import { Heatmap } from '../charts/Heatmap'
 import { CaseFolder } from '../components/CaseFolder'
 import { Chip } from '../components/Chip'
-import { ErrorState, LoadingState } from '../components/States'
-import { api } from '../services/api'
+import { ErrorState, LoadingState, NotReadyState } from '../components/States'
+import { ApiError, api } from '../services/api'
 import { DAMAGE, DamageSwatch } from '../theme/damage'
 import { featureLabel, fmtValue } from '../theme/features'
 import type { Comparison, DamageClass, TreeNode } from '../types/api'
@@ -227,7 +227,9 @@ function ConfoundingSection() {
           ...variants,
         ]} />
         <p className="text-xs leading-5 text-ink-2">The features carry a strong signature of <i>which</i> disaster a building is from (sensor, region, vegetation, roofs).
-          The Phase 3b experiments reduced that signature, but cross-event scores did not improve — the gap is a genuine shift between disasters.</p>
+          {x.data
+            ? ' The Phase 3b experiments reduced that signature, but cross-event scores did not improve — the gap is a genuine shift between disasters.'
+            : ' Phase 3b results are not available, so they are not compared here (see Experiments below).'}</p>
       </div>
       <Heatmap rows={m.confusion_matrix.labels} cols={m.confusion_matrix.labels.map((e) => e.replace('hurricane-', 'h-'))} matrix={m.confusion_matrix.rows_true_cols_pred}
         rowTitle="true event" colTitle="predicted" cell={56} caption={`TEST SET (${c.data.design_label}) · predicting EVENT, analysis only`} />
@@ -238,7 +240,11 @@ function ConfoundingSection() {
 function ExperimentsSection() {
   const x = useQuery({ queryKey: ['experiments'], queryFn: api.experiments, retry: false })
   if (x.isPending) return <LoadingState label="Loading experiments…" />
-  if (x.isError) return <ErrorState error={x.error} what="the experiments" />
+  // The saved summary exists but is broken: say so plainly, never show partial numbers as results.
+  if (x.error instanceof ApiError && x.error.code === 'results_invalid') {
+    return <NotReadyState title="Saved Phase 3b results are malformed or incomplete" message={x.error.message} fix={x.error.fix} />
+  }
+  if (x.isError) return <ErrorState error={x.error} what="the experiments" />  // never run: "not available yet" + command
   return (
     <div className="space-y-3">
       <p className="text-xs text-ink-2">{x.data.label}. {x.data.note}</p>

@@ -41,3 +41,6 @@ Thumbs.db
 backend/tests/fixtures/xbd_synthetic/
 backend/tests/fixtures/xbd_synthetic_parquet/
 report/build/guide.html
+
+# paper build tooling
+paper/build/.venv/

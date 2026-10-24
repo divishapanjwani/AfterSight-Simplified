@@ -120,7 +120,7 @@ def threshold_status(doc: dict[str, Any] | None, problem: str | None, served: li
         reason = f"usable for {', '.join(with_threshold)}; missing for {', '.join(without)}"
     else:
         state = "ready"
-        reason = "usable for " + ", ".join(with_threshold)
+        reason = "usable for every required served model (" + ", ".join(with_threshold) + ")"
     if notes:
         reason += "; " + "; ".join(notes)
     return {"state": state, "reason": reason,

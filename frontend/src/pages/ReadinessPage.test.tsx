@@ -54,7 +54,7 @@ describe('Readiness board', () => {
   it('review thresholds stay READY when only the optional model lacks one, and the tile says so', async () => {
     const status = { ...readyStatus, tiles: { ...readyStatus.tiles,
       review_thresholds: { ready: true, state: 'ready' as const,
-        reason: 'usable for logistic_regression, knn, decision_tree; random_forest (optional) has no usable threshold',
+        reason: 'usable for every required served model (logistic_regression, knn, decision_tree); random_forest (optional) has no usable threshold',
         detail: { rule: 'lowest t', thresholds: { logistic_regression: 0.4836, knn: 0.5333, decision_tree: 0.5257, random_forest: null } }, fix: null } } }
     mockApi({ '/api/health': { body: health }, '/api/dataset/status': { body: status }, '/api/models': { body: models },
       '/api/results/comparison': { body: comparison('within_event', 0.5, 0.5) } })

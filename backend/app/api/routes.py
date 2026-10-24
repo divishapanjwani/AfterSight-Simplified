@@ -16,7 +16,7 @@ from app.inference import feature_lab, images, review_queue, scenes
 from app.inference.analysis import MODEL_LABELS, explain_building, list_analyses, load_analysis, run_analysis
 from app.experiments import summary as phase3b_summary
 from app.inference.review import usable_threshold
-from app.reports.reports import report_context, write_csv, write_pdf
+from app.reports.reports import pdf_name, report_context, write_csv, write_pdf
 from app.schemas.api import (
     AnalysisRequest, AnalysisResult, DatasetStatus, ErrorResponse, Explanation, Job, ModelList, ReviewQueue,
     SceneDetail, SceneList, StatusTile, TrainingRequest,
@@ -274,7 +274,7 @@ def export_csv(analysis_id: str, store: StoreDep) -> FileResponse:
             responses={200: {"content": {"application/pdf": {}}}})
 def export_pdf(analysis_id: str, store: StoreDep) -> FileResponse:
     analysis = load_analysis(store, analysis_id)
-    path = store.paths.reports / f"{analysis['analysis_id']}.pdf"
+    path = store.paths.reports / pdf_name(analysis["analysis_id"])  # versioned: wording changes reach new downloads
     if not path.is_file():
         write_pdf(analysis, path, report_context(store))
     return FileResponse(path, media_type="application/pdf", filename=f"aftersight_{analysis['scene_id']}_{analysis['model']['name']}.pdf")

@@ -4,7 +4,7 @@ export type ChipKind = 'predicted' | 'ground-truth' | 'test' | 'validation' | 't
 
 const CHIPS: Record<ChipKind, { text: string; glyph: string; className: string; title: string }> = {
   predicted: { text: 'PREDICTED', glyph: '◆', className: 'border-ink text-ink', title: 'Output of a model' },
-  'ground-truth': { text: 'GROUND TRUTH', glyph: '●', className: 'border-ink-2 text-ink-2 border-double border-[3px]', title: 'xBD annotation (mask-derived)' },
+  'ground-truth': { text: 'GROUND TRUTH', glyph: '●', className: 'border-ink-2 text-ink-2 border-double border-[3px]', title: 'Reference labels from xBD annotations (mask-derived), used for research evaluation' },
   test: { text: 'TEST SET', glyph: '▲', className: 'border-ink-2 text-ink-2', title: 'Held-out test data: never used for training or tuning' },
   validation: { text: 'VALIDATION', glyph: '△', className: 'border-caution text-caution bg-caution-soft', title: 'Used to tune model settings — somewhat optimistic' },
   training: { text: 'TRAINING SCENE', glyph: '!', className: 'border-caution text-caution bg-caution-soft', title: 'Used to fit the models — results here are optimistic' },

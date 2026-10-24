@@ -17,7 +17,7 @@ const TILE_ORDER: { key: string; title: string }[] = [
   { key: 'last_analysis', title: 'Last analysis' },
 ]
 
-const fmt = (v: number | null | undefined, digits = 3) => (v === null || v === undefined ? '—' : v.toFixed(digits))
+const fmt = (v: number | null | undefined, digits = 3) => (v === null || v === undefined ? 'not available' : v.toFixed(digits))
 const count = (v: unknown) => (typeof v === 'number' ? v.toLocaleString('en-GB') : String(v ?? '—'))
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {

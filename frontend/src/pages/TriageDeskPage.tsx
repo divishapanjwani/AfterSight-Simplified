@@ -69,8 +69,8 @@ function CountsTable({ analysis }: { analysis: AnalysisResult }) {
       </table>
       {m && (
         <p className="text-xs text-ink-2">
-          On this scene: accuracy <span className="num text-ink">{m.accuracy?.toFixed(2)}</span> · macro-F1 <span className="num text-ink">{m.macro_f1?.toFixed(2)}</span>{' '}
-          <span className="text-ink-3">(n = {m.n}, a {analysis.provenance.split === 'test' ? 'held-out test' : analysis.provenance.split} scene; one scene is a small sample)</span>
+          Scene-level (this scene only): accuracy <span className="num text-ink">{m.accuracy?.toFixed(2) ?? 'not available'}</span> · macro-F1 <span className="num text-ink">{m.macro_f1?.toFixed(2) ?? 'not available'}</span>{' '}
+          <span className="text-ink-3">(n = {m.n}, a {analysis.provenance.split === 'test' ? 'held-out test' : analysis.provenance.split} scene; one scene is a small sample, not the overall test score)</span>
         </p>
       )}
     </div>

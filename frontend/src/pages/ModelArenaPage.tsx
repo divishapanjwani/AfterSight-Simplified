@@ -19,7 +19,7 @@ const NAMES: Record<string, string> = {
   baseline: 'Threshold baseline', logistic_regression: 'Logistic Regression', knn: 'KNN', decision_tree: 'Decision Tree', random_forest: 'Random Forest',
 }
 const name = (m: string, optional?: boolean) => `${NAMES[m] ?? m}${optional ? ' (optional)' : ''}`
-const f3 = (v: number | null | undefined) => (v === null || v === undefined ? '—' : v.toFixed(3))
+const f3 = (v: number | null | undefined) => (v === null || v === undefined ? 'not available' : v.toFixed(3))
 const SECTIONS = ['story', 'table', 'confusion', 'events', 'tree', 'confounding', 'three', 'experiments'] as const
 const SECTION_LABELS: Record<(typeof SECTIONS)[number], string> = {
   story: 'Honest headline', table: 'Comparison', confusion: 'Confusion', events: 'Per event', tree: 'Decision tree',

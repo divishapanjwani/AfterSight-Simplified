@@ -37,7 +37,7 @@ export function ReportsPage() {
                   <td className="py-1.5"><SplitChip split={a.split} /></td>
                   <td className="py-1.5 text-ink-2">{a.model_label}</td>
                   <td className="num py-1.5 text-right">{a.n_buildings}</td>
-                  <td className="num py-1.5 text-right">{a.macro_f1?.toFixed(2) ?? '—'}</td>
+                  <td className="num py-1.5 text-right">{a.macro_f1?.toFixed(2) ?? 'not available'}</td>
                   <td className="num py-1.5 text-right">{a.n_review}</td>
                   <td className="num py-1.5 pl-4 text-ink-3">{a.created_at.replace('T', ' ').slice(0, 16)}</td>
                   <td className="py-1.5 text-right whitespace-nowrap">

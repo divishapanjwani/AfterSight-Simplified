@@ -19,7 +19,7 @@ from app.core.errors import AppError
 from app.core.store import Store, StorePaths
 from app.inference import images, scenes
 from app.inference.analysis import run_analysis
-from app.reports.reports import report_context, write_csv, write_pdf
+from app.reports.reports import pdf_name, report_context, write_csv, write_pdf
 
 
 def evenness(counts: dict[str, int]) -> float:
@@ -57,7 +57,7 @@ def main() -> int:
         for model in models:
             analysis = run_analysis(store, sid, model)
             csv_path = store.paths.reports / f"{analysis['analysis_id']}.csv"
-            pdf_path = store.paths.reports / f"{analysis['analysis_id']}.pdf"
+            pdf_path = store.paths.reports / pdf_name(analysis["analysis_id"])  # same versioned name the API serves
             if not csv_path.is_file():
                 write_csv(analysis, csv_path)
             if not pdf_path.is_file():

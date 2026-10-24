@@ -13,6 +13,7 @@ from api_fixture import build_deployment, empty_store
 from app.api.deps import get_jobs, get_store
 from app.core.jobs import JobManager
 from app.main import app
+from app.reports.reports import REPORT_VERSION
 
 TRAIN_WARNING = "This scene was used for training. Accuracy here is optimistic."
 
@@ -205,7 +206,7 @@ def test_explanations(client, model, kind) -> None:
     _assert_clean_error(client.get(f"/api/analysis/{analysis['analysis_id']}/buildings/{other}/explain"), 404, "building_not_found")
 
 
-def test_exports(client) -> None:
+def test_exports(client, store) -> None:
     analysis = client.post("/api/analysis", json={"scene_id": _scene(client, "test"), "model_name": "logistic_regression"}).json()
     csv = client.get(f"/api/analysis/{analysis['analysis_id']}/export.csv")
     assert csv.status_code == 200 and csv.headers["content-type"].startswith("text/csv")
@@ -213,6 +214,7 @@ def test_exports(client) -> None:
     assert lines[0].startswith("building_uid,scene_id,split,model,predicted,true_label") and len(lines) == 1 + len(analysis["buildings"])
     pdf = client.get(f"/api/analysis/{analysis['analysis_id']}/report.pdf")
     assert pdf.status_code == 200 and pdf.content.startswith(b"%PDF") and len(pdf.content) > 5000
+    assert (store.paths.reports / f"{analysis['analysis_id']}.r{REPORT_VERSION}.pdf").is_file()  # versioned cache name
 
 
 def test_review_queue(client) -> None:

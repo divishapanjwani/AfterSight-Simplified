@@ -1,6 +1,6 @@
 /**
  * Building Case File: crops, predicted vs ground truth, confidence (with its meaning), and the model's
- * explanation — LR contributions, the decision-tree path, the KNN neighbours, or the random-forest note.
+ * explanation — LR contributions or the KNN neighbours.
  * All values come from the API.
  */
 import { useQuery } from '@tanstack/react-query'
@@ -124,33 +124,6 @@ function LrView({ e }: { e: Explanation }) {
   )
 }
 
-function TreeView({ e }: { e: Explanation }) {
-  const steps = e.detail.steps ?? []
-  return (
-    <div>
-      <p className="mb-2 text-xs text-ink-2">The questions the decision tree asked, from the root to the leaf (values in raw feature units).</p>
-      <ol className="space-y-1">
-        {steps.map((s, i) => (
-          <li key={i} className="grid grid-cols-[20px_1fr] gap-2 text-xs">
-            <span className="num text-ink-3">{i + 1}</span>
-            <span className="text-ink">
-              {featureLabel(s.feature)} <span className="num text-ink-2">{fmtValue(s.value_raw)} {s.op === '<=' ? '≤' : '>'} {fmtValue(s.threshold_raw)}</span>
-              <span className="ml-1 font-mono text-[10px] text-ink-3">{s.feature}</span>
-            </span>
-          </li>
-        ))}
-        <li className="grid grid-cols-[20px_1fr] gap-2 text-xs">
-          <span aria-hidden="true" className="text-ink-3">→</span>
-          <span className="text-ink">Leaf of <span className="num">{e.detail.leaf_samples}</span> training buildings:{' '}
-            <span className="num text-ink-2">{Object.entries(e.detail.leaf_class_fractions ?? {}).map(([c, p]) => `${shortName(c)} ${(p * 100).toFixed(0)}%`).join(' · ')}</span>
-          </span>
-        </li>
-      </ol>
-      <p className="mt-2 text-[11px] text-ink-3">Leaf shares are class-weighted training fractions, not calibrated probabilities.</p>
-    </div>
-  )
-}
-
 /** How many neighbours carry each label, in the order the labels first appear (nearest first). */
 function countVotes(neighbours: { label: string }[]): Record<string, number> {
   const votes: Record<string, number> = {}
@@ -187,12 +160,8 @@ function ExplanationView({ e }: { e: Explanation }) {
   switch (e.kind) {
     case 'lr_contributions':
       return <LrView e={e} />
-    case 'decision_path':
-      return <TreeView e={e} />
     case 'nearest_neighbours':
       return <KnnView e={e} />
-    case 'none': // random forest: no compact per-building explanation, the API sends a note instead
-      return <p className="text-xs text-ink-2">{e.detail.note}</p>
     default:
       return null
   }

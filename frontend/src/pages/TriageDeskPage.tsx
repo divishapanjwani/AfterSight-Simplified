@@ -180,7 +180,7 @@ export function TriageDeskPage() {
             <button key={m.name} type="button" role="radio" aria-checked={model === m.name} disabled={!m.trained}
               title={m.trained ? m.confidence : `Not trained — ${m.fix}`} onClick={() => set('model', m.name)}
               className={`border-r border-rule-strong px-2.5 py-1 text-sm last:border-r-0 disabled:cursor-not-allowed disabled:opacity-40 ${model === m.name ? 'bg-ink text-paper' : 'bg-sheet text-ink-2 hover:bg-sheet-2'}`}>
-              {m.label.replace(' (optional)', '')}{m.optional && <span className="ml-1 text-[10px] opacity-70">optional</span>}
+              {m.label}
             </button>
           ))}
         </div>

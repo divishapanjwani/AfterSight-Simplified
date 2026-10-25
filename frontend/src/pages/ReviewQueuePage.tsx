@@ -29,7 +29,7 @@ export function ReviewQueuePage() {
         <div role="radiogroup" aria-label="Model" className="flex overflow-hidden rounded-[3px] border border-rule-strong">
           {(models.data?.models ?? []).map((m) => (
             <button key={m.name} type="button" role="radio" aria-checked={model === m.name} disabled={!m.trained} onClick={() => set('model', m.name)}
-              className={`border-r border-rule-strong px-2.5 py-1 text-xs last:border-r-0 disabled:opacity-40 ${model === m.name ? 'bg-ink text-paper' : 'bg-sheet text-ink-2 hover:bg-sheet-2'}`}>{m.label.replace(' (optional)', '')}</button>
+              className={`border-r border-rule-strong px-2.5 py-1 text-xs last:border-r-0 disabled:opacity-40 ${model === m.name ? 'bg-ink text-paper' : 'bg-sheet text-ink-2 hover:bg-sheet-2'}`}>{m.label}</button>
           ))}
         </div>
       </div>

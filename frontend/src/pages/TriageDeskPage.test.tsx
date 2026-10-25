@@ -51,7 +51,7 @@ describe('Triage Desk', () => {
     api()
     page()
     await screen.findByText(ID)
-    expect(await screen.findByRole('radio', { name: /Random Forest/ })).toBeDisabled()
+    expect(await screen.findByRole('radio', { name: 'K-Nearest Neighbours' })).toBeDisabled() // untrained in this fixture
     expect(screen.getByRole('radio', { name: 'Logistic Regression' })).toHaveAttribute('aria-checked', 'true')
   })
 
@@ -106,7 +106,7 @@ it('keyboard: Enter on a focused footprint opens it; arrow keys pan without erro
 
 describe('Case file page', () => {
   it.each([
-    ['decision_tree', 'Leaf of', 'Texture smoothness change'],
+    ['logistic_regression', 'intercept', 'Surroundings brightness change'],
     ['knn', 'Votes:', 'minor'],
   ])('renders the %s explanation', async (model, text, detail) => {
     mockApi({

@@ -205,13 +205,6 @@ export interface LrContribution {
   contribution: number
 }
 
-export interface PathStep {
-  feature: string
-  value_raw: number
-  op: '<=' | '>'
-  threshold_raw: number
-}
-
 export interface Neighbour {
   sample_id: string
   label: DamageClass
@@ -224,7 +217,7 @@ export interface Explanation {
   analysis_id: string
   building_uid: string
   model: string
-  kind: 'lr_contributions' | 'decision_path' | 'nearest_neighbours' | 'none'
+  kind: 'lr_contributions' | 'nearest_neighbours'
   predicted: DamageClass
   true_label: DamageClass
   confidence: number
@@ -236,11 +229,6 @@ export interface Explanation {
     score?: number
     top_features?: LrContribution[]
     note?: string
-    // decision_path
-    steps?: PathStep[]
-    leaf_samples?: number
-    leaf_class_fractions?: Record<string, number>
-    prediction?: string
     // nearest_neighbours
     k?: number
     weights?: string
@@ -298,27 +286,6 @@ export interface Confounding {
   majority_class: string
   majority_class_accuracy: number
   chance_accuracy_uniform: number
-}
-
-export interface ExperimentRow {
-  variant: string
-  n_features: number
-  design: string
-  model: string
-  val_macro_f1: number
-  test_macro_f1: number
-  test_recall_major: number
-  test_recall_destroyed: number
-  event_prediction_accuracy_within_event: number | null
-}
-
-export interface Experiments {
-  label: string
-  section: string
-  selectable: false
-  note: string
-  variants: Record<string, string>
-  rows: ExperimentRow[]
 }
 
 export interface FeatureSummary {

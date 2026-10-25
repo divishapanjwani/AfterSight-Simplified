@@ -9,25 +9,40 @@ import { Dumbbell } from '../charts/Dumbbell'
 import { Heatmap } from '../charts/Heatmap'
 import { CaseFolder } from '../components/CaseFolder'
 import { Chip } from '../components/Chip'
-import { ErrorState, LoadingState, NotReadyState } from '../components/States'
-import { ApiError, api } from '../services/api'
+import { ErrorState, LoadingState } from '../components/States'
+import { api } from '../services/api'
 import { DAMAGE, DamageSwatch } from '../theme/damage'
 import { featureLabel, fmtValue } from '../theme/features'
 import type { Comparison, DamageClass, TreeNode } from '../types/api'
 
 const NAMES: Record<string, string> = {
-  baseline: 'Threshold baseline', logistic_regression: 'Logistic Regression', knn: 'KNN', decision_tree: 'Decision Tree', random_forest: 'Random Forest',
+  baseline: 'Threshold baseline', logistic_regression: 'Logistic Regression', knn: 'KNN', decision_tree: 'Decision Tree',
 }
-const name = (m: string, optional?: boolean) => `${NAMES[m] ?? m}${optional ? ' (optional)' : ''}`
+// Saved results of models the app no longer serves that the Arena still shows, as research evidence (the paper compares
+// KNN with the Decision Tree). Random Forest results stay on disk but are not shown.
+const RESEARCH_MODELS = ['decision_tree']
+const RESEARCH_NOTE = 'research comparison: not served in the app'
 const f3 = (v: number | null | undefined) => (v === null || v === undefined ? 'not available' : v.toFixed(3))
-const SECTIONS = ['story', 'table', 'confusion', 'events', 'tree', 'confounding', 'three', 'experiments'] as const
+const SECTIONS = ['story', 'table', 'confusion', 'events', 'tree', 'confounding', 'three'] as const
 const SECTION_LABELS: Record<(typeof SECTIONS)[number], string> = {
   story: 'Honest headline', table: 'Comparison', confusion: 'Confusion', events: 'Per event', tree: 'Decision tree',
-  confounding: 'Confounding', three: '3-class', experiments: 'Experiments',
+  confounding: 'Confounding', three: '3-class',
 }
 
 function useComparison(design: string, scheme: string) {
   return useQuery({ queryKey: ['comparison', design, scheme], queryFn: () => api.comparison(design, scheme), retry: false })
+}
+
+/** The models the Arena shows: the threshold baseline, the served models (from the config, via /api/models) and the
+ *  research comparison models. `label` marks a research model as not served. */
+function useArenaModels() {
+  const q = useQuery({ queryKey: ['models'], queryFn: api.models })
+  const served = q.data ? q.data.models.map((m) => m.name) : []
+  const names = ['baseline', ...served, ...RESEARCH_MODELS.filter((m) => !served.includes(m))]
+  const research = (m: string) => !served.includes(m) && m !== 'baseline'
+  const label = (m: string) => `${NAMES[m] ?? m}${research(m) ? ` (${RESEARCH_NOTE})` : ''}`
+  const short = (m: string) => `${NAMES[m] ?? m}${research(m) ? ' (research)' : ''}`
+  return { ready: q.isSuccess, names, research, label, short }
 }
 
 function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; label: string }) {
@@ -42,8 +57,9 @@ function Segmented<T extends string>({ value, options, onChange, label }: { valu
 }
 
 function Story({ within, cross, title }: { within: Comparison; cross: Comparison; title: string }) {
-  const rows = within.models.map((m) => ({
-    label: name(m.model, m.optional), a: m.test_macro_f1, b: cross.models.find((c) => c.model === m.model)?.test_macro_f1 ?? null,
+  const arena = useArenaModels()
+  const rows = within.models.filter((m) => arena.names.includes(m.model)).map((m) => ({
+    label: arena.label(m.model), a: m.test_macro_f1, b: cross.models.find((c) => c.model === m.model)?.test_macro_f1 ?? null,
   }))
   return (
     <div className="grid grid-cols-[1fr_300px] gap-6">
@@ -60,6 +76,7 @@ function Story({ within, cross, title }: { within: Comparison; cross: Comparison
 }
 
 function ComparisonTable({ c }: { c: Comparison }) {
+  const arena = useArenaModels()
   return (
     <table className="w-full text-xs">
       <thead>
@@ -78,9 +95,9 @@ function ComparisonTable({ c }: { c: Comparison }) {
         </tr>
       </thead>
       <tbody>
-        {c.models.map((m) => (
+        {c.models.filter((m) => arena.names.includes(m.model)).map((m) => (
           <tr key={m.model} className="border-b border-rule/60 last:border-0">
-            <td className="py-1.5 text-ink">{name(m.model, m.optional)}{m.model === 'baseline' && <span className="ml-1 text-ink-3">· non-ML</span>}</td>
+            <td className="py-1.5 text-ink">{arena.label(m.model)}{m.model === 'baseline' && <span className="ml-1 text-ink-3">· non-ML</span>}</td>
             <td className="num py-1.5 text-right">{f3(m.val_macro_f1)}</td>
             <td className="num py-1.5 text-right font-medium text-ink">{f3(m.test_macro_f1)}</td>
             <td className="num py-1.5 text-right">{f3(m.test_accuracy)}</td>
@@ -94,7 +111,12 @@ function ComparisonTable({ c }: { c: Comparison }) {
   )
 }
 
+function ResearchNote({ show }: { show: boolean }) {
+  return show ? <p className="text-xs text-ink-3">Decision Tree: saved results shown as a {RESEARCH_NOTE}.</p> : null
+}
+
 function ConfusionSection() {
+  const arena = useArenaModels()
   const [model, setModel] = useState('logistic_regression')
   const [design, setDesign] = useState<'within_event' | 'cross_event'>('within_event')
   const [split, setSplit] = useState<'test' | 'val'>('test')
@@ -104,12 +126,13 @@ function ConfusionSection() {
     <div className="space-y-3">
       <div className="flex flex-wrap gap-3">
         <Segmented label="Model" value={model} onChange={setModel}
-          options={Object.keys(NAMES).map((k) => ({ value: k, label: NAMES[k] }))} />
+          options={arena.names.map((k) => ({ value: k, label: arena.short(k) }))} />
         <Segmented label="Design" value={design} onChange={setDesign} options={[{ value: 'within_event', label: 'within-event' }, { value: 'cross_event', label: 'cross-event' }]} />
         <Segmented label="Split" value={split} onChange={setSplit} options={[{ value: 'test', label: 'test' }, { value: 'val', label: 'validation' }]} />
       </div>
+      <ResearchNote show={arena.ready && arena.research(model)} />
       {q.isPending && <LoadingState label="Loading metrics…" />}
-      {q.isError && <ErrorState error={q.error} what={`${NAMES[model]} metrics`} />}
+      {q.isError && <ErrorState error={q.error} what={`${NAMES[model] ?? model} metrics`} />}
       {m && (
         <div className="flex items-start gap-8">
           <Heatmap rows={m.confusion_matrix.labels} cols={m.confusion_matrix.labels} matrix={m.confusion_matrix.rows_true_cols_pred}
@@ -128,12 +151,14 @@ function ConfusionSection() {
 }
 
 function EventsSection() {
+  const arena = useArenaModels()
   const [model, setModel] = useState('logistic_regression')
   const q = useQuery({ queryKey: ['metrics', model, 'within_event'], queryFn: () => api.modelMetrics(model, 'within_event') })
   const events = q.data ? Object.entries(q.data.metrics.test_per_event) : []
   return (
     <div className="space-y-3">
-      <Segmented label="Model" value={model} onChange={setModel} options={Object.keys(NAMES).filter((k) => k !== 'baseline').map((k) => ({ value: k, label: NAMES[k] }))} />
+      <Segmented label="Model" value={model} onChange={setModel} options={arena.names.filter((k) => k !== 'baseline').map((k) => ({ value: k, label: arena.short(k) }))} />
+      <ResearchNote show={arena.ready && arena.research(model)} />
       {q.isPending && <LoadingState label="Loading per-event metrics…" />}
       {q.isError && <ErrorState error={q.error} what="per-event metrics" />}
       {q.data && (
@@ -211,11 +236,9 @@ function TreeSection() {
 
 function ConfoundingSection() {
   const c = useQuery({ queryKey: ['confounding'], queryFn: api.confounding, retry: false })
-  const x = useQuery({ queryKey: ['experiments'], queryFn: api.experiments, retry: false })
   if (c.isPending) return <LoadingState label="Loading the confounding check…" />
   if (c.isError) return <ErrorState error={c.error} what="the confounding check" />
   const m = c.data.test_metrics
-  const variants = x.data ? Object.keys(x.data.variants).map((v) => ({ label: `Feature-set experiment · ${v}`, value: x.data!.rows.find((r) => r.variant === v)?.event_prediction_accuracy_within_event ?? null })) : []
   return (
     <div className="grid grid-cols-[1fr_1fr] gap-8">
       <div className="space-y-3">
@@ -224,47 +247,11 @@ function ConfoundingSection() {
           { label: 'Event prediction accuracy (same features)', value: m.accuracy },
           { label: `Always guess the most common event (${c.data.majority_class})`, value: c.data.majority_class_accuracy },
           { label: `Uniform chance (${m.confusion_matrix.labels.length} events)`, value: c.data.chance_accuracy_uniform },
-          ...variants,
         ]} />
-        <p className="text-xs leading-5 text-ink-2">The features carry a strong signature of <i>which</i> disaster a building is from (sensor, region, vegetation, roofs).
-          {x.data
-            ? ' The feature-set experiments reduced that signature, but cross-event scores did not improve — the gap is a genuine shift between disasters.'
-            : ' Feature-set experiment results are not available, so they are not compared here (see Experiments below).'}</p>
+        <p className="text-xs leading-5 text-ink-2">The features carry a strong signature of <i>which</i> disaster a building is from (sensor, region, vegetation, roofs).</p>
       </div>
       <Heatmap rows={m.confusion_matrix.labels} cols={m.confusion_matrix.labels.map((e) => e.replace('hurricane-', 'h-'))} matrix={m.confusion_matrix.rows_true_cols_pred}
         rowTitle="true event" colTitle="predicted" cell={56} caption={`TEST SET (${c.data.design_label}) · predicting EVENT, analysis only`} />
-    </div>
-  )
-}
-
-function ExperimentsSection() {
-  const x = useQuery({ queryKey: ['experiments'], queryFn: api.experiments, retry: false })
-  if (x.isPending) return <LoadingState label="Loading experiments…" />
-  // The saved summary exists but is broken: say so plainly, never show partial numbers as results.
-  if (x.error instanceof ApiError && x.error.code === 'results_invalid') {
-    return <NotReadyState title="Saved feature-set experiment results are malformed or incomplete" message={x.error.message} fix={x.error.fix} />
-  }
-  if (x.isError) return <ErrorState error={x.error} what="the experiments" />  // never run: "not available yet" + command
-  return (
-    <div className="space-y-3">
-      <p className="text-xs text-ink-2">{x.data.note}</p>
-      <ul className="text-xs text-ink-2">{Object.entries(x.data.variants).map(([k, v]) => <li key={k}><span className="num text-ink">{k}</span> — {v}</li>)}</ul>
-      <table className="w-full text-xs">
-        <thead><tr className="border-b border-rule text-left text-ink-3">
-          <th className="py-1.5 font-normal">Variant</th><th className="py-1.5 font-normal">Design</th><th className="py-1.5 font-normal">Model</th>
-          <th className="py-1.5 text-right font-normal">macro-F1 <Chip kind="test" /></th><th className="py-1.5 text-right font-normal">recall major</th>
-          <th className="py-1.5 text-right font-normal">recall destroyed</th><th className="py-1.5 text-right font-normal">event-pred. acc.</th></tr></thead>
-        <tbody>
-          {x.data.rows.map((r) => (
-            <tr key={`${r.variant}-${r.design}-${r.model}`} className="border-b border-rule/60 last:border-0">
-              <td className="num py-1.5 text-ink">{r.variant} <span className="text-ink-3">({r.n_features})</span></td><td className="py-1.5 text-ink-2">{r.design.replace('_', '-')}</td>
-              <td className="py-1.5 text-ink-2">{NAMES[r.model]}</td><td className="num py-1.5 text-right font-medium">{f3(r.test_macro_f1)}</td>
-              <td className="num py-1.5 text-right">{f3(r.test_recall_major)}</td><td className="num py-1.5 text-right">{f3(r.test_recall_destroyed)}</td>
-              <td className="num py-1.5 text-right">{r.design === 'within_event' ? f3(r.event_prediction_accuracy_within_event) : ''}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   )
 }
@@ -297,23 +284,19 @@ export function ModelArenaPage() {
         aside={<Segmented label="Design" value={design} onChange={setDesign} options={[{ value: 'within_event', label: 'within-event' }, { value: 'cross_event', label: 'cross-event' }]} />}>
         {table.isPending && <LoadingState label="Loading…" />}
         {table.isError && <ErrorState error={table.error} what="the comparison" />}
-        {table.data && <><ComparisonTable c={table.data} /><p className="mt-2 text-[11px] text-ink-3">{table.data.split_note} Training times are fits on the training split; inference = test-set prediction time per 1,000 buildings (KNN and RF use all cores).</p></>}
+        {table.data && <><ComparisonTable c={table.data} /><p className="mt-2 text-[11px] text-ink-3">{table.data.split_note} Training times are fits on the training split; inference = test-set prediction time per 1,000 buildings (KNN uses all cores).</p></>}
       </CaseFolder></div>
 
       <div id="confusion"><CaseFolder tab="ARENA · 03" title="Confusion matrices"><ConfusionSection /></CaseFolder></div>
       <div id="events"><CaseFolder tab="ARENA · 04" title="Per-event scores (within-event test)"><EventsSection /></CaseFolder></div>
-      <div id="tree"><CaseFolder tab="ARENA · 05" title="Decision tree"><TreeSection /></CaseFolder></div>
+      <div id="tree"><CaseFolder tab="ARENA · 05" title="Decision tree"
+        aside={<span className="font-mono text-[10px] tracking-wider text-ink-3">{RESEARCH_NOTE.toUpperCase()}</span>}><TreeSection /></CaseFolder></div>
       <div id="confounding"><CaseFolder tab="ARENA · 06" title="Event-confounding check" aside={<span className="font-mono text-[10px] tracking-wider text-ink-3">ANALYSIS ONLY</span>}><ConfoundingSection /></CaseFolder></div>
 
       <div id="three"><CaseFolder tab="ARENA · 07 · EXPERIMENT" title="3-class experiment: no-damage / damaged / destroyed"
         aside={<span className="font-mono text-[10px] tracking-wider text-ink-3">SEPARATE EXPERIMENT · 4-CLASS STAYS PRIMARY</span>}>
         {within3.isSuccess && cross3.isSuccess ? <Story within={within3.data} cross={cross3.data} title="3-class (experiment)" />
           : within3.isError ? <ErrorState error={within3.error} what="the 3-class results" /> : <LoadingState label="Loading…" />}
-      </CaseFolder></div>
-
-      <div id="experiments"><CaseFolder tab="EXPERIMENTS · FEATURE SETS" title="Experiments: confounding-reduced feature sets"
-        aside={<span className="font-mono text-[10px] tracking-wider text-ink-3">NOT SELECTABLE IN THE TRIAGE DESK</span>}>
-        <ExperimentsSection />
       </CaseFolder></div>
     </div>
   )

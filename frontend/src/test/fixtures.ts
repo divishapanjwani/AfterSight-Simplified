@@ -9,7 +9,7 @@ export const readyStatus: DatasetStatus = {
     scene_cache: { ready: true, detail: { scenes: 12, events: ['ev-a', 'ev-b'], buildings: 345 }, fix: null },
     features: { ready: true, detail: { buildings: 340, features: 37, schema_version: 1 }, fix: null },
     splits: { ready: true, detail: { within_event: 'aaaa1111', cross_event: 'bbbb2222' }, fix: null },
-    models: { ready: true, detail: { trained: { logistic_regression: true, random_forest: false } }, fix: 'python scripts/train.py' },
+    models: { ready: true, detail: { trained: { logistic_regression: true, knn: true } }, fix: null },
     review_thresholds: { ready: true, detail: { rule: 'lowest t' }, fix: null },
     last_analysis: { ready: false, detail: {}, fix: 'POST /api/analysis' },
   },
@@ -30,8 +30,8 @@ export const models: ModelList = {
     { name: 'logistic_regression', label: 'Logistic Regression', selectable: true, optional: false, default: true, trained: true,
       design: 'within_event', scheme: 'four_class', confidence: 'probability (not calibrated)', hyperparameters: { C: 10 },
       val_macro_f1: 0.611, test_macro_f1: 0.622, trained_at: 't', review_threshold: 0.44, fix: null },
-    { name: 'random_forest', label: 'Random Forest (optional)', selectable: true, optional: true, default: false, trained: false,
-      design: 'within_event', scheme: 'four_class', confidence: 'mean of tree leaf fractions', hyperparameters: null,
+    { name: 'knn', label: 'K-Nearest Neighbours', selectable: true, optional: false, default: false, trained: false,
+      design: 'within_event', scheme: 'four_class', confidence: 'vote fraction of neighbours', hyperparameters: null,
       val_macro_f1: null, test_macro_f1: null, trained_at: null, review_threshold: null, fix: 'python scripts/train.py' },
   ],
 }
@@ -84,7 +84,7 @@ const prediction = (uid: string, true_label: BuildingPrediction['true_label'], p
 
 export const analysisFor = (id: string, model = 'logistic_regression', split: SceneSummary['split'] = 'test', warning: string | null = null): AnalysisResult => ({
   analysis_id: 'abcdef0123456789', cached: false, created_at: 't', scene_id: id, event: 'ev-a', disaster_type: 'flooding',
-  model: { name: model, label: model === 'knn' ? 'K-Nearest Neighbours' : model === 'decision_tree' ? 'Decision Tree' : 'Logistic Regression',
+  model: { name: model, label: model === 'knn' ? 'K-Nearest Neighbours' : 'Logistic Regression',
     design: 'within_event', design_label: 'within-event generalisation', scheme: 'four_class', trained_at: 't', hyperparameters: {}, test_macro_f1: 0.5, optional: false },
   confidence_kind: model === 'knn' ? 'vote fraction of neighbours' : 'probability (not calibrated)',
   review_threshold: 0.48, review_rule: 'rule',
@@ -103,9 +103,6 @@ export const explanations: Record<string, Explanation> = {
     { feature: 'post_mean_b', value_raw: 155.9, standardised: 1.2, coefficient: -3.6, contribution: -4.37 },
     { feature: 'ring_dmean', value_raw: 4.2, standardised: 0.9, coefficient: 3.4, contribution: 3.07 },
   ] } },
-  decision_tree: { ...base, building_uid: 'x', kind: 'decision_path', detail: { prediction: 'destroyed', leaf_samples: 3677,
-    leaf_class_fractions: { destroyed: 0.6, 'no-damage': 0.4 },
-    steps: [{ feature: 'glcm_homogeneity_delta', value_raw: -0.022, op: '>', threshold_raw: -0.146 }] } },
   knn: { ...base, building_uid: 'x', kind: 'nearest_neighbours', detail: { k: 2, weights: 'uniform', neighbours: [
     { sample_id: 'ev-b_00000001_b0003', label: 'destroyed', distance: 1.5, split: 'train', crop_urls: { pre: '/p', post: '/q' } },
     { sample_id: 'ev-b_00000002_b0004', label: 'minor-damage', distance: 1.9, split: 'train', crop_urls: { pre: '/p', post: '/q' } },

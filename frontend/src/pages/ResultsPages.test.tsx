@@ -15,54 +15,47 @@ const cm = { labels: ['no-damage', 'destroyed'], rows_true_cols_pred: [[8, 2], [
 const metrics = { n: 20, accuracy: 0.85, macro_f1: 0.851, weighted_f1: 0.85, per_class: { destroyed: { precision: 1, recall: 0.9, f1: 0.9, support: 10 } }, confusion_matrix: cm, notes: [] }
 
 describe('Model Arena', () => {
-  it('tells the within- vs cross-event story with API numbers, and separates experiments', async () => {
-    mockApi({
-      '/api/results/comparison': (url) => ({ body: url.searchParams.get('design') === 'cross_event' ? comparison('cross_event', 0.291, 0.301) : comparison('within_event', 0.532, 0.481) }),
-      '/api/models': (url) => url.pathname.endsWith('/metrics')
+  const arenaRoutes = () => ({
+    '/api/results/comparison': (url: URL) => ({ body: url.searchParams.get('design') === 'cross_event' ? comparison('cross_event', 0.291, 0.301) : comparison('within_event', 0.532, 0.481) }),
+    '/api/models': (url: URL) => url.pathname === '/api/models' ? { body: models }
+      : url.pathname.endsWith('/metrics')
         ? { body: { model: 'logistic_regression', hyperparameters: { C: 10 }, metrics: { val: metrics, test: metrics, test_per_event: { 'ev-a': metrics } } } }
         : { body: { root: { id: 0, depth: 0, samples: 50, class_fractions: {}, majority: 'destroyed', leaf: true }, n_nodes: 1, max_depth: 0, n_leaves: 1, classes: [], view_max_depth: 3 } },
-      '/api/results/confounding': { body: { design_label: 'within-event generalisation', target: 'event', test_metrics: { ...metrics, accuracy: 0.829, confusion_matrix: { labels: ['ev-a', 'ev-b'], rows_true_cols_pred: [[5, 1], [2, 4]] } }, majority_class: 'ev-a', majority_class_accuracy: 0.252, chance_accuracy_uniform: 0.2 } },
-      '/api/results/experiments': { body: { label: 'Phase 3b experiment', section: 'Experiments', selectable: false, note: 'Separate models for analysis only.', variants: { change_only: '17 features' },
-        rows: [{ variant: 'change_only', n_features: 17, design: 'within_event', model: 'logistic_regression', val_macro_f1: 0.4, test_macro_f1: 0.45, test_recall_major: 0.5, test_recall_destroyed: 0.76, event_prediction_accuracy_within_event: 0.632 }] } },
-    })
+    '/api/results/confounding': { body: { design_label: 'within-event generalisation', target: 'event', test_metrics: { ...metrics, accuracy: 0.829, confusion_matrix: { labels: ['ev-a', 'ev-b'], rows_true_cols_pred: [[5, 1], [2, 4]] } }, majority_class: 'ev-a', majority_class_accuracy: 0.252, chance_accuracy_uniform: 0.2 } },
+  })
+
+  it('tells the within- vs cross-event story with API numbers, and keeps the confounding result', async () => {
+    mockApi(arenaRoutes())
     renderAt(<ModelArenaPage />, '/arena')
     expect(await screen.findAllByText('0.53 → 0.29')).not.toHaveLength(0)
-    expect(screen.getByText('NOT SELECTABLE IN THE TRIAGE DESK')).toBeInTheDocument()
     expect(await screen.findByText('0.829')).toBeInTheDocument() // event-prediction accuracy
     expect(screen.getByText('0.252')).toBeInTheDocument()
-    expect((await screen.findAllByText('0.632')).length).toBeGreaterThan(0) // feature-set experiment event accuracy
     expect(screen.getByText('SEPARATE EXPERIMENT · 4-CLASS STAYS PRIMARY')).toBeInTheDocument()
-    expect(screen.getByText('EXPERIMENTS · FEATURE SETS')).toBeInTheDocument()
-    expect(screen.getByText('Feature-set experiment · change_only')).toBeInTheDocument()
-    // the internal development name is no longer shown anywhere on the page (the API still sends `label`)
     expect(screen.queryByText(/Phase 3b/i)).not.toBeInTheDocument()
   })
-})
 
-describe('Model Arena: feature-set experiment results not usable', () => {
-  const routes = (experiments: { status: number; body: unknown }) => ({
-    '/api/results/comparison': (url: URL) => ({ body: url.searchParams.get('design') === 'cross_event' ? comparison('cross_event', 0.291, 0.301) : comparison('within_event', 0.532, 0.481) }),
-    '/api/results/confounding': { body: { design_label: 'within-event generalisation', target: 'event', test_metrics: { ...metrics, accuracy: 0.829, confusion_matrix: { labels: ['ev-a', 'ev-b'], rows_true_cols_pred: [[5, 1], [2, 4]] } }, majority_class: 'ev-a', majority_class_accuracy: 0.252, chance_accuracy_uniform: 0.2 } },
-    '/api/results/experiments': experiments,
-  })
-
-  it('a malformed or incomplete summary gets its own state, the reason and the command, and no numbers', async () => {
-    mockApi(routes({ status: 503, body: { error: { code: 'results_invalid', message: "The saved feature-set experiment summary can't be used: row 3 (scene_normalised, decision_tree) is missing 'test_macro_f1'.", fix: 'python scripts/run_phase3b.py' } } }))
+  it('has no feature-set Experiments section and never requests its results', async () => {
+    const calls = mockApi(arenaRoutes())
     renderAt(<ModelArenaPage />, '/arena')
-    expect(await screen.findByText('Saved feature-set experiment results are malformed or incomplete')).toBeInTheDocument()
-    expect(screen.getByText(/row 3 \(scene_normalised, decision_tree\) is missing 'test_macro_f1'/)).toBeInTheDocument()
-    expect(screen.getByText('$ python scripts/run_phase3b.py')).toBeInTheDocument()
-    expect(screen.queryByText(/Feature-set experiment · /)).not.toBeInTheDocument() // no experiment bars in the confounding chart
-    expect(screen.getByText(/Feature-set experiment results are not available/)).toBeInTheDocument()
+    expect(await screen.findByText('0.829')).toBeInTheDocument()
+    for (const gone of ['EXPERIMENTS · FEATURE SETS', 'Experiments: confounding-reduced feature sets', 'NOT SELECTABLE IN THE TRIAGE DESK']) {
+      expect(screen.queryByText(gone)).not.toBeInTheDocument()
+    }
+    expect(screen.queryByText(/Feature-set experiment/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/reduced that signature/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Experiments' })).not.toBeInTheDocument()
+    expect(document.getElementById('experiments')).toBeNull()
+    expect(calls.some((u) => u.pathname === '/api/results/experiments')).toBe(false)
   })
 
-  it('a missing summary says it has not been run yet, with the command', async () => {
-    mockApi(routes({ status: 404, body: { error: { code: 'results_not_found', message: 'No experiments have been run.', fix: 'python scripts/run_phase3b.py' } } }))
+  it('labels the Decision Tree as a research comparison and does not show Random Forest', async () => {
+    mockApi(arenaRoutes())
     renderAt(<ModelArenaPage />, '/arena')
-    expect(await screen.findByText('Not available yet: the experiments')).toBeInTheDocument()
-    expect(screen.getByText('No experiments have been run.')).toBeInTheDocument()
-    expect(screen.queryByText('Saved feature-set experiment results are malformed or incomplete')).not.toBeInTheDocument()
+    expect((await screen.findAllByText('Decision Tree (research comparison: not served in the app)')).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Logistic Regression').length).toBeGreaterThan(0) // served: no research label
+    expect(screen.getByText('RESEARCH COMPARISON: NOT SERVED IN THE APP')).toBeInTheDocument() // tree section
+    expect(screen.queryByText(/Random Forest/)).not.toBeInTheDocument()
+    expect(within(screen.getAllByRole('radiogroup', { name: 'Model' })[0]).getByRole('radio', { name: 'Decision Tree (research)' })).toBeInTheDocument()
   })
 })
 

@@ -75,7 +75,7 @@ the project's own environment it passes, which is exactly what the test protects
 |---|---|---|
 | D1 threshold readiness | **fixed now** | see below; tests in `test_review_thresholds.py`, `test_api.py::test_threshold_tile_*`, `ReadinessPage.test.tsx` |
 | D2 Review Queue | already correct | `test_api.py::test_review_queue_without_a_usable_threshold`, `ResultsPages.test.tsx` (no-threshold note, paging) |
-| D3 Phase 3b | already correct | `test_api.py::test_phase3b_summary_*`, `test_phase3b.py` (writer output accepted by reader); real rows identical to `summary.json` |
+| D3 feature-set experiments | already correct | `test_api.py::test_phase3b_summary_*`, `test_phase3b.py` (writer output accepted by reader); real rows identical to `summary.json` |
 | D4 models | already correct | per-model `trained` flags, models tile counts required models only; Case File explanation for LR, KNN, DT and RF in the snapshot (752 explanations) |
 | D5 reports and wording | already correct | `test_reports.py`; every UI and PDF mention of "probability" says "not calibrated" or "model score" |
 

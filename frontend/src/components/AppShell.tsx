@@ -8,46 +8,39 @@ import { useWorkflow } from './Workflow'
 const SCOPE = 'Damage classification on building footprints derived from xBD annotations.'
 
 /** Workflow steps (left to right); links follow the scene/analysis/building the user is working on. */
-function useSteps(): { to: string; label: string; ready: boolean; match: string }[] {
+function useSteps(): { to: string; label: string; match: string }[] {
   const { state } = useWorkflow()
   const triage = state.sceneId ? `/triage/${state.sceneId}?model=${state.model ?? ''}${state.analysisId ? '&run=1' : ''}` : '/triage'
   const caseFile = state.analysisId && state.buildingUid ? `/case/${state.analysisId}/${state.buildingUid}` : '/case'
   return [
-    { to: '/library?split=test', label: 'Library', ready: true, match: '/library' },
-    { to: triage, label: 'Triage', ready: true, match: '/triage' },
-    { to: caseFile, label: 'Case file', ready: true, match: '/case' },
-    { to: '/arena', label: 'Arena', ready: true, match: '/arena' },
-    { to: '/reports', label: 'Report', ready: true, match: '/reports' },
+    { to: '/library?split=test', label: 'Library', match: '/library' },
+    { to: triage, label: 'Triage', match: '/triage' },
+    { to: caseFile, label: 'Case file', match: '/case' },
+    { to: '/arena', label: 'Arena', match: '/arena' },
+    { to: '/reports', label: 'Report', match: '/reports' },
   ]
 }
-const TOOLS: { to: string; label: string; ready: boolean }[] = [
-  { to: '/', label: 'Readiness', ready: true },
-  { to: '/features', label: 'Feature Lab', ready: true },
-  { to: '/clusters', label: 'Cluster Atlas', ready: true },
-  { to: '/review', label: 'Review Queue', ready: true },
+const TOOLS: { to: string; label: string }[] = [
+  { to: '/', label: 'Readiness' },
+  { to: '/features', label: 'Feature Lab' },
+  { to: '/clusters', label: 'Cluster Atlas' },
+  { to: '/review', label: 'Review Queue' },
 ]
 
 function ApiDot() {
   const health = useQuery({ queryKey: ['health'], queryFn: api.health, retry: false, refetchInterval: 30_000 })
   const ok = health.isSuccess
   return (
-    <span className="flex items-center gap-1.5 font-mono text-[11px] text-ink-3" title={ok ? `API v${health.data.version}` : 'API not reachable'}>
+    <span className="flex items-center gap-1.5 font-mono text-[11px] text-ink-3" title={ok ? 'API online' : 'API not reachable'}>
       <span aria-hidden="true" className={`inline-block h-2 w-2 rounded-full ${ok ? 'bg-ok' : health.isPending ? 'bg-ink-3' : 'bg-danger'}`} />
       {ok ? 'API online' : health.isPending ? 'API …' : 'API offline'}
     </span>
   )
 }
 
-function StepLink({ to, label, ready, index, match }: { to: string; label: string; ready: boolean; index?: number; match?: string }) {
+function StepLink({ to, label, index, match }: { to: string; label: string; index?: number; match?: string }) {
   const { pathname } = useLocation()
   const prefix = index !== undefined ? <span className="num mr-1.5 text-ink-3">{String(index + 1).padStart(2, '0')}</span> : null
-  if (!ready) {
-    return (
-      <span aria-disabled="true" title="Arrives in Phase 5 Part B" className="flex items-center px-3 py-2 text-sm text-ink-3/70">
-        {prefix}{label}
-      </span>
-    )
-  }
   return (
     <NavLink to={to} end={!match}
       className={({ isActive }) => {

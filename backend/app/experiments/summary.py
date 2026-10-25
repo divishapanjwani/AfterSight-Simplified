@@ -1,4 +1,7 @@
-"""Reading the saved Phase 3b summary (artifacts/experiments/phase3b/summary.json) for the Model Arena.
+"""Reading the saved feature-set experiment summary for the Model Arena.
+
+The experiment was called "Phase 3b" during development, which is why its files live in
+artifacts/experiments/phase3b/ (summary.json).
 
 The file is written by scripts/run_phase3b.py (app/experiments/phase3b.py). This module only checks that it
 has what the Arena shows; the saved values are passed through exactly as written, never replaced or filled in.
@@ -67,5 +70,5 @@ def load_summary(store: Store) -> dict[str, Any]:
     if state == "missing":
         raise NotFound("No experiments have been run.", code="results_not_found", fix=FIX["experiments"])
     if state == "invalid":
-        raise ResultsInvalid(f"The saved Phase 3b summary can't be used: {problem}.", fix=FIX["experiments"])
+        raise ResultsInvalid(f"The saved feature-set experiment summary can't be used: {problem}.", fix=FIX["experiments"])
     return doc

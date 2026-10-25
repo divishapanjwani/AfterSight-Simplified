@@ -699,7 +699,7 @@ season, region and roof styles. Cross-event, hurricane-michael looks different, 
 different too (23% minor damage vs 14% in the training events). Every model loses between a third and a half of its score.
 **0.53 is an optimistic upper bound; 0.29 is the realistic figure for a new disaster.**
 
-### 7.4 What the confounding check and Phase 3b proved
+### 7.4 What the confounding check and the feature-set experiments proved
 
 **Confounding check.** We trained a Logistic Regression to predict the **event** (which disaster) from the same
 37 features. It was right **82.9%** of the time, against 25.2% for always guessing the most common event. So the
@@ -711,7 +711,7 @@ santa-rosa 0.460). Part of the pooled score comes from recognising the disaster 
 
 *Figure 13: Predicting the event from the features (test set): most buildings are recognised.*
 
-**Phase 3b.** We tried to remove that signature:
+**Feature-set experiments** (called "Phase 3b" during development, so their files are in `artifacts/experiments/phase3b/` and the script is `scripts/run_phase3b.py`). We tried to remove that signature:
 
 - **change-only:** 17 features, with no absolute colour levels;
 - **scene-normalised:** each feature minus the median of its scene;
@@ -825,7 +825,7 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 | `backend/app/features/extract.py` | computes the features for one building |
 | `backend/app/features/schema.py` | names of the 37 features and the non-feature columns |
 | `backend/app/features/table.py` | builds and loads the feature table |
-| `backend/app/features/variants.py` | Phase 3b feature variants |
+| `backend/app/features/variants.py` | feature-set experiment variants |
 | `backend/app/training/splits.py` | scene-grouped splits and leakage checks |
 | `backend/app/training/models.py` | pipelines, baseline rule, log1p transformer |
 | `backend/app/training/run.py` | tuning, single test evaluation, saving |
@@ -838,7 +838,7 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 | `backend/app/inference/analysis.py` | runs and caches an analysis; explanations |
 | `backend/app/inference/review.py` | review thresholds: calibration on validation, which thresholds are usable, READY / PARTIAL / NOT READY |
 | `backend/app/inference/review_queue.py` | builds the review queue |
-| `backend/app/experiments/summary.py` | reads and checks the saved Phase 3b summary for the Model Arena |
+| `backend/app/experiments/summary.py` | reads and checks the saved feature-set experiment summary for the Model Arena |
 | `backend/app/inference/feature_lab.py` | Feature Lab statistics (η², per-class percentiles, scatter sample), training split only |
 | `backend/app/reports/reports.py` | CSV and PDF reports |
 | `frontend/src/pages/` | one file per page (Triage Desk, Arena, …) |
@@ -922,7 +922,7 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 16. Why is K-Means not used for predictions?
 17. What does the cross-event design hold out, and why?
 18. The event can be predicted from the features with 82.9% accuracy. Why does that matter?
-19. Phase 3b reduced event prediction to 37.4%. Why didn't that fix cross-event performance?
+19. The feature-set experiments reduced event prediction to 37.4%. Why didn't that fix cross-event performance?
 20. A building appears with a dashed red outline in "Correct vs wrong" mode. What does that mean, and what would
     you check in its Case File?
 

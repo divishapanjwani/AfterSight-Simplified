@@ -18,7 +18,7 @@ score.
   - all 37 Feature Lab features;
   - `/models`.
 - **Real files untouched.** `data/` and `artifacts/` were never edited, nothing was retrained, and the real
-  Phase 3b results were **used, not regenerated**.
+  feature-set experiment results were **used, not regenerated**.
 - **Edge cases on temporary copies.** We tested them on a temporary copy of `artifacts/` (symlinks to the
   real files, with only the file under test replaced), so the real files were never changed.
 
@@ -107,13 +107,13 @@ which suggests a threshold was in use. It also called the remaining buildings "c
 **Exam answer.** "Without a threshold chosen on validation we can't call anything low-confidence, so the
 queue shows only buildings where the models disagree, and it says why."
 
-## 4. Phase 3b results in the Model Arena
+## 4. Feature-set experiment results in the Model Arena
 
 **What was wrong.** A missing summary already showed "not available yet" plus the command. But:
 
 - a **malformed** summary (bad JSON) caused HTTP 500;
 - an **incomplete** one was served as if it were fine, and two such cases crashed the Arena page;
-- the confounding section always claimed what Phase 3b found, even with no results.
+- the confounding section always claimed what the feature-set experiments found, even with no results.
 
 **What changed.**
 
@@ -122,7 +122,7 @@ queue shows only buildings where the models disagree, and it says why."
 - A broken file gives a structured **503 `results_invalid`** naming the problem (for example "row 3 … is
   missing 'test_macro_f1'") plus `python scripts/run_phase3b.py`.
 - The Arena shows a separate "malformed or incomplete" state.
-- The Phase 3b sentence appears only when the results are available.
+- The feature-set experiment sentence appears only when the results are available.
 - The writer and reader already agreed on path and keys. A test now checks that what `run_phase3b` writes
   is exactly what the reader accepts.
 - The workflow doesn't record run failures, so there is no "run failed" state; we didn't invent one.

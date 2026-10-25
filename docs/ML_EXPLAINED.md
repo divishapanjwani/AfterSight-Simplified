@@ -96,7 +96,7 @@ useless. So:
 - **The features know which disaster a building is from:** a classifier predicting the *event* from the same
   37 features scores **82.9%** (majority class 25.2%). Each event alone scores below the pooled within-event
   figure, so part of 0.53 comes from recognising the disaster.
-- **Phase 3b:** removing absolute colour levels and normalising by the scene median cut that signature
+- **Feature-set experiments** (called "Phase 3b" during development; files in `artifacts/experiments/phase3b/`): removing absolute colour levels and normalising by the scene median cut that signature
   (82.9% → 37.4%), but did **not** improve cross-event scores. The gap is real **domain shift**: different
   roofs, imagery and damage appearance across disasters.
 

@@ -61,7 +61,7 @@ domain shift.
 **Honesty and limits**
 
 - **Why the drop from 0.53 to 0.29?** The features identify the disaster with 82.9% accuracy, so part of the
-  within-event score comes from recognising the event. Removing that signature (Phase 3b) lowered event
+  within-event score comes from recognising the event. Removing that signature (the feature-set experiments) lowered event
   prediction to 37% but did not improve cross-event scores. It is domain shift.
 - **Can I trust the confidence?** It is a model score, not a calibrated probability. For review we use a
   threshold chosen on validation. LR flags 40% of buildings as low-confidence; the queue also adds model

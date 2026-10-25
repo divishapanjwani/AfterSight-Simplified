@@ -215,7 +215,7 @@ function ConfoundingSection() {
   if (c.isPending) return <LoadingState label="Loading the confounding check…" />
   if (c.isError) return <ErrorState error={c.error} what="the confounding check" />
   const m = c.data.test_metrics
-  const variants = x.data ? Object.keys(x.data.variants).map((v) => ({ label: `Phase 3b · ${v}`, value: x.data!.rows.find((r) => r.variant === v)?.event_prediction_accuracy_within_event ?? null })) : []
+  const variants = x.data ? Object.keys(x.data.variants).map((v) => ({ label: `Feature-set experiment · ${v}`, value: x.data!.rows.find((r) => r.variant === v)?.event_prediction_accuracy_within_event ?? null })) : []
   return (
     <div className="grid grid-cols-[1fr_1fr] gap-8">
       <div className="space-y-3">
@@ -228,8 +228,8 @@ function ConfoundingSection() {
         ]} />
         <p className="text-xs leading-5 text-ink-2">The features carry a strong signature of <i>which</i> disaster a building is from (sensor, region, vegetation, roofs).
           {x.data
-            ? ' The Phase 3b experiments reduced that signature, but cross-event scores did not improve — the gap is a genuine shift between disasters.'
-            : ' Phase 3b results are not available, so they are not compared here (see Experiments below).'}</p>
+            ? ' The feature-set experiments reduced that signature, but cross-event scores did not improve — the gap is a genuine shift between disasters.'
+            : ' Feature-set experiment results are not available, so they are not compared here (see Experiments below).'}</p>
       </div>
       <Heatmap rows={m.confusion_matrix.labels} cols={m.confusion_matrix.labels.map((e) => e.replace('hurricane-', 'h-'))} matrix={m.confusion_matrix.rows_true_cols_pred}
         rowTitle="true event" colTitle="predicted" cell={56} caption={`TEST SET (${c.data.design_label}) · predicting EVENT, analysis only`} />
@@ -242,12 +242,12 @@ function ExperimentsSection() {
   if (x.isPending) return <LoadingState label="Loading experiments…" />
   // The saved summary exists but is broken: say so plainly, never show partial numbers as results.
   if (x.error instanceof ApiError && x.error.code === 'results_invalid') {
-    return <NotReadyState title="Saved Phase 3b results are malformed or incomplete" message={x.error.message} fix={x.error.fix} />
+    return <NotReadyState title="Saved feature-set experiment results are malformed or incomplete" message={x.error.message} fix={x.error.fix} />
   }
   if (x.isError) return <ErrorState error={x.error} what="the experiments" />  // never run: "not available yet" + command
   return (
     <div className="space-y-3">
-      <p className="text-xs text-ink-2">{x.data.label}. {x.data.note}</p>
+      <p className="text-xs text-ink-2">{x.data.note}</p>
       <ul className="text-xs text-ink-2">{Object.entries(x.data.variants).map(([k, v]) => <li key={k}><span className="num text-ink">{k}</span> — {v}</li>)}</ul>
       <table className="w-full text-xs">
         <thead><tr className="border-b border-rule text-left text-ink-3">
@@ -311,7 +311,7 @@ export function ModelArenaPage() {
           : within3.isError ? <ErrorState error={within3.error} what="the 3-class results" /> : <LoadingState label="Loading…" />}
       </CaseFolder></div>
 
-      <div id="experiments"><CaseFolder tab="EXPERIMENTS · PHASE 3B" title="Experiments: confounding-reduced feature sets"
+      <div id="experiments"><CaseFolder tab="EXPERIMENTS · FEATURE SETS" title="Experiments: confounding-reduced feature sets"
         aside={<span className="font-mono text-[10px] tracking-wider text-ink-3">NOT SELECTABLE IN THE TRIAGE DESK</span>}>
         <ExperimentsSection />
       </CaseFolder></div>

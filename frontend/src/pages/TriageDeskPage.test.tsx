@@ -65,6 +65,8 @@ describe('Triage Desk', () => {
     expect(within(summary).getByText('probability (not calibrated)', { exact: false })).toBeInTheDocument()
     expect(urls.some((u) => u.pathname === '/api/analysis')).toBe(true)
     expect(screen.getByRole('radio', { name: 'Prediction' })).not.toBeDisabled()
+    // the analysis is cached and deterministic, so there is no misleading 'Re-run' button once it is shown
+    expect(screen.queryByRole('button', { name: /run analysis/i })).not.toBeInTheDocument()
   })
 
   it('clicking a footprint opens that building’s case file with its explanation', async () => {

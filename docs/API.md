@@ -39,7 +39,7 @@ every value it returns is read from an artifact written by the pipeline scripts.
 | GET | `/results/overview` | which saved result groups exist |
 | GET | `/results/comparison` | model comparison per `design` × `scheme` (3-class flagged as an experiment), with `holdout_event` and `test_events` |
 | GET | `/results/confounding` | event-prediction check (analysis only) |
-| GET | `/results/experiments` | Phase 3b, labelled "Experiments", not selectable |
+| GET | `/results/experiments` | the feature-set experiments (called "Phase 3b" during development, hence `artifacts/experiments/phase3b/` and `scripts/run_phase3b.py`), labelled "Experiments", not selectable |
 | GET | `/clusters` | precomputed K-Means for `k` (and `design`): sizes, contingency, ARI, silhouette, PCA points, inertia curves; `never_predictions: true`. 404 `results_not_found` if not run, 404 `k_not_available` for a k that was not computed |
 | POST | `/analysis` | `{scene_id, model_name}` → predictions, scores, review flags, counts, scene metrics, provenance |
 | GET | `/analyses` | recent cached analyses (newest first) for the Reports page |
@@ -66,7 +66,7 @@ every value it returns is read from an artifact written by the pipeline scripts.
 - A **usable threshold** is a number between 0 and 1. Missing entries and `null` (calibration found none that
   reaches the target) mean no low-confidence flags for that model.
 - `/review-queue`: new `threshold_note`.
-- `/results/experiments`: `404 results_not_found` when Phase 3b was never run (unchanged); **`503 results_invalid`**
+- `/results/experiments`: `404 results_not_found` when the feature-set experiments were never run (unchanged); **`503 results_invalid`**
   with the reason and `fix` when `summary.json` is not valid JSON or lacks what the Arena shows (`label`,
   `variants`, rows with `variant`, `design`, `model`, `n_features`, test macro-F1, recall major/destroyed and
   `event_prediction_accuracy_within_event`, which may be null). Valid summaries are returned unchanged.

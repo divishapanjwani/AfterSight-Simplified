@@ -92,7 +92,7 @@ Train and val scenes also get a full-width caution banner. Chips alone are not e
 | Not built / not trained | dashed, neutral (a setup step, not a failure) | API message + copyable fix command |
 | Error | brick border, `role="alert"` | message, `code · HTTP status`, fix command if the API sent one |
 
-"Suggested for human review" (review queue, later) uses neutral styling. It is never shown as an error.
+"Suggested for human review" (Review Queue) uses neutral styling. It is never shown as an error.
 
 ## Overlays (Triage Desk)
 

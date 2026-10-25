@@ -69,7 +69,10 @@ Part of the pooled score comes from telling events apart, not from reading damag
 
 ---
 
-# Phase 3b experiment: confounding-reduced feature sets
+# Feature-set experiment: confounding-reduced feature sets
+
+*(Called "Phase 3b" during development; its outputs are in `artifacts/experiments/phase3b/` and it is run with
+`scripts/run_phase3b.py`.)*
 
 *A separate experiment. These are new Logistic Regression and Decision Tree models, each tuned on
 validation and evaluated on test once, stored under `artifacts/experiments/phase3b/`. The Phase 3

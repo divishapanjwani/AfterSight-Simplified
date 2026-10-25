@@ -1,6 +1,6 @@
 /** Provenance chips: every number on screen says where it comes from. Glyph + word, never colour alone. */
 
-export type ChipKind = 'predicted' | 'ground-truth' | 'test' | 'validation' | 'training' | 'not-available' | 'config' | 'demo'
+export type ChipKind = 'predicted' | 'ground-truth' | 'test' | 'validation' | 'training' | 'not-available' | 'config'
 
 const CHIPS: Record<ChipKind, { text: string; glyph: string; className: string; title: string }> = {
   predicted: { text: 'PREDICTED', glyph: '◆', className: 'border-ink text-ink', title: 'Output of a model' },
@@ -10,7 +10,6 @@ const CHIPS: Record<ChipKind, { text: string; glyph: string; className: string; 
   training: { text: 'TRAINING SCENE', glyph: '!', className: 'border-caution text-caution bg-caution-soft', title: 'Used to fit the models — results here are optimistic' },
   'not-available': { text: 'NOT AVAILABLE', glyph: '–', className: 'border-dashed border-ink-3 text-ink-3', title: 'Not computed or not built yet' },
   config: { text: 'FROM CONFIG', glyph: '⚙', className: 'border-dashed border-ink-3 text-ink-3', title: 'Set in config/events.yaml, not stored in the dataset' },
-  demo: { text: 'DEMO', glyph: '◇', className: 'border-danger text-danger', title: 'Demo data — not real results' },
 }
 
 export function Chip({ kind, label }: { kind: ChipKind; label?: string }) {

@@ -184,10 +184,14 @@ export function TriageDeskPage() {
             </button>
           ))}
         </div>
-        <button type="button" onClick={() => (runRequested ? run.refetch() : set('run', '1'))} disabled={run.isFetching}
-          className="rounded-[3px] bg-signal px-3 py-1.5 text-sm font-medium text-signal-ink hover:brightness-110 disabled:opacity-60">
-          {run.isFetching ? 'Analysing…' : analysis ? 'Re-run analysis' : 'Run analysis'}
-        </button>
+        {/* Analyses are deterministic and cached per (scene, model); once one is shown there is nothing to re-run.
+            Choosing another model above runs that model's analysis automatically. */}
+        {!analysis && (
+          <button type="button" onClick={() => (runRequested ? run.refetch() : set('run', '1'))} disabled={run.isFetching}
+            className="rounded-[3px] bg-signal px-3 py-1.5 text-sm font-medium text-signal-ink hover:brightness-110 disabled:opacity-60">
+            {run.isFetching ? 'Analysing…' : 'Run analysis'}
+          </button>
+        )}
         <div role="radiogroup" aria-label="Overlay" className="ml-auto flex overflow-hidden rounded-[3px] border border-rule-strong">
           {OVERLAYS.map((o) => {
             const needsAnalysis = o.value === 'prediction' || o.value === 'agreement'

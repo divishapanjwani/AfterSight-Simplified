@@ -33,7 +33,8 @@ Every number in `AfterSight_Final_Research_Paper.docx` is read from saved files 
 
 ```zsh
 cd ~/AfterSight-Simplified
-.venv/bin/python scripts/snapshot_behaviour.py check verification/snapshot_before.json   # saved models behave as before
+.venv/bin/python scripts/snapshot_behaviour.py save verification/snapshot_before.json    # once: record a baseline
+.venv/bin/python scripts/snapshot_behaviour.py check verification/snapshot_before.json   # later: saved models behave as before
 .venv/bin/python scripts/paper_stats.py --resamples 2000 --seed 42    # scene-level bootstrap -> paper/build/stats.json (<1 s)
 .venv/bin/python paper/build/make_figures.py                          # Figs. 1-3 -> paper/figures/
 paper/build/.venv/bin/python paper/build/build_paper.py               # -> docs/research/AfterSight_Final_Research_Paper.docx
@@ -86,5 +87,5 @@ The saved per-fit training times for the paper's models are:
 data, configs and library versions is expected to reproduce the saved models. The project's earlier
 fresh-clone check reported identical test scores. That is documented, not re-run here.
 
-After a rerun, compare with `scripts/snapshot_behaviour.py check verification/snapshot_before.json`. Any
+Before a rerun, record a baseline with `scripts/snapshot_behaviour.py save verification/snapshot_before.json`; after it, compare with `… check verification/snapshot_before.json`. Any
 difference means the results changed, and the paper must be rebuilt (step A) and re-audited.

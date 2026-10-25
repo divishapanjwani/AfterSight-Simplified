@@ -44,3 +44,7 @@ report/build/guide.html
 
 # paper build tooling
 paper/build/.venv/
+
+# local-only verification files (kept on the machine that made the clone; not published)
+CLONE_VERIFICATION.md
+verification/

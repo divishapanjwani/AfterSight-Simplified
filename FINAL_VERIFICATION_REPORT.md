@@ -8,6 +8,11 @@
 
 Every check below was run on the final state of the clone. Results are copied from the command output.
 
+> **Published copy:** the verification files named below (`CLONE_VERIFICATION.md`, `verification/original_checksums.sha256`,
+> `verification/snapshot_before.json`) are kept locally on the machine that made the clone and are not part of the public
+> repository. To repeat the behaviour check, first record your own baseline with
+> `python scripts/snapshot_behaviour.py save verification/snapshot_before.json`.
+
 ## 1. The original is untouched
 
 - `verification/original_checksums.sha256` holds SHA-256 checksums of all **10,358** files of

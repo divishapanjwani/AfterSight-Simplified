@@ -30,8 +30,8 @@ tag `v1.3`). Every change was made **in the clone only**.
   to the artifact paths. The README notes that the clone and the original share ports, so only one should
   run at a time.
 - **New:**
-  - `CLONE_VERIFICATION.md` and `verification/original_checksums.sha256`;
-  - `verification/snapshot_before.json` (behaviour baseline);
+  - local-only verification files (clone notes, the original's checksum list, the behaviour baseline), kept on the
+    machine that made the clone and **not published** in this repository;
   - `docs/screenshots/` (workflow screenshots from the clone);
   - `docs/research/` (final paper and its audit, changelog and reproduction notes);
   - `docs/study-guide/` (14 files);

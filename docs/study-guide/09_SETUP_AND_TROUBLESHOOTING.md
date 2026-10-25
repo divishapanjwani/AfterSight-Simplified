@@ -66,6 +66,7 @@ python -m pytest                          # 148 backend tests
 (cd frontend && npx vitest run)           # 37 frontend tests
 (cd frontend && npx tsc -b && npm run build)
 python scripts/e2e_check.py               # 22 end-to-end checks
+python scripts/snapshot_behaviour.py save verification/snapshot_before.json    # once, before any change
 python scripts/snapshot_behaviour.py check verification/snapshot_before.json   # predictions unchanged?
 ```
 

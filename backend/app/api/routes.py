@@ -13,7 +13,8 @@ from app.core.jobs import JobManager
 from app.core.store import FIX, Store
 from app.features.schema import FEATURE_COLUMNS
 from app.inference import feature_lab, images, review_queue, scenes
-from app.inference.analysis import MODEL_LABELS, explain_building, list_analyses, load_analysis, run_analysis
+from app.inference.analysis import (MODEL_LABELS, explain_building, list_analyses, load_analysis, run_analysis,
+                                    served_analysis_records)
 from app.experiments import summary as phase3b_summary
 from app.inference.review import usable_threshold
 from app.reports.reports import pdf_name, report_context, write_csv, write_pdf
@@ -56,8 +57,8 @@ def dataset_status(store: StoreDep) -> dict[str, Any]:
     tile("splits", lambda: {d: store.manifest(d)["manifest_hash"] for d in store.training_config.splits.designs}, FIX["splits"])
     tiles["models"] = models_tile(store)
     tiles["review_thresholds"] = review_thresholds_tile(store)
-    runs = sorted(store.paths.analysis_runs.glob("*.json"), key=lambda p: p.stat().st_mtime) if store.paths.analysis_runs.is_dir() else []
-    tiles["last_analysis"] = StatusTile(ready=bool(runs), detail={"analysis_id": runs[-1].stem, "count": len(runs)} if runs else {},
+    runs = served_analysis_records(store)  # newest first; analyses of models no longer served are not counted
+    tiles["last_analysis"] = StatusTile(ready=bool(runs), detail={"analysis_id": runs[0][0].stem, "count": len(runs)} if runs else {},
                                         fix=None if runs else "POST /api/analysis")
     events = store.events_config
     return {"scope": SCOPE_LABEL, "source": events.source if events else None, "demo_mode": False, "tiles": tiles}
@@ -142,7 +143,8 @@ def list_models(store: StoreDep) -> dict[str, Any]:
     for name in store.serving.models:
         meta = store.model_meta(name)
         models.append({
-            "name": name, "label": MODEL_LABELS[name], "selectable": True, "optional": name == "random_forest",
+            "name": name, "label": MODEL_LABELS[name], "selectable": True,
+            "optional": name in store.optional_models(),  # from config (optional: true); no served model is optional now
             "default": name == store.training_config.default_model, "trained": meta is not None,
             "design": store.serving.design, "scheme": store.serving.scheme, "confidence": CONFIDENCE_KIND[name],
             "hyperparameters": meta["hyperparameters"] if meta else None,

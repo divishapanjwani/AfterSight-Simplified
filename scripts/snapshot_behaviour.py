@@ -60,8 +60,10 @@ def take_snapshot() -> dict:
         app.dependency_overrides[get_store] = lambda: store
         client = TestClient(app)
         snap: dict = {"analyses": {}, "explanations": {}, "scatter": {}}
+        # the models the app serves now (from config via /api/models), not the list frozen in demo_scenes.json
+        served = [m["name"] for m in client.get("/api/models").json()["models"] if m["trained"]]
         for scene in demo["scenes"]:
-            for model in demo["models"]:
+            for model in served:
                 response = client.post("/api/analysis", json={"scene_id": scene["scene_id"], "model_name": model})
                 response.raise_for_status()
                 analysis = response.json()
@@ -91,11 +93,36 @@ def main() -> int:
         return 0
     before = json.loads(out.read_text(encoding="utf-8"))
     after = json.loads(json.dumps(snap, sort_keys=True))
-    differences = [f"{section}:{key}" for section in before for key in (before[section] if isinstance(before[section], dict) else [])
-                   if before[section].get(key) != after.get(section, {}).get(key)]
-    if before != after:
-        print(f"DIFFERENT ({len(differences)} keys), e.g. {differences[:5]}")
+    return compare(before, after, counts)
+
+
+def compare(before: dict, after: dict, counts: str) -> int:
+    """Every entry present in BOTH snapshots must be identical. Entries only in the baseline (e.g. analyses of a
+    model that is no longer served) are reported, not failed; entries only in the new snapshot are a failure."""
+    problems, dropped = [], []
+    for section in ("analyses", "explanations", "scatter"):
+        b, a = before[section], after[section]
+        problems += [f"{section}:{k} changed" for k in b.keys() & a.keys() if b[k] != a[k]]
+        problems += [f"{section}:{k} is new" for k in a.keys() - b.keys()]
+        dropped += [f"{section}:{k}" for k in b.keys() - a.keys()]
+    if before["feature_summary"] != after["feature_summary"]:
+        problems.append("feature_summary changed")
+    bm = {m["name"]: m for m in before["models"]["models"]}
+    am = {m["name"]: m for m in after["models"]["models"]}
+    problems += [f"models:{n} changed" for n in bm.keys() & am.keys() if bm[n] != am[n]]
+    problems += [f"models:{n} is new" for n in am.keys() - bm.keys()]
+    dropped_models = sorted(bm.keys() - am.keys())
+    rest = lambda d: {k: v for k, v in d["models"].items() if k != "models"}  # noqa: E731
+    if rest(before) != rest(after):
+        problems.append("models: top-level fields changed")
+    if problems:
+        print(f"DIFFERENT ({len(problems)}), e.g. {problems[:5]}")
         return 1
+    if dropped or dropped_models:
+        gone = sorted({k.split("|")[1] for k in dropped if k.startswith(("analyses:", "explanations:"))})
+        print(f"IDENTICAL for every shared entry ({counts}); no longer produced: {len(dropped)} entries "
+              f"(models {', '.join(gone) or '-'}), /models entries removed: {', '.join(dropped_models) or '-'}")
+        return 0
     print(f"IDENTICAL: {counts}")
     return 0
 

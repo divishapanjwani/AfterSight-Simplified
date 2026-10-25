@@ -15,7 +15,7 @@ import numpy as np
 from app.core.errors import Conflict, NotFound
 from app.core.store import ANALYSIS_ID, Store
 from app.evaluation.metrics import classification_metrics
-from app.explain.explain import decision_path, knn_neighbours, lr_contributions
+from app.explain.explain import knn_neighbours, lr_contributions
 from app.inference.review import usable_threshold
 from app.inference.scenes import polygon_parts, provenance
 from app.training.models import CONFIDENCE_KIND
@@ -106,7 +106,13 @@ def load_analysis(store: Store, analysis_id: str) -> dict[str, Any]:
     path = store.paths.analysis_runs / f"{analysis_id}.json"
     if not path.is_file():
         raise NotFound("Unknown analysis id.", code="analysis_not_found")
-    return json.loads(path.read_text(encoding="utf-8"))
+    analysis = json.loads(path.read_text(encoding="utf-8"))
+    # Cached analyses of models that are no longer served (e.g. decision_tree, random_forest) stay on disk as
+    # records, but the app does not open, explain or export them.
+    if analysis["model"]["name"] not in store.serving.models:
+        raise NotFound(f"This analysis used {analysis['model']['name']}, which the app no longer serves.",
+                       code="model_not_served")
+    return analysis
 
 
 def crop_urls(building_uid: str) -> dict[str, str]:
@@ -138,16 +144,13 @@ def explain_building(store: Store, analysis_id: str, building_uid: str) -> dict[
     row = feature_row(store, building_uid)
     if name == "logistic_regression":
         kind, detail = "lr_contributions", lr_contributions(pipe, row, top_k=8)
-    elif name == "decision_tree":
-        kind, detail = "decision_path", decision_path(pipe, row)
     elif name == "knn":
         kind, detail = "nearest_neighbours", knn_neighbours(pipe, row, store.knn_index())
         for neighbour in detail["neighbours"]:
             neighbour["crop_urls"] = crop_urls(neighbour["sample_id"])
             neighbour["split"] = "train"  # KNN only ever searches the training buildings
-    else:
-        kind, detail = "none", {"note": "Random forests have no compact per-building explanation here; "
-                                        "see the global feature importances below."}
+    else:  # only reachable if a new model is added to the serving list without an explainer
+        raise NotFound(f"No per-building explanation is implemented for {name}.", code="explanation_not_available")
     explain = store.read_json(f"analyses/{meta['design']}/{meta['scheme']}/{name}_explain.json") or {}
     return {
         "analysis_id": analysis_id, "building_uid": building_uid, "model": name, "kind": kind,
@@ -160,11 +163,9 @@ def explain_building(store: Store, analysis_id: str, building_uid: str) -> dict[
 
 def list_analyses(store: Store, limit: int) -> dict[str, Any]:
     """Most recent cached analyses (newest first) as short summaries for the Reports page."""
-    folder = store.paths.analysis_runs
-    files = sorted(folder.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True) if folder.is_dir() else []
+    records = served_analysis_records(store)
     items = []
-    for path in files[:limit]:
-        a = json.loads(path.read_text(encoding="utf-8"))
+    for _path, a in records[:limit]:
         m = a["scene_metrics"] or {}
         items.append({
             "analysis_id": a["analysis_id"], "scene_id": a["scene_id"], "event": a["event"], "created_at": a["created_at"],
@@ -174,4 +175,16 @@ def list_analyses(store: Store, limit: int) -> dict[str, Any]:
             "accuracy": m.get("accuracy"), "macro_f1": m.get("macro_f1"),
             "csv_url": f"/api/analysis/{a['analysis_id']}/export.csv", "pdf_url": f"/api/analysis/{a['analysis_id']}/report.pdf",
         })
-    return {"total": len(files), "items": items}
+    return {"total": len(records), "items": items}
+
+
+def served_analysis_records(store: Store) -> list[tuple[Any, dict[str, Any]]]:
+    """Cached analyses of served models, newest first. Records of models no longer served stay on disk, unlisted."""
+    folder = store.paths.analysis_runs
+    files = sorted(folder.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True) if folder.is_dir() else []
+    records = []
+    for path in files:
+        a = json.loads(path.read_text(encoding="utf-8"))
+        if a["model"]["name"] in store.serving.models:
+            records.append((path, a))
+    return records

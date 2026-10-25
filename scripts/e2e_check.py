@@ -27,8 +27,8 @@ import _bootstrap  # noqa: F401
 from app.core.config import REPO_ROOT
 from app.datasets.synthetic_deployment import build_deployment
 
-MODELS = ["logistic_regression", "knn", "decision_tree"]
-EXPLAIN_KIND = {"logistic_regression": "lr_contributions", "knn": "nearest_neighbours", "decision_tree": "decision_path"}
+EXPLAIN_KIND = {"logistic_regression": "lr_contributions", "knn": "nearest_neighbours"}
+NOT_SERVED = ["decision_tree", "random_forest"]  # still trained for research, no longer served by the app
 
 
 def free_port() -> int:
@@ -113,7 +113,9 @@ def main() -> int:
         c.check(scenes["total"] > 0 and all(s["split"] == "test" for s in scenes["items"]), "test scenes listed", f"{scenes['total']} test scenes")
         scene = scenes["items"][0]["scene_id"]
 
-        for model in MODELS:
+        served = [m["name"] for m in json.loads(request(f"{api}/models")[1])["models"]]  # from config/training.yaml
+        c.check(served == list(EXPLAIN_KIND), "served models are LR and KNN", ", ".join(served))
+        for model in served:
             t = time.perf_counter()
             code, body, _ = request(f"{api}/analysis", {"scene_id": scene, "model_name": model})
             analysis = json.loads(body) if code == 200 else {}
@@ -129,9 +131,10 @@ def main() -> int:
             code, body, ctype = request(f"{api}/analysis/{aid}/report.pdf")
             c.check(code == 200 and body.startswith(b"%PDF"), f"{model}: PDF report", f"{len(body):,} bytes")
 
-        code, body, _ = request(f"{api}/analysis", {"scene_id": scene, "model_name": "random_forest"})
-        err = json.loads(body).get("error", {})
-        c.check(code == 409 and err.get("code") == "model_not_trained" and "train.py" in (err.get("fix") or ""), "untrained RF: clean 409 with fix command")
+        for model in NOT_SERVED:
+            code, body, _ = request(f"{api}/analysis", {"scene_id": scene, "model_name": model})
+            err = json.loads(body).get("error", {})
+            c.check(code == 404 and err.get("code") == "model_not_found" and b"Traceback" not in body, f"{model}: not served, clean 404")
         code, body, _ = request(f"{api}/scenes/..%2F..%2Fetc%2Fpasswd")
         c.check(code in (404, 422) and b"root:" not in body and b"Traceback" not in body, "path traversal rejected cleanly")
 

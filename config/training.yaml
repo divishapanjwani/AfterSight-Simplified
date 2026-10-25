@@ -75,7 +75,10 @@ confounding:
 serving:
   design: within_event          # Triage Desk models: within-event split, 4-class
   scheme: four_class
-  models: [logistic_regression, knn, decision_tree, random_forest]   # random_forest is labelled optional
+  # Served by the app (model pickers, analysis, explanations, review queue, readiness, reports). Decision Tree and
+  # Random Forest are still trained by scripts/train.py for research (the paper compares KNN vs Decision Tree) and
+  # their saved results stay in artifacts/, but the app no longer serves them.
+  models: [logistic_regression, knn]
 
 review:
   # Per model, on VALIDATION: the lowest confidence threshold t such that buildings with confidence >= t

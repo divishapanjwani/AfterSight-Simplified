@@ -1,10 +1,13 @@
 """Choose each serving model's review-queue confidence threshold on the VALIDATION split.
 
-Usage: python scripts/calibrate_review.py
-Writes artifacts/models/<serving design>/<scheme>/review_thresholds.json. Never uses test data.
+Usage: python scripts/calibrate_review.py [--out <folder>]
+Writes <folder>/review_thresholds.json (default folder: artifacts/models/<serving design>/<scheme>/).
+Never uses test data. --out lets you check calibration without replacing the saved thresholds.
 """
 
+import argparse
 import sys
+from pathlib import Path
 from datetime import datetime, timezone
 
 import _bootstrap  # noqa: F401
@@ -16,6 +19,9 @@ from app.training.persistence import ModelLoadError, load_model
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--out", type=Path, default=None, help="folder for review_thresholds.json (default: next to the models)")
+    args = parser.parse_args()
     cfg, table, manifests = load_inputs()
     s = cfg.serving
     data = data_for(cfg, table, manifests, s.design, s.scheme)
@@ -35,7 +41,9 @@ def main() -> int:
         doc["models"][name] = {**result, "confidence": CONFIDENCE_KIND[name]}
         print(f"{name:<20} threshold {result['threshold']}  flags {result['flagged_share_val']:.1%} of val  "
               f"acc above {result.get('accuracy_at_or_above_val')}  below {result.get('accuracy_below_val')}")
-    print(f"-> {write_thresholds(folder, doc).relative_to(REPO_ROOT)}")
+    out_folder = args.out or folder
+    out_folder.mkdir(parents=True, exist_ok=True)
+    print(f"-> {write_thresholds(out_folder, doc)}")
     return 0
 
 

@@ -125,4 +125,6 @@ were traced through the real code (`docs/build/understanding_data.json`):
 - `change_only_scene_normalised`: both.
 
 They lowered the event signature (event-prediction accuracy 0.829 → as low as 0.374), but did **not**
-improve cross-event macro-F1. They are analysis only; the served models use all 37 features.
+improve cross-event macro-F1. They are analysis only; the served models use all 37 features. Their saved
+results stay in `artifacts/experiments/phase3b/` and the API (`/results/experiments`), but the app no longer
+shows them.

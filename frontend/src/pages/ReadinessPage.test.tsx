@@ -22,7 +22,9 @@ describe('Readiness board', () => {
     expect(within(cache).getByText('✓ READY')).toBeInTheDocument()
     expect(await screen.findByText('0.876')).toBeInTheDocument() // within-event LR, from the API
     expect(screen.getByText('0.111')).toBeInTheDocument() // cross-event LR
-    expect(screen.getByText('best: decision tree 0.222')).toBeInTheDocument()
+    // "best" only considers the served models: the Decision Tree's higher 0.222 is a research result, not served
+    expect(screen.getByText('best served model: logistic regression 0.111')).toBeInTheDocument()
+    expect(screen.queryByText(/decision tree/i)).not.toBeInTheDocument()
     expect(screen.getByText('Damage classification on building footprints derived from xBD annotations.')).toBeInTheDocument()
   })
 

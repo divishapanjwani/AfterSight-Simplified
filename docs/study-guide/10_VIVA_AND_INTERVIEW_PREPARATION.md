@@ -375,7 +375,8 @@ results.
 - **Short:** An explicit state, not a crash. Readiness shows NOT READY or PARTIAL with the fix command; a
   broken experiment summary returns `503 results_invalid`.
 - **Detailed:** Tests cover a missing file, bad JSON and missing keys.
-- **Follow-ups:** Optional models? (An untrained or threshold-less Random Forest never makes a tile PARTIAL.)
+- **Follow-ups:** Which models count? (Only the served ones in config, LR and KNN; the Decision Tree and Random
+  Forest are not served, so they never affect a tile.)
 
 **Q60. Are confidence scores probabilities?**
 - **Short:** No. They are model scores and are not calibrated.
@@ -384,7 +385,7 @@ results.
 - **Follow-ups:** How to calibrate? (Isotonic or Platt scaling on validation; future work.)
 
 **Q61. How many tests are there?**
-- **Short:** 148 backend (pytest), 37 frontend (Vitest), and a 22-check end-to-end script, all passing in the
+- **Short:** 149 backend (pytest), 37 frontend (Vitest), and a 20-check end-to-end script, all passing in the
   final clone.
 - **Detailed:** They include leakage, model reload, API and UI states.
 - **Follow-ups:** What do the tests use for data? (Synthetic fixtures, never shown as xBD.)

@@ -8,11 +8,11 @@ only proposed**.
 - **Data:** building extraction from xBD masks, plus a dataset inspector with drop logs and an alignment check.
 - **Features:** 37 engineered features, shared preprocessing fitted on train only.
 - **Splits:** scene-grouped within-event and cross-event splits with leakage validation and hashes.
-- **Models:** KNN, Decision Tree, Logistic Regression, Random Forest (optional) and a threshold baseline, tuned
-  on validation, each evaluated on test once.
+- **Models:** KNN, Decision Tree, Logistic Regression, Random Forest and a threshold baseline, tuned on
+  validation, each evaluated on test once. The app serves LR and KNN; DT is kept as the paper's comparison.
 - **Analyses:** K-Means, the event-confounding check, the feature-set experiments, and the scene-level
   bootstrap (from saved predictions).
-- **App:** a web application with explanations (KNN neighbours, DT path, LR contributions), a review queue,
+- **App:** a web application serving LR and KNN, with explanations (KNN neighbours, LR contributions), a review queue,
   and CSV/PDF reports.
 
 ## What the experiments show (and only that)

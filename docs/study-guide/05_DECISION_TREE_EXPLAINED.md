@@ -81,10 +81,12 @@ models get identical input. Explanations convert thresholds back to raw units (`
 
 So texture change is the single most useful question, which matches the Feature Lab ranking.
 
-## How AfterSight explains a DT prediction
+## How a DT prediction is explained
 
-`decision_path` (`backend/app/explain/explain.py`) returns the questions this building answered from the root
-to its leaf.
+The app no longer serves the Decision Tree (it serves LR and KNN), so the Case File does not show this. The
+saved tree is still in the Model Arena as a research comparison, and `decision_path`
+(`backend/app/explain/explain.py`) still returns the questions a building answered from the root to its leaf;
+the example below was made with it.
 
 **Example:** `santa-rosa-wildfire_00000006_b0002` (destroyed).
 

@@ -58,13 +58,15 @@ It is split into three questions:
 
 - **Readiness:** what is built and trained, the headline results, the served models.
 - **Scene Library:** choose a scene; held-out test scenes are shown by default.
-- **Triage Desk:** before/after swipe viewer, damage overlays, Run analysis, building list.
+- **Triage Desk:** before/after swipe viewer, damage overlays, Run analysis, building list. The app serves two
+  models: Logistic Regression (default) and KNN.
 - **Case File:** one building: crops, predicted vs reference label, confidence, model explanation.
-- **Model Arena:** every model under both designs, confusion matrices, per-event scores, the tree, the
-  event-confounding check, and the feature-set experiments.
+- **Model Arena:** LR, KNN and the threshold baseline under both designs, confusion matrices, per-event scores,
+  and the event-confounding check. The Decision Tree's saved results (and its tree) are shown as a *research
+  comparison: not served in the app*; the paper's KNN-vs-DT comparison uses them.
 - **Feature Lab:** which features separate the classes (training data only).
 - **Cluster Atlas:** K-Means groups compared with the labels. Analysis only, never predictions.
-- **Review Queue:** buildings suggested for human review (low confidence or model disagreement).
+- **Review Queue:** buildings suggested for human review (low confidence, or LR and KNN disagree).
 - **Reports:** CSV and PDF per analysis.
 
 ## The key results (test sets, each model evaluated once)

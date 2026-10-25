@@ -50,10 +50,10 @@ through `backend/app/core/store.py`.
 | `training/persistence.py` | `save_model`, `load_model`, `ModelLoadError` | joblib + metadata; refuses incompatible models |
 | `evaluation/metrics.py` | `classification_metrics`, `TestSetGuard`, `timed_predict` | metrics; one test evaluation per model |
 | `evaluation/analysis.py` | `run_kmeans`, `run_confounding` | K-Means and the event-prediction check |
-| `explain/explain.py` | `knn_neighbours`, `decision_path`, `tree_structure`, `lr_contributions`, `raw_threshold`, `permutation_importances` | explanations in raw feature units |
+| `explain/explain.py` | `knn_neighbours`, `decision_path`, `tree_structure`, `lr_contributions`, `raw_threshold`, `permutation_importances` | explanations in raw feature units. The app uses `knn_neighbours` and `lr_contributions`; `tree_structure` saves the research tree during training, and `decision_path` is used by `docs/build/understanding_data.py` |
 | `inference/analysis.py` | `run_analysis`, `predict_rows`, `explain_building`, `load_analysis`, `list_analyses` | per-scene predictions (cached) and explanations |
 | `inference/review.py` | `choose_threshold`, `read_thresholds`, `usable_threshold`, `threshold_status` | review thresholds and READY / PARTIAL / NOT READY |
-| `inference/review_queue.py` | `review_queue` | low-confidence or disagreement suggestions |
+| `inference/review_queue.py` | `review_queue` | low-confidence or disagreement suggestions (disagreement between the served models: LR vs KNN) |
 | `inference/feature_lab.py` | `summary`, `scatter`, `eta_squared`, `class_stats` | Feature Lab statistics (training split only) |
 | `inference/scenes.py` | `list_scenes`, `scene_detail`, `provenance` | Library and scene details, split provenance |
 | `experiments/summary.py` | `load_summary`, `summary_state`, `summary_problem` | validates the saved feature-set experiment summary |
@@ -75,7 +75,7 @@ POST /api/analysis  (api/routes.py: create_analysis)
             predicted = argmax; confidence = max score
             needs_review = confidence < usable_threshold(...)  (validation-chosen)
 GET /api/analysis/{id}/buildings/{uid}/explain
-  └─ explain_building → knn_neighbours | decision_path | lr_contributions | note (RF)
+  └─ explain_building → lr_contributions | knn_neighbours   (served models only)
 ```
 
 ## Frontend (`frontend/src/`)
@@ -86,7 +86,7 @@ GET /api/analysis/{id}/buildings/{uid}/explain
 | `services/api.ts` | `api.*` fetch functions, `ApiError` (`notReady` for 503 / not-trained / not-found results) |
 | `types/api.ts` | TypeScript types matching the Pydantic schemas |
 | `components/AppShell.tsx` | header, stepper, tools, API status dot, theme toggle |
-| `components/CaseFile.tsx` | the Case File (`cropWindow`, `polygonPath`, `ExplanationView`, `KnnView`, `TreeView`, `LrView`) |
+| `components/CaseFile.tsx` | the Case File (`cropWindow`, `polygonPath`, `ExplanationView`, `KnnView`, `LrView`) |
 | `viewer/SceneViewer.tsx` | swipe, zoom and overlay viewer (SVG polygons over the images) |
 | `components/States.tsx` | `LoadingState`, `ErrorState`, `NotReadyState`, `EmptyState`, `CommandBlock` |
 | `components/Workflow.tsx` | remembers the current scene, model, analysis and building for the stepper links |
@@ -97,6 +97,6 @@ GET /api/analysis/{id}/buildings/{uid}/explain
 
 | Suite | Count | What it covers |
 |---|---:|---|
-| `backend/tests/` (pytest) | 148 | parser, features with known answers, split leakage, models, save/reload, API (including path traversal), review thresholds, the feature-set experiment summary, reports |
+| `backend/tests/` (pytest) | 149 | parser, features with known answers, split leakage, models, save/reload, API (including path traversal), review thresholds, the feature-set experiment summary, reports |
 | `frontend/src/**/*.test.tsx` (Vitest) | 37 | pages and their states, the Triage → Case File flow, Arena, Readiness, Review Queue, Cluster Atlas |
-| `scripts/e2e_check.py` | 22 checks | synthetic end-to-end run of the backend and the built frontend |
+| `scripts/e2e_check.py` | 20 checks | synthetic end-to-end run of the backend and the built frontend |

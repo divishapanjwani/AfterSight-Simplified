@@ -100,7 +100,7 @@ Swagger documentation is at `http://localhost:8020/docs` while the backend runs.
 | Training | `backend/app/training/run.py` → `train_one`, `run_design` | grid search on validation, single test evaluation |
 | Save/load | `backend/app/training/persistence.py` → `save_model`, `load_model` | joblib + metadata JSON, compatibility checks |
 | Metrics | `backend/app/evaluation/metrics.py` → `classification_metrics`, `TestSetGuard` | metrics; one test evaluation per model |
-| Explanations | `backend/app/explain/explain.py` → `knn_neighbours`, `decision_path`, `lr_contributions` | per-building "why" |
+| Explanations | `backend/app/explain/explain.py` → `knn_neighbours`, `lr_contributions` (the app); `decision_path`, `tree_structure` (research: the saved tree, `docs/build/understanding_data.py`) | per-building "why" |
 | Inference | `backend/app/inference/analysis.py` → `run_analysis`, `explain_building` | predict a scene, cache, explain |
 
 ## Data flow when you click "Run analysis"

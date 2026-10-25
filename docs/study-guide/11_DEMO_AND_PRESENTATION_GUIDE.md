@@ -28,20 +28,22 @@ Scene-level scores are small samples, not the overall result. Say so.
    - Choose **K-Nearest Neighbours** and **Run analysis**.
    - Switch the overlay to *Correct vs wrong*.
    - Point at the scene-level numbers and say they cover one scene only.
-   - Then pick **Decision Tree**; it runs automatically.
+   - Then pick **Logistic Regression**; it runs automatically.
 4. **Case File, KNN (60 s).** Click building `b0002`.
    - Predicted **destroyed** = reference **destroyed**.
    - Confidence **1.00** means "15 of 15 neighbours voted destroyed" (a vote fraction, not a probability).
    - Show the 15 nearest training buildings, all destroyed, nearest distance 1.447.
-5. **Case File, DT (45 s).** Same building with the Decision Tree. Show the 8 yes/no questions, starting
-   with `glcm_homogeneity_delta ≤ −0.146`, ending in a leaf of 971 training buildings that are 99.8%
-   destroyed.
+5. **Case File, LR (45 s).** Same building with Logistic Regression. Show the top feature contributions
+   (coefficient × standardised value) that push the score for its predicted class. The app no longer serves the
+   Decision Tree; its path for this building is in `05_DECISION_TREE_EXPLAINED.md` and its tree is in the Arena.
 6. **Model Arena (90 s).**
    - The dumbbell: every model drops on the unseen disaster.
-   - The table: **KNN 0.520 vs DT 0.470 within; 0.271 vs 0.294 cross**.
+   - The table: **KNN 0.520 vs DT 0.470 within; 0.271 vs 0.294 cross** (the DT row is labelled a research
+     comparison, not served in the app).
    - The confusion matrices: KNN calls most minor and major damage "no damage".
    - The confounding check: **0.829** event-prediction accuracy, so the features recognise *which disaster*.
-   - The feature-set experiments reduced that signature but did not fix transfer.
+   - If asked: the feature-set experiments (saved results, no longer shown in the app) reduced that signature
+     but did not fix transfer.
 7. **Reports (30 s).** Download the PDF. It separates the overall test score from scene-level metrics.
 
 ## Presenting the findings (keep to the evidence)

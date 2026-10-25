@@ -109,9 +109,11 @@ function ReadyBadge({ tile }: { tile: StatusTile }) {
   return <span className="inline-flex items-center gap-1 rounded-[3px] border border-dashed border-ink-3 px-1.5 py-px font-mono text-[10px] tracking-wider text-ink-3">○ NOT READY</span>
 }
 
-function Headline({ within, cross }: { within: Comparison; cross: Comparison }) {
+function Headline({ within, cross, served }: { within: Comparison; cross: Comparison; served: string[] }) {
   const lr = (c: Comparison) => c.models.find((m) => m.model === 'logistic_regression')
-  const best = (c: Comparison) => c.models.reduce((a, b) => (b.test_macro_f1 > a.test_macro_f1 ? b : a))
+  // only the models the app serves (config, via /api/models); the Arena has the research comparisons
+  const best = (c: Comparison) => c.models.filter((m) => served.includes(m.model)).reduce<Comparison['models'][number] | null>(
+    (a, b) => (a === null || b.test_macro_f1 > a.test_macro_f1 ? b : a), null)
   const rows = [
     { c: within, title: 'Within-event', text: `New scenes from the same ${within.test_events.length} disasters the models were trained on.` },
     { c: cross, title: 'Cross-event', text: `A disaster never seen in training (${cross.holdout_event ?? cross.test_events.join(', ')}).` },
@@ -129,7 +131,7 @@ function Headline({ within, cross }: { within: Comparison; cross: Comparison }) 
             <span className="num text-3xl font-medium text-ink">{fmt(lr(c)?.test_macro_f1)}</span>
             <span className="text-xs text-ink-2">macro-F1 · Logistic Regression (default)</span>
           </p>
-          <p className="num mt-1 text-xs text-ink-3">best: {best(c).model.replaceAll('_', ' ')} {fmt(best(c).test_macro_f1)}</p>
+          {best(c) && <p className="num mt-1 text-xs text-ink-3">best served model: {best(c)!.model.replaceAll('_', ' ')} {fmt(best(c)!.test_macro_f1)}</p>}
         </div>
       ))}
     </div>
@@ -177,7 +179,7 @@ export function ReadinessPage() {
         {cross.isError && !within.isError && <ErrorState error={cross.error} what="cross-event results" />}
         {within.isSuccess && cross.isSuccess && (
           <>
-            <Headline within={within.data} cross={cross.data} />
+            <Headline within={within.data} cross={cross.data} served={(models.data?.models ?? []).map((m) => m.name)} />
             <p className="mt-3 text-xs leading-5 text-ink-2">
               The gap is the honest story: on scenes from disasters it has seen, the model does much better than on a new
               disaster. The full comparison, per-event scores and the confounding check live in the Model Arena.

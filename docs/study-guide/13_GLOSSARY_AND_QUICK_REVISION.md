@@ -33,7 +33,7 @@
 | **Confidence interval (95%)** | range from the 2.5th to the 97.5th percentile of bootstrap scores |
 | **Domain shift** | test data systematically different from training data |
 | **Confounding (event signature)** | features that reveal *which disaster*, which can inflate within-event scores |
-| **Feature-set experiments** | reduced or normalised feature sets tested for the event signature (development name "Phase 3b"; files in `artifacts/experiments/phase3b/`) |
+| **Feature-set experiments** | reduced or normalised feature sets tested for the event signature (development name "Phase 3b"; files in `artifacts/experiments/phase3b/`). Saved results; no longer shown in the app |
 | **K-Means / silhouette / ARI** | unsupervised clustering / cluster separation (−1…1) / agreement with labels (0 random, 1 identical) |
 | **Calibration** | making scores match real probabilities; **not** done here |
 

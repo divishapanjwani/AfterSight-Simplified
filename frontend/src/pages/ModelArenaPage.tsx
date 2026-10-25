@@ -59,12 +59,16 @@ function Segmented<T extends string>({ value, options, onChange, label }: { valu
 function Story({ within, cross, title }: { within: Comparison; cross: Comparison; title: string }) {
   const arena = useArenaModels()
   const rows = within.models.filter((m) => arena.names.includes(m.model)).map((m) => ({
-    label: arena.label(m.model), a: m.test_macro_f1, b: cross.models.find((c) => c.model === m.model)?.test_macro_f1 ?? null,
+    label: arena.short(m.model), a: m.test_macro_f1, b: cross.models.find((c) => c.model === m.model)?.test_macro_f1 ?? null,
+    research: arena.ready && arena.research(m.model),
   }))
   return (
     <div className="grid grid-cols-[1fr_300px] gap-6">
+      <div>
       <Dumbbell rows={rows} aLabel="within-event · new scenes, known disasters" bLabel={`cross-event · unseen disaster (${cross.holdout_event ?? cross.test_events.join(', ')})`}
         axisLabel={`${title} · test macro-F1 (each model evaluated on its test set once)`} />
+      {rows.some((r) => r.research) && <p className="mt-1 text-[11px] text-ink-3">Decision Tree (research): saved results shown as a {RESEARCH_NOTE}.</p>}
+      </div>
       <div className="space-y-3 text-xs leading-5 text-ink-2">
         <p><b className="text-ink">Within-event.</b> {within.split_note}</p>
         <p><b className="text-ink">Cross-event.</b> {cross.split_note}</p>

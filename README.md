@@ -67,6 +67,10 @@ Test macro-F1 (4-class, primary metric), each model evaluated once. Full tables 
 
 ## Quick start (macOS)
 
+> **This is the simplified clone** (`~/AfterSight-Simplified`, branch `simplified`). It uses the same ports as
+> the original (`8020` API, `5200` web) and `start.sh` stops whatever is on them, so **run only one copy at a
+> time**. See `CLONE_VERIFICATION.md`.
+
 Requires Python 3.11 (`brew install python@3.11`) and Node 20+. The virtualenv lives at the **repo root**.
 
 ```zsh

@@ -23,7 +23,7 @@ from docx.oxml.ns import qn
 from docx.shared import Inches, Pt, RGBColor
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "paper" / "AfterSight_KNN_vs_DT_IEEE.docx"
+OUT = ROOT / "docs" / "research" / "AfterSight_Final_Research_Paper.docx"
 FIG = ROOT / "paper" / "figures"
 CLASSES = ["no-damage", "minor-damage", "major-damage", "destroyed"]
 EVENT_NAME = {"hurricane-harvey": "Hurricane Harvey", "hurricane-matthew": "Hurricane Matthew",
@@ -47,6 +47,20 @@ CONF = load("artifacts/analyses/confounding/within_event.json")
 ST = load("paper/build/stats.json")
 
 EVENTS = SPLIT["within_event"]["feature_table_fingerprint"]["events"]
+
+# Scene accounting from the per-scene inspection table: why 1,239 cached pairs become 1,179 in every split.
+import csv  # noqa: E402
+
+with (ROOT / "artifacts" / "inspection" / "xbd" / "scenes.csv").open(encoding="utf-8") as fh:
+    SCENES = [r for r in csv.DictReader(fh) if r["event"] in EVENTS]
+SC_NO_BLOB = [r for r in SCENES if int(r["n_raw_footprints"]) == 0]
+SC_ALL_DROPPED = [r for r in SCENES if int(r["n_raw_footprints"]) > 0 and int(r["n_buildings"]) == 0]
+SC_WITH = [r for r in SCENES if int(r["n_buildings"]) > 0]
+assert len(SC_NO_BLOB) + len(SC_ALL_DROPPED) + len(SC_WITH) == len(SCENES)
+assert set(r["scene_id"] for r in SC_WITH) == set(SPLIT["within_event"]["scenes"]) == set(SPLIT["cross_event"]["scenes"])
+ALL_DROPPED_BLOBS = sum(int(r["n_raw_footprints"]) for r in SC_ALL_DROPPED)
+MICHAEL_CACHED = sum(1 for r in SCENES if r["event"] == "hurricane-michael")
+MICHAEL_WITH = sum(1 for r in SC_WITH if r["event"] == "hurricane-michael")
 TOT = INSP["totals"]
 CC = INSP["class_counts"]
 N_BUILD = sum(CC["overall"].values())
@@ -338,7 +352,7 @@ abstract = (
     "four-class building damage classification when each building is described by 37 engineered pre- and post-event "
     f"image features covering colour, change, texture, surrounding context and shape. Building regions are derived "
     f"from the annotation masks of the xBD training split; five disaster events provide {n(N_BUILD)} labelled buildings "
-    f"in {n(TOT['scenes_discovered'])} image pairs. Both classifiers share one preprocessing pipeline fitted on training "
+    f"from {n(len(SC_WITH))} image pairs. Both classifiers share one preprocessing pipeline fitted on training "
     "data, are tuned on validation macro-F1 and are evaluated once on held-out test scenes under two designs: a "
     "scene-grouped within-event split and a cross-event split that holds out Hurricane Michael. Within events, KNN "
     f"reaches a test macro-F1 of {f3(t(w, 'knn')['macro_f1'])} (95% scene-level bootstrap interval {ci(w, 'knn')}) "
@@ -431,7 +445,8 @@ for e in EVENTS:
     rows.append([EVENT_NAME[e], n(INSP["all_events"][e]["scenes"])] + [n(c[k]) for k in CLASSES])
 rows.append(["Total", n(TOT["scenes_discovered"])] + [n(CC["overall"][k]) for k in CLASSES])
 table_caption("I", "Labelled buildings per event and damage class")
-table(rows, [1.05, 0.48, 0.5, 0.45, 0.45, 0.45], bold_rows=(len(rows) - 1,))
+table(rows, [1.05, 0.48, 0.5, 0.45, 0.45, 0.45], bold_rows=(len(rows) - 1,),
+      note=f"Scenes = cached image pairs; {n(len(SC_WITH))} of them contain at least one labelled building (Sec. III-B).")
 h2("B. Building Regions from Annotation Masks")
 dr = INSP["drop_reasons"]
 para("The copy contains no building polygons, so building regions are reconstructed from the masks rather than "
@@ -440,7 +455,10 @@ para("The copy contains no building polygons, so building regions are reconstruc
      f"({n(dr['label_missing'])}) or with a tied vote ({n(dr['label_tie'])}) are excluded and logged, leaving "
      f"{n(N_BUILD)} buildings. Touching buildings can merge into one component; {n(TOT['mixed_label_blobs'])} components "
      "contain more than one damage value and receive the majority label. Original building identifiers and geographic "
-     "coordinates are unavailable, so all geometry is in image pixels.")
+     "coordinates are unavailable, so all geometry is in image pixels. "
+     f"Of the {n(len(SCENES))} image pairs, {len(SC_NO_BLOB)} contain no building component and {len(SC_ALL_DROPPED)} "
+     f"contain only excluded components (all {ALL_DROPPED_BLOBS} lacked a damage value), so {n(len(SC_WITH))} pairs "
+     "contribute buildings; these are exactly the scenes assigned in both split designs.")
 h2("C. Task")
 para("Each building *i* is represented by a feature vector **x**ᵢ ∈ ℝ³⁷ and a label *y*ᵢ ∈ {no damage, minor, major, "
      f"destroyed}}. The classes are imbalanced: {CC['overall']['no-damage'] / N_BUILD:.0%} of buildings are undamaged.")
@@ -495,7 +513,8 @@ h2("A. Evaluation Designs")
 sw, sx = SPLIT[w]["counts"], SPLIT[x]["counts"]
 para("Buildings in one image share acquisition conditions and often damage, so every split assigns whole scenes. The "
      "**within-event** design partitions scenes of all five events with stratified group folds (seed 42; requested "
-     "70/15/15). The **cross-event** design uses every Hurricane Michael scene as the test set and splits the other four "
+     "70/15/15). The **cross-event** design uses every Hurricane Michael scene that contains labelled buildings "
+     f"({MICHAEL_WITH} of {MICHAEL_CACHED}) as the test set and splits the other four "
      "events into training and validation scenes (requested 85/15). Table III gives the realised sizes. Split manifests "
      "are hashed and checked automatically for scene overlap. The cross-event test distribution differs from training: "
      f"minor damage is {michael_minor:.1%} of Hurricane Michael buildings but {other_minor:.1%} of the other events'.")

@@ -32,9 +32,9 @@ step "3/7 scene-grouped split manifests"               $PY scripts/make_splits.p
 step "4/7 train + evaluate models (test sets once)"    $PY scripts/train.py
 step "5/7 review thresholds (validation)"              $PY scripts/calibrate_review.py
 if [[ $EXPERIMENTS == 1 ]]; then
-  step "6/7 Phase 3b experiments"                      $PY scripts/run_phase3b.py
+  step "6/7 feature-set experiments (Phase 3b)"     $PY scripts/run_phase3b.py
 else
-  echo; echo "== 6/7 Phase 3b experiments skipped (--no-experiments)"
+  echo; echo "== 6/7 feature-set experiments skipped (--no-experiments)"
 fi
 step "7/7 pre-cache the demo scenes"                   $PY scripts/prepare_demo.py
 

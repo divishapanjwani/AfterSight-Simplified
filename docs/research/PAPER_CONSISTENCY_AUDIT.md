@@ -62,7 +62,7 @@
 
 | Claim | Evidence | Status |
 |---|---|---|
-| A KNN prediction is explained by its nearest labelled training buildings, a DT prediction by its root-to-leaf path in raw feature units | `backend/app/explain/explain.py` (`knn_neighbours`, `decision_path`); Case File (`frontend/src/components/CaseFile.tsx`); screenshots `docs/screenshots/04_casefile_knn.png`, `05_casefile_dt.png` | Verified (code + clone UI) |
+| The application explains a KNN prediction by its nearest labelled training buildings; DT root-to-leaf paths in raw feature units come from the saved research models and are shown in the Model Arena's tree view; the DT is not served for live predictions | `backend/app/explain/explain.py` (`knn_neighbours`, `decision_path`, `tree_structure`); Case File (`frontend/src/components/CaseFile.tsx`); Arena tree section (`frontend/src/pages/ModelArenaPage.tsx`, `/api/models/decision_tree/tree`); serving list `config/training.yaml`; screenshots `docs/screenshots/06_casefile_knn.png`, `08_arena.png` | Verified (code + clone UI, after the two-model change) |
 | No claim about removed UI elements (re-run button, demo chip, internal labels) | text search of the final PDF: 0 matches for "Phase 3b", "re-run", "demo mode", "readiness" | Verified |
 
 ## References

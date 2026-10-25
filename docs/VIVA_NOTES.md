@@ -47,8 +47,14 @@ domain shift.
 
 **Models**
 
-- **Which model is best?** Within-event: Random Forest 0.546 and LR 0.527. Cross-event: all about 0.29 (DT
-  0.294). LR is the app default: nearly as good, fast, and the most explainable.
+- **Which model is best?** Of the two models the app serves, LR (the default) scores 0.527 within-event and
+  0.290 cross-event, and KNN 0.520 and 0.271. LR is fast and the most explainable. Among the saved research
+  models, the Random Forest scores highest within-event (0.546) and the Decision Tree highest cross-event
+  (0.294), but neither is served in the app.
+- **Why does the app serve only LR and KNN?** To keep the app small: one linear model with feature
+  contributions and one example-based model with nearest neighbours. The Decision Tree is still trained, and its
+  saved results are the paper's comparison with KNN. The Model Arena shows them (and the tree) labelled
+  "research comparison: not served in the app". The Random Forest's results stay on disk but are not shown.
 - **Why is KNN slow?** It stores all 49,929 training buildings and compares each new building with them at
   prediction time (about 20 ms per 1,000 buildings vs 0.2 ms for LR).
 - **What does the baseline show?** One feature (texture-smoothness change) with three thresholds already gets
@@ -61,14 +67,15 @@ domain shift.
 **Honesty and limits**
 
 - **Why the drop from 0.53 to 0.29?** The features identify the disaster with 82.9% accuracy, so part of the
-  within-event score comes from recognising the event. Removing that signature (the feature-set experiments) lowered event
-  prediction to 37% but did not improve cross-event scores. It is domain shift.
+  within-event score comes from recognising the event. Removing that signature (the feature-set experiments; saved
+  results, no longer shown in the app) lowered event prediction to 37% but did not improve cross-event scores. It is
+  domain shift.
 - **Can I trust the confidence?** It is a model score, not a calibrated probability. For review we use a
-  threshold chosen on validation. LR flags 40% of buildings as low-confidence; the queue also adds model
-  disagreements.
+  threshold chosen on validation. LR flags 40% of buildings as low-confidence; the queue also adds buildings where
+  LR and KNN disagree.
 - **Is it ready for real disasters?** No. It is a research and teaching tool, with no rescue or routing use.
-- **What does PARTIAL on the Readiness board mean?** Some served models have a usable review threshold and some
-  don't (the tile names them). A model without one gets no low-confidence flags; only model disagreement is
+- **What does PARTIAL on the Readiness board mean?** One of the served models (LR, KNN) has a usable review
+  threshold and the other doesn't (the tile names it). A model without one gets no low-confidence flags; only model disagreement is
   flagged. The thresholds are still chosen on validation only. See [FIXES_V1_2.md](FIXES_V1_2.md).
 - **What changed in v1.1, and how do you know nothing broke?** We simplified the Case File and Feature Lab code
   (named helper functions, plain loops, fewer repeated expressions) and removed the validation column from the
@@ -86,12 +93,12 @@ domain shift.
    Prediction overlay, then Correct vs wrong. Burned roofs → *destroyed* is the easiest class
    (scene macro-F1 0.73).
 4. **Case file (60 s):** click a destroyed building and show the outlined crops, predicted vs ground truth, and
-   the LR contributions. Switch the model to Decision Tree for the path of questions, and to KNN for the 15
-   similar training buildings.
+   the LR contributions. Switch the model to KNN for the 15 similar training buildings.
 5. **Wind scene `hurricane-matthew_00000185` (30 s):** all four classes mixed. Minor vs major get confused, which is
    the hardest distinction.
-6. **Arena (60 s):** the dumbbell (every model drops on the unseen disaster), the confounding check (82.9%),
-   and the Experiments section (removing the signature didn't help).
+6. **Arena (60 s):** the dumbbell (every model drops on the unseen disaster), then the confounding check (82.9%
+   event-prediction accuracy vs 25.2% for always guessing the most common event). If asked about the paper, point
+   to the Decision Tree rows, labelled as a research comparison not served in the app.
 7. **Report (30 s):** download the PDF. It carries the split, the metrics and the limitations.
 
 Backup: the flooding scene `hurricane-harvey_00000356` is mostly minor damage under water, and the models struggle
@@ -101,10 +108,12 @@ Backup: the flooding scene `hurricane-harvey_00000356` is mostly minor damage un
 
 `python scripts/prepare_demo.py` chose these from the **held-out test split**. Each has 25–160 buildings and
 at least 3 ground-truth damage classes, ranked by how evenly the classes are mixed, with the best scene per
-disaster type. For every model, the analysis, view images, CSV and PDF are already on disk. Generated from
+disaster type. For LR and KNN, the analysis, view images, CSV and PDF are already on disk and open in the app.
+The DT and RF analyses from before the app served only LR and KNN also stay on disk, but the app no longer lists or
+opens them; their scores below are kept as saved results. Generated from
 `artifacts/demo/demo_scenes.json`; re-run the script after retraining.
 
-| # | Scene | Disaster type (config) | Buildings | Ground truth: none · minor · major · destroyed | Scene macro-F1: LR · KNN · DT · RF |
+| # | Scene | Disaster type (config) | Buildings | Ground truth: none · minor · major · destroyed | Scene macro-F1: LR · KNN (served) · DT · RF (saved, not served) |
 |---|---|---|---:|---|---|
 | 1 | `hurricane-matthew_00000185` | wind | 37 | 12 · 10 · 8 · 7 | 0.22 · 0.35 · 0.16 · 0.20 |
 | 2 | `hurricane-harvey_00000356` | flooding | 115 | 25 · 61 · 27 · 2 | 0.21 · 0.17 · 0.26 · 0.23 |

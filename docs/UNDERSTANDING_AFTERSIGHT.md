@@ -62,7 +62,7 @@ flowchart TB
     end
     subgraph live ["Used live: the app"]
         direction LR
-        F["Saved models +<br/>results (files)"] --> G["FastAPI backend"]
+        F["Saved models (LR + KNN served) +<br/>results (files)"] --> G["FastAPI backend"]
         G <-->|"you click Run analysis"| H["React web app<br/>Triage Desk, Case File, Arena…"]
     end
     build --> live
@@ -240,7 +240,7 @@ flowchart TB
     B --> F["37 features"]
     F --> S["split: test (within-event)"]
     S --> Z["scaling (log1p + z-score)"]
-    Z --> M["LR 0.95 · KNN 15/15 · Tree 0.998<br/>→ destroyed"]
+    Z --> M["LR 0.95 · KNN 15/15 (served)<br/>Tree 0.998 (research model)<br/>→ destroyed"]
     M --> U["solid dark footprint on the map<br/>+ explanation in the Case File"]
 ```
 
@@ -388,7 +388,9 @@ probabilities came out as **destroyed 0.951**, minor 0.031, major 0.010, none 0.
 destroyed buildings**, all from other Santa Rosa scenes (e.g. `santa-rosa-wildfire_00000007_b0047` at distance
 1.45). Vote: 15 of 15 → destroyed, confidence 1.0.
 
-**Decision Tree** (depth 8). It asks yes/no questions. Our building's path:
+**Decision Tree** (depth 8). It asks yes/no questions. The app does not serve the Decision Tree (it serves LR and
+KNN), so this path comes from the saved research model; the Model Arena shows the same saved tree. Our building's
+path:
 
 1. `glcm_homogeneity_delta` −0.240 ≤ −0.146? **yes**
 2. `glcm_homogeneity_post` 0.515 ≤ 0.576? **yes**
@@ -399,7 +401,7 @@ destroyed buildings**, all from other Santa Rosa scenes (e.g. `santa-rosa-wildfi
 7. `ring_dmean` 32.1 > 5.7? **yes**
 8. `contrast_change` 27.5 > −6.2? **yes** → a leaf of **971 training buildings**, almost all destroyed (0.998)
 
-The optional **Random Forest** also says destroyed (0.997).
+The saved **Random Forest** (not served or shown in the app) also says destroyed (0.997).
 
 ### Step 10: the confidence
 
@@ -408,10 +410,11 @@ The **confidence** is the highest class score. What it means depends on the mode
 - LR: a probability, though not *calibrated*, meaning nobody checked that predictions at 0.9 are right 90% of
   the time (0.951);
 - KNN: the share of neighbours voting for the class (1.0);
-- Tree: the class share in the leaf (0.998).
+- Tree (research model): the class share in the leaf (0.998).
 
-Each model has a **review threshold** chosen on validation: LR 0.484, KNN 0.533, Tree 0.526. Our building's
-confidence is well above all of them, so it is **not** flagged for human review.
+Each served model has a **review threshold** chosen on validation: LR 0.484 and KNN 0.533 (the saved file also
+holds Tree 0.526 from when the Tree was served; the app no longer reads it). Our building's confidence is well
+above all of them, so it is **not** flagged for human review.
 
 ### Step 11: how it appears on the map
 
@@ -437,7 +440,8 @@ Clicking the footprint opens its **Case File**. It shows:
 - the class scores;
 - the LR contribution bars from Step 9.
 
-With KNN selected, it shows the 15 neighbour thumbnails instead; with the Tree, the 8 questions.
+With KNN selected, it shows the 15 neighbour thumbnails instead. The app does not serve the Tree, so the Case
+File does not show its 8 questions; they are in Step 9, and the Model Arena shows the saved tree.
 
 ![Case File with the LR explanation](../report/assets/r04_casefile.png)
 
@@ -613,9 +617,10 @@ makes the two groups most "pure", using **Gini impurity**: `G = 1 − Σ_k p_k²
 - **Pros:** completely readable; handles non-linear patterns; no scaling needed in principle.
 - **Cons:** a single tree is unstable (small data changes can change the tree) and overfits if grown too deep.
 - **Here:** depth 8, at least 100 buildings per leaf, 115 leaves; test macro-F1 0.470 within-event, 0.294
-  cross-event (the best cross-event score, by a hair).
+  cross-event (the best cross-event score, by a hair). It is not served in the app; its saved results are the
+  research comparison with KNN (the paper's question) and appear in the Model Arena with that label.
 
-**Random Forest** (optional) averages 200 such trees, each grown on a random sample of data and features. It is
+**Random Forest** (a saved reference; not served or shown in the app) averages 200 such trees, each grown on a random sample of data and features. It is
 more accurate (0.546 within-event) but loses the single readable path.
 
 ### 6.5 K-Means (clustering, analysis only)
@@ -689,8 +694,8 @@ Two things the matrix shows:
 | Threshold baseline | 0.383 | 0.193 |
 | Logistic Regression | 0.527 | 0.290 |
 | KNN | 0.520 | 0.271 |
-| Decision Tree | 0.470 | 0.294 |
-| Random Forest (optional) | 0.546 | 0.291 |
+| Decision Tree (research comparison: not served in the app) | 0.470 | 0.294 |
+| Random Forest (saved reference; not served or shown in the app) | 0.546 | 0.291 |
 
 *Table 5: Test results, each model evaluated once (`artifacts/metrics/*/four_class/comparison.json`).*
 
@@ -711,7 +716,7 @@ santa-rosa 0.460). Part of the pooled score comes from recognising the disaster 
 
 *Figure 13: Predicting the event from the features (test set): most buildings are recognised.*
 
-**Feature-set experiments** (called "Phase 3b" during development, so their files are in `artifacts/experiments/phase3b/` and the script is `scripts/run_phase3b.py`). We tried to remove that signature:
+**Feature-set experiments** (called "Phase 3b" during development, so their files are in `artifacts/experiments/phase3b/` and the script is `scripts/run_phase3b.py`; saved results, no longer shown in the app). We tried to remove that signature:
 
 - **change-only:** 17 features, with no absolute colour levels;
 - **scene-normalised:** each feature minus the median of its scene;
@@ -737,6 +742,9 @@ the supervised models *do* find damage, because they are told what to look for.
 
 - The **frontend** (React, in your browser) only displays things.
 - The **API** (FastAPI, Python, port 8020) loads saved models and data files and answers requests.
+- The app serves two models, Logistic Regression (default) and KNN (`serving.models` in
+  `config/training.yaml`). The Decision Tree and Random Forest are trained by the pipeline for research but not
+  served; asking the API for them gives a clean "Unknown model" error.
 - Nothing is trained by the app. Training happens only when you run the pipeline scripts.
 
 ### 8.2 What happens when you click "Run analysis"
@@ -760,7 +768,7 @@ sequenceDiagram
     W-->>U: coloured footprints, counts, building list
     U->>W: click a footprint
     W->>A: GET /api/analysis/{id}/buildings/{uid}/explain
-    A-->>W: LR contributions / tree path / KNN neighbours
+    A-->>W: LR contributions / KNN neighbours
 ```
 
 On a typical 40-building test scene this takes **8–22 ms** the first time, and about **3 ms** once cached.
@@ -773,15 +781,16 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 | **Library** | scenes, held-out **test** scenes by default, with ground-truth damage bars | choose a scene; training scenes carry a warning |
 | **Triage Desk** | swipe between pre and post, zoom, overlays (ground truth / prediction / correct vs wrong), building list | the main workspace |
 | **Case File** | one building: crops, predicted vs true, confidence, explanation | understand a single decision |
-| **Arena** | every model, both designs, confusion matrices, per-event scores, tree, confounding, experiments | compare models honestly |
+| **Arena** | LR, KNN and the threshold baseline under both designs, plus the Decision Tree's saved results labelled "research comparison: not served in the app"; confusion matrices, per-event scores, the tree, confounding | compare models honestly |
 | **Feature Lab** | which features separate the classes (training split) | see *why* the models work or fail |
 | **Cluster Atlas** | precomputed K-Means for k = 2…10: cluster sizes, silhouette, ARI and which damage classes fall into each cluster; clearly marked "never predictions" | unsupervised view of the data; a cluster ID is not a damage class |
-| **Review Queue** | buildings *suggested for human review* (low confidence or models disagree) | where a person should look first |
+| **Review Queue** | buildings *suggested for human review* (low confidence, or LR and KNN disagree) | where a person should look first |
 | **Reports** | CSV and PDF per analysis | take the results away |
 
-![Model Arena](../report/assets/r06_arena_top.png)
+![Model Arena](figures/understanding/arena_top.png)
 
-*Figure 14: The Model Arena's first view: every model drops from within-event to cross-event.*
+*Figure 14: The Model Arena's first view: every model drops from within-event to cross-event. The Decision Tree
+row is the saved research comparison; the app serves LR and KNN.*
 
 ---
 
@@ -832,13 +841,13 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 | `backend/app/training/persistence.py` | save/load models with compatibility checks |
 | `backend/app/evaluation/metrics.py` | metrics and `TestSetGuard` |
 | `backend/app/evaluation/analysis.py` | K-Means and the confounding check |
-| `backend/app/explain/explain.py` | LR contributions, tree paths, KNN neighbours |
+| `backend/app/explain/explain.py` | LR contributions and KNN neighbours (the app); tree paths and the tree structure (the saved research tree) |
 | `backend/app/api/routes.py` | all API endpoints |
 | `backend/app/core/store.py` | file-based data access, ID validation |
 | `backend/app/inference/analysis.py` | runs and caches an analysis; explanations |
 | `backend/app/inference/review.py` | review thresholds: calibration on validation, which thresholds are usable, READY / PARTIAL / NOT READY |
 | `backend/app/inference/review_queue.py` | builds the review queue |
-| `backend/app/experiments/summary.py` | reads and checks the saved feature-set experiment summary for the Model Arena |
+| `backend/app/experiments/summary.py` | reads and checks the saved feature-set experiment summary for `/results/experiments` (the UI no longer shows it) |
 | `backend/app/inference/feature_lab.py` | Feature Lab statistics (η², per-class percentiles, scatter sample), training split only |
 | `backend/app/reports/reports.py` | CSV and PDF reports |
 | `frontend/src/pages/` | one file per page (Triage Desk, Arena, …) |
@@ -953,7 +962,7 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 18. Part of the within-event score may come from recognising the disaster, so 0.53 is optimistic.
 19. The difficulty is genuine domain shift: damage looks different across disasters. Removing the signature
     also removed useful information.
-20. The prediction disagrees with the ground truth. Check the explanation (which features or questions drove
+20. The prediction disagrees with the ground truth. Check the explanation (which features or neighbours drove
     it), the confidence, whether it is flagged for review, and whether the footprint is a merged blob.
 
 ---

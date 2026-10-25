@@ -623,9 +623,10 @@ para("The opposite recall profiles are consistent with the protocol difference i
 para(f"The models also differ in cost and explanation. On our hardware, test inference took "
      f"{M[w]['knn']['inference_seconds_per_1000_test'] * 1000:.1f} ms per 1,000 buildings for KNN, which compares each "
      f"query with all {n(sw['train']['buildings'])} training buildings, versus "
-     f"{M[w]['decision_tree']['inference_seconds_per_1000_test'] * 1000:.2f} ms for the DT (single measurements). In the "
-     "AfterSight application a KNN prediction is explained by its nearest labelled training buildings and a DT "
-     "prediction by its root-to-leaf path in raw feature units.")
+     f"{M[w]['decision_tree']['inference_seconds_per_1000_test'] * 1000:.2f} ms for the DT (single measurements). The "
+     "AfterSight application explains a KNN prediction by its nearest labelled training buildings. The DT "
+     "root-to-leaf paths in raw feature units are reported in this study from the saved research models and shown "
+     "in the application's Model Arena tree view, but the DT is not served for live predictions.")
 
 # ---------------------------------------------------------------- VII. Threats
 h1("VII. Limitations and Threats to Validity")

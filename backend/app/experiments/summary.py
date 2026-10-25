@@ -1,10 +1,11 @@
-"""Reading the saved feature-set experiment summary for the Model Arena.
+"""Reading the saved feature-set experiment summary for /results/experiments and /results/overview.
 
 The experiment was called "Phase 3b" during development, which is why its files live in
 artifacts/experiments/phase3b/ (summary.json).
 
 The file is written by scripts/run_phase3b.py (app/experiments/phase3b.py). This module only checks that it
-has what the Arena shows; the saved values are passed through exactly as written, never replaced or filled in.
+has the fields the API returns; the saved values are passed through exactly as written, never replaced or
+filled in. The Model Arena no longer displays these results, but the endpoints still serve them.
 """
 
 import json

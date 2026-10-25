@@ -97,8 +97,9 @@ def threshold_status(doc: dict[str, Any] | None, problem: str | None, served: li
                      optional: list[str], optional_untrained: list[str]) -> dict[str, Any]:
     """READY / PARTIAL / NOT READY for the review thresholds of the REQUIRED served models.
 
-    Optional models (config: optional: true, e.g. random_forest) never decide the state; they are only
-    mentioned in the reason (not trained, or trained without a usable threshold).
+    Served models marked optional in config (optional: true; none of the currently served LR and KNN is) never
+    decide the state; they are only mentioned in the reason (not trained, or trained without a usable threshold).
+    Models that are not served are not passed in at all.
     """
     required = [m for m in served if m not in optional]
     with_threshold = [m for m in required if usable_threshold(doc, m) is not None]

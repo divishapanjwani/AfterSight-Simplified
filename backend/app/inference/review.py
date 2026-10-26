@@ -97,7 +97,7 @@ def threshold_status(doc: dict[str, Any] | None, problem: str | None, served: li
                      optional: list[str], optional_untrained: list[str]) -> dict[str, Any]:
     """READY / PARTIAL / NOT READY for the review thresholds of the REQUIRED served models.
 
-    Served models marked optional in config (optional: true; none of the currently served LR and KNN is) never
+    Served models marked optional in config (optional: true; neither of the currently served KNN and Decision Tree is) never
     decide the state; they are only mentioned in the reason (not trained, or trained without a usable threshold).
     Models that are not served are not passed in at all.
     """

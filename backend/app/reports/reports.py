@@ -17,7 +17,7 @@ from app.evaluation.figures import heatmap
 # Cached PDFs are named <analysis_id>.r<REPORT_VERSION>.pdf and are never regenerated once written.
 # Bump this whenever the PDF wording or layout changes, so new downloads get the new text
 # (older files stay in outputs/reports/ untouched).
-REPORT_VERSION = 2
+REPORT_VERSION = 3  # 3: the limitations quote the report's own model, not the default model
 
 
 def pdf_name(analysis_id: str) -> str:
@@ -29,9 +29,8 @@ def na(value: Any) -> str:
     return "not available" if value is None else str(value)
 
 
-def report_context(store: Any) -> dict[str, Any]:
-    """Numbers quoted in the limitations, read from saved artifacts (never typed in)."""
-    model = store.training_config.default_model
+def report_context(store: Any, model: str) -> dict[str, Any]:
+    """Numbers quoted in the limitations for the report's model, read from saved artifacts (never typed in)."""
     ctx: dict[str, Any] = {"model": model}
     for design in ("within_event", "cross_event"):
         doc = store.read_json(f"metrics/{design}/four_class/comparison.json") or {}
@@ -44,7 +43,7 @@ def limitations(context: dict[str, Any] | None) -> list[str]:
     context = context or {}
     scores = ""
     if context.get("within_event") is not None and context.get("cross_event") is not None:
-        scores = (f" For the default model, test macro-F1 is {context['within_event']:.2f} on new scenes of known disasters "
+        scores = (f" For this model, test macro-F1 is {context['within_event']:.2f} on new scenes of known disasters "
                   f"but {context['cross_event']:.2f} on an unseen disaster (cross-event).")
     return [
         "Footprints are derived from rasterised xBD annotation masks, not original polygons; touching buildings may be merged.",

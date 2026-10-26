@@ -4,7 +4,7 @@ import json
 
 from app.inference.review import read_thresholds, threshold_status, usable_threshold, why_unusable
 
-SERVED = ["logistic_regression", "knn", "decision_tree", "random_forest"]
+SERVED = ["knn", "decision_tree", "random_forest"]
 
 
 def _doc(**thresholds):
@@ -12,7 +12,7 @@ def _doc(**thresholds):
             "models": {m: {"threshold": t} for m, t in thresholds.items()}}
 
 
-ALL = dict(logistic_regression=0.4836, knn=0.5333, decision_tree=0.5257, random_forest=0.3865)
+ALL = dict(knn=0.5333, decision_tree=0.5257, random_forest=0.3865)
 
 
 def test_read_missing_malformed_and_wrong_shape(tmp_path) -> None:
@@ -28,18 +28,19 @@ def test_read_missing_malformed_and_wrong_shape(tmp_path) -> None:
 
 
 def test_usable_threshold_only_accepts_numbers_in_0_1() -> None:
-    doc = _doc(logistic_regression=0.48, knn=None, decision_tree="0.5", random_forest=True)
+    doc = _doc(knn=0.53, decision_tree=None, random_forest="0.5")
     doc["models"]["extra"] = {"threshold": 1.7}
-    assert usable_threshold(doc, "logistic_regression") == 0.48
-    for model in ("knn", "decision_tree", "random_forest", "extra", "not_listed"):
+    doc["models"]["flag"] = {"threshold": True}
+    assert usable_threshold(doc, "knn") == 0.53
+    for model in ("decision_tree", "random_forest", "extra", "flag", "not_listed"):
         assert usable_threshold(doc, model) is None
     assert usable_threshold(None, "knn") is None
 
 
 def test_reasons_name_the_problem() -> None:
-    doc = _doc(logistic_regression=None, knn=0.5)
-    assert "no threshold for logistic_regression that reaches 70% accuracy on validation" in why_unusable(doc, None, "logistic_regression")
-    assert "decision_tree is not in the review threshold file" in why_unusable(doc, None, "decision_tree")
+    doc = _doc(decision_tree=None, knn=0.5)
+    assert "no threshold for decision_tree that reaches 70% accuracy on validation" in why_unusable(doc, None, "decision_tree")
+    assert "random_forest is not in the review threshold file" in why_unusable(doc, None, "random_forest")
     assert why_unusable(doc, None, "knn") is None
     assert why_unusable(None, "the review threshold file is not valid JSON", "knn") == "the review threshold file is not valid JSON"
 
@@ -63,7 +64,7 @@ def test_status_all_present_partial_and_none() -> None:
 
 
 def test_untrained_optional_model_does_not_make_it_partial() -> None:
-    doc = _doc(logistic_regression=0.48, knn=0.53, decision_tree=0.53)  # RF skipped by calibration
+    doc = _doc(knn=0.53, decision_tree=0.53)  # RF skipped by calibration
     status = threshold_status(doc, None, SERVED, ["random_forest"], ["random_forest"])
     assert status["state"] == "ready" and "random_forest (optional) not trained" in status["reason"]
     assert "random_forest" not in status["thresholds"]
@@ -71,7 +72,7 @@ def test_untrained_optional_model_does_not_make_it_partial() -> None:
 
 def test_trained_optional_model_without_threshold_does_not_make_it_partial() -> None:
     # random_forest is trained, but calibration found no threshold for it (null) or skipped it (missing)
-    for doc in (_doc(**{**ALL, "random_forest": None}), _doc(logistic_regression=0.48, knn=0.53, decision_tree=0.53)):
+    for doc in (_doc(**{**ALL, "random_forest": None}), _doc(knn=0.53, decision_tree=0.53)):
         status = threshold_status(doc, None, SERVED, ["random_forest"], [])
         assert status["state"] == "ready", status
         assert "random_forest (optional) has no usable threshold" in status["reason"]

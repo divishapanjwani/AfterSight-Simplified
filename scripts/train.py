@@ -2,7 +2,7 @@
 
 Usage (repo root, venv active):
     python scripts/train.py                           # both designs, both label schemes, all models + analyses
-    python scripts/train.py --design within_event --scheme four_class --models logistic_regression
+    python scripts/train.py --design within_event --scheme four_class --models knn
     python scripts/train.py --no-optional             # skip the optional random forest
     python scripts/train.py --skip-analyses           # no K-Means / confounding check
 

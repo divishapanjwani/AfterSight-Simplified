@@ -41,14 +41,14 @@ preprocessing:
   # skewness exceeds this (non-negative features only), then median imputation, then StandardScaler.
   skew_threshold: 2.0
 
-default_model: logistic_regression   # Triage Desk default (decided after Phase 3)
+default_model: knn   # Triage Desk default
 
 models:   # tuned on validation macro-F1; the best setting is evaluated on test exactly once
   baseline:
     quantile_step: 0.05        # threshold candidates = training-set quantiles of the feature at 5% steps
-  logistic_regression:
-    grid: {C: [0.01, 0.1, 1.0, 10.0]}
-    max_iter: 3000
+  logistic_regression:         # NOT a damage model of the app and not trained by scripts/train.py. Used only by the
+    grid: {C: [0.01, 0.1, 1.0, 10.0]}   # feature-set experiment (scripts/run_phase3b.py, app/experiments/phase3b.py),
+    max_iter: 3000                      # kept so that saved experiment stays reproducible.
   knn:
     grid: {n_neighbors: [5, 15, 31], weights: [uniform, distance]}
   decision_tree:
@@ -67,18 +67,18 @@ kmeans:
   silhouette_sample: 5000
   pca_sample: 3000             # points saved for the 2-D "visualisation only" projection
 
-confounding:
-  grid: {C: [0.01, 0.1, 1.0, 10.0]}   # logistic regression predicting EVENT from the same 37 features
+confounding:   # an analysis classifier (multinomial logistic regression) predicting EVENT from the same 37 features,
+  grid: {C: [0.01, 0.1, 1.0, 10.0]}   # used only to measure the disaster fingerprint, not a damage model
 
 # ---------------------------------------------------------------- Phase 4: what the app serves
 
 serving:
   design: within_event          # Triage Desk models: within-event split, 4-class
   scheme: four_class
-  # Served by the app (model pickers, analysis, explanations, review queue, readiness, reports). Decision Tree and
-  # Random Forest are still trained by scripts/train.py for research (the paper compares KNN vs Decision Tree) and
-  # their saved results stay in artifacts/, but the app no longer serves them.
-  models: [logistic_regression, knn]
+  # Served by the app (model pickers, analysis, explanations, review queue, readiness, reports): KNN (the default)
+  # and the Decision Tree. Random Forest is still trained by scripts/train.py as an optional reference and its saved
+  # results stay in artifacts/, but the app does not serve it. Logistic Regression is not a damage model of the app.
+  models: [knn, decision_tree]
 
 review:
   # Per model, on VALIDATION: the lowest confidence threshold t such that buildings with confidence >= t

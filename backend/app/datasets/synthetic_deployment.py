@@ -2,8 +2,9 @@
 
 Used by the API tests and by scripts/e2e_check.py.
 
-Steps mirror the scripts: inspect (+cache) -> features -> manifests -> train LR/KNN/DT (RF deliberately
-left untrained, to test the "not trained" path) -> review thresholds. NOT xBD data.
+Steps mirror the scripts: inspect (+cache) -> features -> manifests -> train KNN/DT (RF deliberately left untrained,
+to test the "not trained" path) -> review thresholds. NOT xBD data. A Logistic Regression is also saved next to the
+served models, like the old LR files left on disk in a real deployment, so tests can show the app never serves it.
 """
 
 import json
@@ -69,13 +70,13 @@ def build_deployment(base: Path) -> Store:
     serving = design_data(table, manifests["within_event"], "four_class", cfg.label_schemes["four_class"])
     run_design(serving, cfg, guard, roots, ["baseline", "logistic_regression", "knn", "decision_tree"], say=lambda _m: None)
     cross = design_data(table, manifests["cross_event"], "four_class", cfg.label_schemes["four_class"])
-    run_design(cross, cfg, guard, roots, ["logistic_regression", "decision_tree"], say=lambda _m: None)
+    run_design(cross, cfg, guard, roots, ["knn", "decision_tree"], say=lambda _m: None)
     run_kmeans(serving, cfg, roots)
     run_confounding(serving, cfg, guard, roots)
 
     from app.training.persistence import load_model
     thresholds = {"rule": "lowest t with accuracy(confidence >= t) >= 0.5", "models": {}}
-    for name in ("logistic_regression", "knn", "decision_tree"):
+    for name in ("logistic_regression", "knn", "decision_tree"):  # LR: an unserved entry, like the real file
         pipe, _ = load_model(roots.models / "within_event" / "four_class" / f"{name}.joblib")
         proba = pipe.predict_proba(serving.X["val"])
         thresholds["models"][name] = choose_threshold(proba.max(axis=1), pipe.classes_[proba.argmax(axis=1)] == serving.y["val"].to_numpy(), 0.5)

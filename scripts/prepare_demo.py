@@ -61,15 +61,15 @@ def main() -> int:
             if not csv_path.is_file():
                 write_csv(analysis, csv_path)
             if not pdf_path.is_file():
-                write_pdf(analysis, pdf_path, report_context(store))
+                write_pdf(analysis, pdf_path, report_context(store, model))
             m = analysis["scene_metrics"] or {}
             entry["analyses"][model] = {"analysis_id": analysis["analysis_id"], "scene_macro_f1": m.get("macro_f1"),
                                         "scene_accuracy": m.get("accuracy"),
                                         "suggested_for_review": sum(b["needs_review"] for b in analysis["buildings"])}
         demo.append(entry)
-        lr = entry["analyses"].get("logistic_regression", {})
+        default = entry["analyses"].get(store.training_config.default_model, {})
         print(f"{sid:<32} {row['disaster_type']:<9} {int(row['n_buildings']):>4} buildings  GT {entry['ground_truth_counts']}  "
-              f"LR scene macro-F1 {lr.get('scene_macro_f1')}")
+              f"{store.training_config.default_model} scene macro-F1 {default.get('scene_macro_f1')}")
     out = store.paths.artifacts / "demo"
     out.mkdir(parents=True, exist_ok=True)
     (out / "demo_scenes.json").write_text(json.dumps({"created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

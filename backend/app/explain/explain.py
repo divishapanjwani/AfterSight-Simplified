@@ -94,7 +94,11 @@ def decision_path(pipe: Pipeline, row: pd.DataFrame) -> dict[str, Any]:
 
 
 def lr_contributions(pipe: Pipeline, row: pd.DataFrame, top_k: int = 5) -> dict[str, Any]:
-    """Top features pushing the predicted class: coefficient x standardised value (log-odds units)."""
+    """Top features pushing the predicted class: coefficient x standardised value (log-odds units).
+
+    Not used by the app (Logistic Regression is not a damage model it serves). Kept for docs/build/understanding_data.py,
+    which computes the logistic-regression worked example in docs/UNDERSTANDING_AFTERSIGHT.md.
+    """
     model = pipe.named_steps["model"]
     z = _transform(pipe, row)[0]  # the building's 37 values after log1p + imputation + standardisation
     scores = model.decision_function(z[None, :])[0]  # one linear score per class
@@ -124,6 +128,7 @@ def lr_contributions(pipe: Pipeline, row: pd.DataFrame, top_k: int = 5) -> dict[
 
 
 def lr_coefficients(pipe: Pipeline) -> dict[str, dict[str, float]]:
+    """Per-class coefficients, saved by training for the feature-set experiment's logistic regression (phase3b)."""
     model = pipe.named_steps["model"]
     names = feature_names(pipe)
     return {str(c): {names[j]: round(float(model.coef_[i][j]), 5) for j in range(len(names))}

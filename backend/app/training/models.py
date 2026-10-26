@@ -20,13 +20,13 @@ from sklearn.ensemble import RandomForestClassifier
 
 from app.features.schema import CHANGE, CONTEXT, FEATURE_COLUMNS
 
-REQUIRED_MODELS = ["baseline", "logistic_regression", "knn", "decision_tree"]
+REQUIRED_MODELS = ["baseline", "knn", "decision_tree"]
 OPTIONAL_MODELS = ["random_forest"]
 
 # What predict_proba means for each model — shown next to any confidence value in the UI.
 CONFIDENCE_KIND = {
     "baseline": "none",
-    "logistic_regression": "probability (not calibrated)",
+    "logistic_regression": "probability (not calibrated)",  # only for the feature-set experiment (phase3b), not served
     "knn": "vote fraction of neighbours",
     "decision_tree": "class fraction in the leaf",
     "random_forest": "mean of tree leaf fractions",
@@ -150,7 +150,7 @@ def make_pipeline(name: str, params: dict[str, Any], seed: int, skew_threshold: 
     """Build an unfitted pipeline. The baseline has no preprocessing (it works in raw feature units)."""
     if name == "baseline":
         return Pipeline([("model", ThresholdRule(**params))])
-    if name == "logistic_regression":
+    if name == "logistic_regression":  # the confounding check and the feature-set experiment only; not a damage model
         model = LogisticRegression(class_weight="balanced", max_iter=settings.max_iter if settings else 3000,
                                    random_state=seed, **params)  # lbfgs = multinomial for >2 classes
     elif name == "knn":

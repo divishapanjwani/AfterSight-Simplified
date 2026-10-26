@@ -83,7 +83,7 @@ class ConfoundingConfig(BaseModel):
 class ServingConfig(BaseModel):
     design: str = "within_event"
     scheme: str = "four_class"
-    models: list[str] = ["logistic_regression", "knn", "decision_tree", "random_forest"]
+    models: list[str] = ["knn", "decision_tree"]
 
 
 class ReviewConfig(BaseModel):
@@ -95,7 +95,7 @@ class TrainingConfig(BaseModel):
     splits: SplitsConfig
     label_schemes: dict[str, LabelScheme] = {}
     preprocessing: dict[str, float] = {"skew_threshold": 2.0}
-    default_model: str = "logistic_regression"
+    default_model: str = "knn"
     models: dict[str, ModelSettings] = {}
     explain: ExplainConfig = ExplainConfig()
     kmeans: KMeansConfig = KMeansConfig()

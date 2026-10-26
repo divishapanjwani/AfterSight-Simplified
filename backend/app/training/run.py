@@ -155,7 +155,7 @@ def train_one(name: str, data: DesignData, cfg: TrainingConfig, guard: TestSetGu
     Xs, ys = _stratified_sample(Xva, yva, cfg.explain.permutation_sample, cfg.seed)
     explain: dict[str, Any] = {"permutation_importance_val": permutation_importances(pipe, Xs, ys, cfg.explain.permutation_repeats, cfg.seed),
                                "permutation_sample": len(Xs)}
-    if name == "logistic_regression":
+    if name == "logistic_regression":  # only trained by the feature-set experiment (phase3b), never by train.py
         explain["coefficients_per_class"] = lr_coefficients(pipe)
         explain["coefficient_note"] = "per one standard deviation of the (log-)transformed feature; log-odds units"
     if name == "decision_tree":

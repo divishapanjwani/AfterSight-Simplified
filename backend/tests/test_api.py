@@ -69,14 +69,35 @@ def test_health(client) -> None:
 def test_status_ready_on_built_deployment(client) -> None:
     tiles = client.get("/api/dataset/status").json()["tiles"]
     assert all(tiles[t]["ready"] for t in ("scene_cache", "features", "splits", "models", "review_thresholds"))
-    # readiness follows the served models in config (LR and KNN). The fixture also trains a Decision Tree and has an
-    # untrained Random Forest; neither is served, so neither appears in or affects the tiles.
-    assert tiles["models"]["detail"]["trained"] == {"logistic_regression": True, "knn": True}
+    # readiness follows the served models in config (KNN and the Decision Tree). The fixture also has a saved Logistic
+    # Regression (like the old files left on disk) and an untrained Random Forest; neither is served or affects the tiles.
+    assert tiles["models"]["detail"]["trained"] == {"knn": True, "decision_tree": True}
     assert tiles["models"]["fix"] is None
     assert tiles["models"]["state"] == "ready" and tiles["models"]["reason"] == "all required served models are trained"
     thresholds = tiles["review_thresholds"]
-    assert thresholds["state"] == "ready" and set(thresholds["detail"]["thresholds"]) == {"logistic_regression", "knn"}
-    assert thresholds["reason"] == "usable for every required served model (logistic_regression, knn)"
+    assert thresholds["state"] == "ready" and set(thresholds["detail"]["thresholds"]) == {"knn", "decision_tree"}
+    assert thresholds["reason"] == "usable for every required served model (knn, decision_tree)"
+
+
+def test_readiness_depends_only_on_knn_and_decision_tree(client, store) -> None:
+    """Removing the saved Logistic Regression changes nothing; removing the Decision Tree makes the models tile PARTIAL."""
+    from app.core.store import Store
+    before = client.get("/api/dataset/status").json()["tiles"]
+    for name, expected in (("logistic_regression", "ready"), ("decision_tree", "partial")):
+        model_file = store.model_dir() / f"{name}.json"
+        hidden = model_file.with_suffix(".json.hidden")
+        model_file.rename(hidden)
+        app.dependency_overrides[get_store] = lambda: Store(store.paths)
+        try:
+            tiles = client.get("/api/dataset/status").json()["tiles"]
+            assert tiles["models"]["state"] == expected, name
+            if name == "logistic_regression":
+                assert tiles["models"] == before["models"] and tiles["review_thresholds"] == before["review_thresholds"]
+            else:
+                assert tiles["models"]["reason"] == "not trained: decision_tree"
+        finally:
+            hidden.rename(model_file)
+            app.dependency_overrides[get_store] = lambda: store
 
 
 def test_dataset_missing_mode(empty_client) -> None:
@@ -86,7 +107,7 @@ def test_dataset_missing_mode(empty_client) -> None:
         assert status["tiles"][name]["ready"] is False and fix in status["tiles"][name]["fix"]
     error = _assert_clean_error(empty_client.get("/api/scenes"), 503, "dataset_not_ready")
     assert "inspect_dataset.py" in error["fix"]
-    _assert_clean_error(empty_client.post("/api/analysis", json={"scene_id": "x_00000000", "model_name": "logistic_regression"}), 503)
+    _assert_clean_error(empty_client.post("/api/analysis", json={"scene_id": "x_00000000", "model_name": "knn"}), 503)
     models = empty_client.get("/api/models").json()["models"]
     assert not any(m["trained"] for m in models) and all(m["fix"] for m in models)
     _assert_clean_error(empty_client.get("/api/results/comparison"), 404, "results_not_found")
@@ -151,8 +172,8 @@ def test_images_are_jpegs(client) -> None:
 
 
 # ---------------------------------------------------------------- analysis
-@pytest.mark.parametrize("model, kind", [("logistic_regression", "probability (not calibrated)"),
-                                         ("knn", "vote fraction of neighbours")])
+@pytest.mark.parametrize("model, kind", [("knn", "vote fraction of neighbours"),
+                                         ("decision_tree", "class fraction in the leaf")])
 def test_analysis_per_model_and_cache(client, store, model, kind) -> None:
     sid = _scene(client, "test")
     first = client.post("/api/analysis", json={"scene_id": sid, "model_name": model})
@@ -168,7 +189,7 @@ def test_analysis_per_model_and_cache(client, store, model, kind) -> None:
 
 
 def test_analysis_on_train_scene_carries_warning(client) -> None:
-    body = client.post("/api/analysis", json={"scene_id": _scene(client, "train"), "model_name": "logistic_regression"}).json()
+    body = client.post("/api/analysis", json={"scene_id": _scene(client, "train"), "model_name": "knn"}).json()
     assert body["provenance"]["warning"] == TRAIN_WARNING
 
 
@@ -181,14 +202,24 @@ def test_analysis_input_validation(client) -> None:
     _assert_clean_error(client.get("/api/analysis/..%2F..%2Fsecret"), 404)
 
 
-@pytest.mark.parametrize("model", ["decision_tree", "random_forest"])
-def test_models_no_longer_served_are_rejected_cleanly(client, model) -> None:
-    """DT is trained in the fixture and RF is not; both are outside the served list, so both get the unknown-model error."""
+@pytest.mark.parametrize("model", ["logistic_regression", "random_forest", "svm"])
+def test_models_not_served_are_rejected_cleanly(client, model) -> None:
+    """LR is saved in the fixture (like the old files on disk) and RF is not trained; both are outside the served list,
+    so both get exactly the error of an unknown model."""
     sid = _scene(client, "test")
     error = _assert_clean_error(client.post("/api/analysis", json={"scene_id": sid, "model_name": model}), 404, "model_not_found")
-    assert error["message"] == "Unknown model. Choose one of: logistic_regression, knn."
+    assert error["message"] == "Unknown model. Choose one of: knn, decision_tree."
     _assert_clean_error(client.get("/api/review-queue", params={"model": model}), 404, "model_not_found")
     assert model not in [m["name"] for m in client.get("/api/models").json()["models"]]
+
+
+def test_logistic_regression_is_not_in_the_research_endpoints(client) -> None:
+    """The Arena's endpoints refuse LR like any unknown model, and its saved comparison rows are left out."""
+    for model in ("logistic_regression", "svm"):
+        _assert_clean_error(client.get(f"/api/models/{model}/metrics"), 422, "invalid_request")
+    for design in ("within_event", "cross_event"):
+        rows = [m["model"] for m in client.get("/api/results/comparison", params={"design": design}).json()["models"]]
+        assert "logistic_regression" not in rows and {"knn", "decision_tree"} <= set(rows)
 
 
 def test_cached_analysis_of_a_model_no_longer_served(client, store) -> None:
@@ -196,7 +227,7 @@ def test_cached_analysis_of_a_model_no_longer_served(client, store) -> None:
     served = client.post("/api/analysis", json={"scene_id": _scene(client, "test"), "model_name": "knn"}).json()
     old = json.loads((store.paths.analysis_runs / f"{served['analysis_id']}.json").read_text(encoding="utf-8"))
     old["analysis_id"] = "dddddddddddddddd"
-    old["model"]["name"] = "decision_tree"
+    old["model"]["name"] = "logistic_regression"
     path = store.paths.analysis_runs / "dddddddddddddddd.json"
     path.write_text(json.dumps(old), encoding="utf-8")
     try:
@@ -204,12 +235,12 @@ def test_cached_analysis_of_a_model_no_longer_served(client, store) -> None:
         for url in ("/api/analysis/dddddddddddddddd", f"/api/analysis/dddddddddddddddd/buildings/{uid}/explain",
                     "/api/analysis/dddddddddddddddd/export.csv", "/api/analysis/dddddddddddddddd/report.pdf"):
             error = _assert_clean_error(client.get(url), 404, "model_not_served")
-            assert "decision_tree" in error["message"]
+            assert "logistic_regression" in error["message"]
         listed = client.get("/api/analyses", params={"limit": 100}).json()
         assert "dddddddddddddddd" not in [i["analysis_id"] for i in listed["items"]]
-        assert all(i["model"] in ("logistic_regression", "knn") for i in listed["items"])
+        assert all(i["model"] in ("knn", "decision_tree") for i in listed["items"])
         on_disk = [json.loads(f.read_text(encoding="utf-8"))["model"]["name"] for f in store.paths.analysis_runs.glob("*.json")]
-        assert listed["total"] == sum(m in ("logistic_regression", "knn") for m in on_disk) < len(on_disk)
+        assert listed["total"] == sum(m in ("knn", "decision_tree") for m in on_disk) < len(on_disk)
         last = client.get("/api/dataset/status").json()["tiles"]["last_analysis"]
         assert last["detail"]["analysis_id"] != "dddddddddddddddd"
         assert path.is_file()  # the record itself is never deleted
@@ -235,14 +266,18 @@ def test_missing_model_never_triggers_training(client, store) -> None:
         app.dependency_overrides[get_store] = lambda: store
 
 
-@pytest.mark.parametrize("model, kind", [("logistic_regression", "lr_contributions"), ("knn", "nearest_neighbours")])
+@pytest.mark.parametrize("model, kind", [("knn", "nearest_neighbours"), ("decision_tree", "decision_path")])
 def test_explanations(client, model, kind) -> None:
     analysis = client.post("/api/analysis", json={"scene_id": _scene(client, "test"), "model_name": model}).json()
     building = analysis["buildings"][0]
     body = client.get(f"/api/analysis/{analysis['analysis_id']}/buildings/{building['building_uid']}/explain").json()
     assert body["kind"] == kind and body["predicted"] == building["predicted"]
-    if kind == "lr_contributions":
-        assert len(body["detail"]["top_features"]) == 8
+    if kind == "decision_path":
+        # the root-to-leaf questions in raw units; the leaf's majority is the prediction
+        steps, fractions = body["detail"]["steps"], body["detail"]["leaf_class_fractions"]
+        assert steps and all(s["op"] in ("<=", ">") and (s["value_raw"] <= s["threshold_raw"] + 1e-6) == (s["op"] == "<=") for s in steps)
+        assert body["detail"]["prediction"] == building["predicted"] == max(fractions, key=fractions.get)
+        assert body["detail"]["leaf_samples"] > 0 and sum(fractions.values()) == pytest.approx(1, abs=1e-3)
     if kind == "nearest_neighbours":
         neighbour = body["detail"]["neighbours"][0]
         assert neighbour["split"] == "train"
@@ -251,8 +286,9 @@ def test_explanations(client, model, kind) -> None:
     _assert_clean_error(client.get(f"/api/analysis/{analysis['analysis_id']}/buildings/{other}/explain"), 404, "building_not_found")
 
 
-def test_exports(client, store) -> None:
-    analysis = client.post("/api/analysis", json={"scene_id": _scene(client, "test"), "model_name": "logistic_regression"}).json()
+@pytest.mark.parametrize("model", ["knn", "decision_tree"])
+def test_exports(client, store, model) -> None:
+    analysis = client.post("/api/analysis", json={"scene_id": _scene(client, "test"), "model_name": model}).json()
     csv = client.get(f"/api/analysis/{analysis['analysis_id']}/export.csv")
     assert csv.status_code == 200 and csv.headers["content-type"].startswith("text/csv")
     lines = csv.text.strip().splitlines()
@@ -263,15 +299,16 @@ def test_exports(client, store) -> None:
 
 
 def test_review_queue(client) -> None:
-    body = client.get("/api/review-queue", params={"model": "logistic_regression", "limit": 500 // 5}).json()
+    body = client.get("/api/review-queue", params={"limit": 500 // 5}).json()
+    assert body["model"] == "knn"  # the default
     assert body["framing"].startswith("Suggested for human review") and body["split"] == "test"
     confidences = [i["confidence"] for i in body["items"]]
     assert confidences == sorted(confidences) and all(i["reasons"] for i in body["items"])
     assert body["total_flagged"] <= body["total_buildings"]
     assert body["flagged_low_confidence"] + body["flagged_disagreement_only"] == body["total_flagged"]
     _assert_clean_error(client.get("/api/review-queue", params={"split": "everything"}), 422)
-    # disagreement is between the served models only: LR is compared with KNN, never with the (trained) Decision Tree
-    for model, other in (("logistic_regression", "knn"), ("knn", "logistic_regression")):
+    # disagreement is between the served models only: KNN vs the Decision Tree, never the saved Logistic Regression
+    for model, other in (("knn", "decision_tree"), ("decision_tree", "knn")):
         items = client.get("/api/review-queue", params={"model": model, "limit": 100}).json()["items"]
         assert all(set(i["other_models"]) == {other} for i in items)
         disagreeing = [r for i in items for r in i["reasons"] if r.startswith("other models disagree")]
@@ -323,11 +360,11 @@ def test_threshold_tile_partial_ready_and_not_ready(client, store) -> None:
     with thresholds_file(store, _thresholds_with(store, knn="drop")):
         t = tile()
         assert t["state"] == "partial" and t["ready"] is False and "missing for knn" in t["reason"]
-    # a model that is not served (the fixture's file also has a Decision Tree entry) never affects readiness
-    with thresholds_file(store, _thresholds_with(store, decision_tree=None)):
+    # a model that is not served (the fixture's file also has a Logistic Regression entry) never affects readiness
+    with thresholds_file(store, _thresholds_with(store, logistic_regression=None)):
         t = tile()
-        assert t["state"] == "ready" and "decision_tree" not in t["detail"]["thresholds"]
-    with thresholds_file(store, _thresholds_with(store, logistic_regression=None, knn=None)):
+        assert t["state"] == "ready" and "logistic_regression" not in t["detail"]["thresholds"]
+    with thresholds_file(store, _thresholds_with(store, decision_tree=None, knn=None)):
         t = tile()
         assert t["state"] == "not_ready" and "no required served model has a usable threshold" in t["reason"]
     t = tile()  # the real (all present) file again
@@ -335,10 +372,10 @@ def test_threshold_tile_partial_ready_and_not_ready(client, store) -> None:
 
 
 def test_review_queue_without_a_usable_threshold(client, store) -> None:
-    params = {"model": "logistic_regression", "limit": 200}
+    params = {"model": "decision_tree", "limit": 200}
     with_threshold = client.get("/api/review-queue", params=params).json()
     assert with_threshold["threshold"] is not None and with_threshold["threshold_note"] is None
-    for doc in (_thresholds_with(store, logistic_regression=None), _thresholds_with(store, logistic_regression="drop"), None):
+    for doc in (_thresholds_with(store, decision_tree=None), _thresholds_with(store, decision_tree="drop"), None):
         with thresholds_file(store, doc):
             body = client.get("/api/review-queue", params=params).json()
             # no threshold -> no low-confidence flags, no rule quoted, and a note saying why
@@ -349,7 +386,7 @@ def test_review_queue_without_a_usable_threshold(client, store) -> None:
             assert body["total_flagged"] == body["flagged_disagreement_only"] and len(body["items"]) == min(200, body["total_flagged"])
             assert all(r.startswith("other models disagree") for item in body["items"] for r in item["reasons"])
             other = client.get("/api/models").json()["models"]
-            assert next(m for m in other if m["name"] == "logistic_regression")["review_threshold"] is None
+            assert next(m for m in other if m["name"] == "decision_tree")["review_threshold"] is None
 
 
 def _summary_row(**changes):
@@ -403,12 +440,12 @@ def test_phase3b_summary_malformed_or_incomplete(client, store, content, words) 
 # ---------------------------------------------------------------- models, results, feature lab, clusters
 def test_models_and_results(client) -> None:
     body = client.get("/api/models").json()
-    assert body["default_model"] == "logistic_regression"
-    assert [m["name"] for m in body["models"]] == ["logistic_regression", "knn"]  # the served list from config
+    assert body["default_model"] == "knn"
+    assert [m["name"] for m in body["models"]] == ["knn", "decision_tree"]  # the served list from config
+    assert [m["name"] for m in body["models"] if m["default"]] == ["knn"]
     assert not any(m["optional"] for m in body["models"])
-    metrics = client.get("/api/models/logistic_regression/metrics").json()
+    metrics = client.get("/api/models/knn/metrics").json()
     assert metrics["test_evaluations"] == 1 and "test_per_event" in metrics["metrics"]
-    # research endpoints (Model Arena) still read the saved Decision Tree results, which are not served
     cross = client.get("/api/models/decision_tree/metrics", params={"design": "cross_event"}).json()
     assert cross["design_label"] == "cross-event generalisation"
     tree = client.get("/api/models/decision_tree/tree", params={"max_depth": 2}).json()

@@ -1,9 +1,10 @@
 """End-to-end check on a SYNTHETIC deployment (never touches real data or artifacts).
 
 1. Builds the synthetic Parquet mirror and runs the real pipeline on it (inspect -> features -> splits
-   -> train LR/KNN/DT -> review thresholds) in a temporary folder.
+   -> train KNN/DT -> review thresholds) in a temporary folder.
 2. Starts the backend on that folder and the built frontend (vite preview) proxied to it, on free ports.
-3. For every served model: analysis, explanation, CSV and PDF. Untrained RF must give a clean 409.
+3. For every served model (KNN, Decision Tree): analysis, explanation, CSV and PDF. Unserved models
+   (Logistic Regression, Random Forest) must give a clean 404 model_not_found.
 4. Checks the frontend serves the app and reaches the API through its proxy.
 
 Usage (repo root):  source .venv/bin/activate && python scripts/e2e_check.py [--skip-build]
@@ -27,8 +28,8 @@ import _bootstrap  # noqa: F401
 from app.core.config import REPO_ROOT
 from app.datasets.synthetic_deployment import build_deployment
 
-EXPLAIN_KIND = {"logistic_regression": "lr_contributions", "knn": "nearest_neighbours"}
-NOT_SERVED = ["decision_tree", "random_forest"]  # still trained for research, no longer served by the app
+EXPLAIN_KIND = {"knn": "nearest_neighbours", "decision_tree": "decision_path"}
+NOT_SERVED = ["logistic_regression", "random_forest"]  # LR is not a damage model of the app; RF is not served
 
 
 def free_port() -> int:
@@ -114,7 +115,7 @@ def main() -> int:
         scene = scenes["items"][0]["scene_id"]
 
         served = [m["name"] for m in json.loads(request(f"{api}/models")[1])["models"]]  # from config/training.yaml
-        c.check(served == list(EXPLAIN_KIND), "served models are LR and KNN", ", ".join(served))
+        c.check(served == list(EXPLAIN_KIND), "served models are KNN and Decision Tree", ", ".join(served))
         for model in served:
             t = time.perf_counter()
             code, body, _ = request(f"{api}/analysis", {"scene_id": scene, "model_name": model})

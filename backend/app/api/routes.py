@@ -1,7 +1,7 @@
 """All API routes. Handlers only validate input and call services; logic lives in app/inference etc."""
 
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, get_args
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import FileResponse
@@ -159,7 +159,9 @@ def list_models(store: StoreDep) -> dict[str, Any]:
             "serving_scheme": store.serving.scheme, "default_model": store.training_config.default_model, "models": models}
 
 
-ARENA_MODELS = Literal["baseline", "logistic_regression", "knn", "decision_tree", "random_forest"]
+# Saved damage-model results the research endpoints read. Logistic Regression is not a damage model of the app: a request
+# for it gets the same validation error as any unknown model, and its saved rows are left out of the comparison.
+ARENA_MODELS = Literal["baseline", "knn", "decision_tree", "random_forest"]
 
 
 @router.get("/models/{name}/metrics", tags=["models"])
@@ -207,7 +209,8 @@ def results_comparison(store: StoreDep, design: Design = "within_event", scheme:
         raise NotFound("No saved comparison for this design/scheme.", code="results_not_found", fix=FIX["models"])
     design_cfg = store.training_config.splits.designs[design]
     manifest = store.manifest(design)
-    return {**doc, "split_note": " ".join(design_cfg.description.split()),
+    return {**doc, "models": [m for m in doc["models"] if m["model"] in get_args(ARENA_MODELS)],
+            "split_note": " ".join(design_cfg.description.split()),
             "holdout_event": design_cfg.holdout_event,
             "test_events": sorted(manifest["counts"]["test"]["events"]),
             "experiment": scheme != "four_class", "provenance": "TEST SET (each final model evaluated once)"}
@@ -278,12 +281,12 @@ def export_pdf(analysis_id: str, store: StoreDep) -> FileResponse:
     analysis = load_analysis(store, analysis_id)
     path = store.paths.reports / pdf_name(analysis["analysis_id"])  # versioned: wording changes reach new downloads
     if not path.is_file():
-        write_pdf(analysis, path, report_context(store))
+        write_pdf(analysis, path, report_context(store, analysis["model"]["name"]))
     return FileResponse(path, media_type="application/pdf", filename=f"aftersight_{analysis['scene_id']}_{analysis['model']['name']}.pdf")
 
 
 @router.get("/review-queue", response_model=ReviewQueue, tags=["analysis"])
-def get_review_queue(store: StoreDep, model: Annotated[str, Query(max_length=40)] = "logistic_regression",
+def get_review_queue(store: StoreDep, model: Annotated[str, Query(max_length=40)] = "knn",
                      split: Literal["train", "val", "test"] = "test",
                      offset: Annotated[int, Query(ge=0)] = 0, limit: Annotated[int, Query(ge=1, le=200)] = 50) -> dict[str, Any]:
     return review_queue.review_queue(store, model, split, offset, limit)

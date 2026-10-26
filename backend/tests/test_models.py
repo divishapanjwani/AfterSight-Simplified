@@ -80,7 +80,8 @@ def trained(table, cfg, tmp_path_factory):
 def test_all_models_train_and_beat_chance(trained) -> None:
     data, _roots, _guard, rows = trained
     names = [r["model"] for r in rows]
-    assert names == ["baseline", "logistic_regression", "knn", "decision_tree", "random_forest"]
+    # Logistic Regression is not a damage model: training (scripts/train.py -> run_design) no longer includes it
+    assert names == ["baseline", "knn", "decision_tree", "random_forest"]
     assert next(r for r in rows if r["model"] == "random_forest")["optional"] is True
     for r in rows:
         assert r["test_macro_f1"] > 0.4, r  # synthetic signal is strong
@@ -90,7 +91,7 @@ def test_all_models_train_and_beat_chance(trained) -> None:
 
 def test_test_set_used_exactly_once_per_model(trained) -> None:
     _data_, _roots, guard, _rows = trained
-    assert all(n == 1 for n in guard.used.values()) and len(guard.used) == 5
+    assert all(n == 1 for n in guard.used.values()) and len(guard.used) == 4
     with pytest.raises(RuntimeError, match="already evaluated"):
         guard.evaluate("within_event/four_class/knn", lambda: None)
 
@@ -98,7 +99,7 @@ def test_test_set_used_exactly_once_per_model(trained) -> None:
 def test_saved_model_reloads_with_identical_predictions(trained) -> None:
     data, roots, _guard, _rows = trained
     folder = roots.models / "within_event" / "four_class"
-    for name in ("baseline", "logistic_regression", "knn", "decision_tree", "random_forest"):
+    for name in ("baseline", "knn", "decision_tree", "random_forest"):
         pipe, meta = load_model(folder / f"{name}.joblib", expected_manifest_hash=data.manifest_hash)
         saved = pd.read_parquet(roots.metrics / "within_event" / "four_class" / f"{name}_test_predictions.parquet")
         assert (pipe.predict(data.X["test"]) == saved["pred"].to_numpy()).all()
@@ -125,15 +126,32 @@ def test_artifacts_written(trained) -> None:
     models = roots.models / "within_event" / "four_class"
     assert (models / "decision_tree_structure.json").is_file() and (models / "knn_train_index.parquet").is_file()
     comparison = json.loads((roots.metrics / "within_event" / "four_class" / "comparison.json").read_text())
-    assert comparison["primary_metric"] == "test macro-F1" and len(comparison["models"]) == 5
-    for name in ("logistic_regression", "decision_tree"):
+    assert comparison["primary_metric"] == "test macro-F1" and len(comparison["models"]) == 4
+    assert not (models / "logistic_regression.joblib").exists()
+    for name in ("knn", "decision_tree"):
         explain = json.loads((roots.analyses / "within_event" / "four_class" / f"{name}_explain.json").read_text())
         assert explain["permutation_importance_val"][0]["feature"] in ("gray_absdiff_mean", "edge_density_delta")
-    assert "coefficients_per_class" in json.loads((roots.analyses / "within_event" / "four_class" / "logistic_regression_explain.json").read_text())
+    assert "feature_importances" in json.loads((roots.analyses / "within_event" / "four_class" / "decision_tree_explain.json").read_text())
     assert (roots.figures / "within_event" / "four_class" / "knn_confusion_test.png").stat().st_size > 0
-    meta = json.loads((models / "logistic_regression.json").read_text())
+    meta = json.loads((models / "decision_tree.json").read_text())
     assert "area_px" in meta["preprocessing"]["log1p_features"]
     assert set(meta["metrics"]["test_per_event"]) == {"ev-a", "ev-b", "ev-c"}
+
+
+def test_experiment_logistic_regression_still_trains_when_named(table, cfg, tmp_path_factory) -> None:
+    """The feature-set experiment (phase3b) names logistic_regression explicitly; that path still works and saves
+    the per-class coefficients, so the saved experiment stays reproducible. It is not a damage model of the app."""
+    roots = OutputRoots(*(tmp_path_factory.mktemp(n) for n in ("lr_models", "lr_metrics", "lr_analyses", "lr_figures")))
+    data = _data(table, cfg, "within")
+    rows = run_design(data, cfg, TestSetGuard(), roots, ["logistic_regression"], say=lambda _m: None)
+    assert [r["model"] for r in rows] == ["logistic_regression"] and rows[0]["test_macro_f1"] > 0.4
+    explain = json.loads((roots.analyses / "within_event" / "four_class" / "logistic_regression_explain.json").read_text())
+    assert "coefficients_per_class" in explain
+    lr, _ = load_model(roots.models / "within_event" / "four_class" / "logistic_regression.joblib")
+    row = data.X["test"].iloc[[0]]
+    contrib = lr_contributions(lr, row, top_k=37)  # kept for the docs build script's worked example
+    assert contrib["predicted_class"] == lr.predict(row)[0]
+    assert sum(f["contribution"] for f in contrib["top_features"]) + contrib["intercept"] == pytest.approx(contrib["score"], abs=1e-3)
 
 
 def test_per_building_explanations(trained) -> None:
@@ -146,10 +164,6 @@ def test_per_building_explanations(trained) -> None:
     for step in path["steps"]:  # raw-unit comparison agrees with the branch taken
         assert (step["value_raw"] <= step["threshold_raw"] + 1e-6) == (step["op"] == "<=")
 
-    lr, _ = load_model(folder / "logistic_regression.joblib")
-    contrib = lr_contributions(lr, row, top_k=37)
-    assert contrib["predicted_class"] == lr.predict(row)[0]
-    assert sum(f["contribution"] for f in contrib["top_features"]) + contrib["intercept"] == pytest.approx(contrib["score"], abs=1e-3)
 
     knn, meta = load_model(folder / "knn.joblib")
     index = pd.read_parquet(folder / "knn_train_index.parquet")

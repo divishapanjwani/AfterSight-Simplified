@@ -15,14 +15,14 @@ import numpy as np
 from app.core.errors import Conflict, NotFound
 from app.core.store import ANALYSIS_ID, Store
 from app.evaluation.metrics import classification_metrics
-from app.explain.explain import knn_neighbours, lr_contributions
+from app.explain.explain import decision_path, knn_neighbours
 from app.inference.review import usable_threshold
 from app.inference.scenes import polygon_parts, provenance
 from app.training.models import CONFIDENCE_KIND
 
 ANALYSIS_VERSION = 1
-MODEL_LABELS = {"logistic_regression": "Logistic Regression", "knn": "K-Nearest Neighbours",
-                "decision_tree": "Decision Tree", "random_forest": "Random Forest (optional)", "baseline": "Threshold baseline"}
+MODEL_LABELS = {"knn": "K-Nearest Neighbours", "decision_tree": "Decision Tree",
+                "random_forest": "Random Forest (optional)", "baseline": "Threshold baseline"}
 
 
 def _analysis_id(scene_id: str, model: str, meta: dict[str, Any]) -> str:
@@ -107,7 +107,7 @@ def load_analysis(store: Store, analysis_id: str) -> dict[str, Any]:
     if not path.is_file():
         raise NotFound("Unknown analysis id.", code="analysis_not_found")
     analysis = json.loads(path.read_text(encoding="utf-8"))
-    # Cached analyses of models that are no longer served (e.g. decision_tree, random_forest) stay on disk as
+    # Cached analyses of models that are not served (e.g. logistic_regression, random_forest) stay on disk as
     # records, but the app does not open, explain or export them.
     if analysis["model"]["name"] not in store.serving.models:
         raise NotFound(f"This analysis used {analysis['model']['name']}, which the app no longer serves.",
@@ -142,8 +142,8 @@ def explain_building(store: Store, analysis_id: str, building_uid: str) -> dict[
     if meta["created_at"] != analysis["model"]["trained_at"]:
         raise Conflict("The model was retrained after this analysis; run the analysis again.", code="analysis_stale")
     row = feature_row(store, building_uid)
-    if name == "logistic_regression":
-        kind, detail = "lr_contributions", lr_contributions(pipe, row, top_k=8)
+    if name == "decision_tree":
+        kind, detail = "decision_path", decision_path(pipe, row)
     elif name == "knn":
         kind, detail = "nearest_neighbours", knn_neighbours(pipe, row, store.knn_index())
         for neighbour in detail["neighbours"]:

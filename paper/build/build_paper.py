@@ -573,12 +573,15 @@ for mname, mkey in (("KNN", "knn"), ("Decision tree", "decision_tree")):
                  f"{f3(t(x, mkey)['macro_f1'])} [{ci(x, mkey)}]", f3(t(x, mkey)["accuracy"])])
 rows.append(["KNN − DT", f"{dw['macro_f1']:+.3f} [{dw['ci95'][0]:+.3f}, {dw['ci95'][1]:+.3f}]", "",
              f"{dx['macro_f1']:+.3f} [{dx['ci95'][0]:+.3f}, {dx['ci95'][1]:+.3f}]", ""])
-ctx = ", ".join(f"{name} {f3(CMP[w][k]['test_macro_f1'])}/{f3(CMP[x][k]['test_macro_f1'])}"
-                for name, k in (("logistic regression", "logistic_regression"), ("random forest", "random_forest"),
-                                ("one-feature threshold rule", "baseline")))
+ctx = ", ".join(f"{name} {f3(CMP[w][k]['test_macro_f1'])}/{f3(CMP[x][k]['test_macro_f1'])}{extra}"
+                for name, k, extra in (("logistic regression", "logistic_regression",
+                                        " (saved results from an earlier version of the pipeline that included logistic "
+                                        "regression; it is not trained by the current pipeline)"),
+                                       ("random forest", "random_forest", ""),
+                                       ("one-feature threshold rule", "baseline", "")))
 table_caption("IV", "Test results (single training run; scene-bootstrap intervals)")
 table(rows, [0.72, 1.05, 0.38, 1.0, 0.38],
-      note=f"For context only, other models trained in the same pipeline score (within/cross macro-F1): {ctx}.")
+      note=f"For context only, other models score (within/cross macro-F1): {ctx}.")
 figure(FIG / "fig2_macro_f1.png", "Fig. 2. Test macro-F1 of KNN and the DT under both designs. Error bars: 95% "
        "scene-level bootstrap intervals for fixed trained models.")
 h2("B. Per-Class Behaviour")
@@ -624,9 +627,9 @@ para(f"The models also differ in cost and explanation. On our hardware, test inf
      f"{M[w]['knn']['inference_seconds_per_1000_test'] * 1000:.1f} ms per 1,000 buildings for KNN, which compares each "
      f"query with all {n(sw['train']['buildings'])} training buildings, versus "
      f"{M[w]['decision_tree']['inference_seconds_per_1000_test'] * 1000:.2f} ms for the DT (single measurements). The "
-     "AfterSight application explains a KNN prediction by its nearest labelled training buildings. The DT "
-     "root-to-leaf paths in raw feature units are reported in this study from the saved research models and shown "
-     "in the application's Model Arena tree view, but the DT is not served for live predictions.")
+     "AfterSight application serves both models: it explains a KNN prediction by its nearest labelled training "
+     "buildings and a DT prediction by its root-to-leaf path in raw feature units, shown in the application's Case "
+     "File.")
 
 # ---------------------------------------------------------------- VII. Threats
 h1("VII. Limitations and Threats to Validity")

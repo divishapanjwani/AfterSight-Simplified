@@ -103,15 +103,15 @@ Feature names:
 
 | # | Claim | Evidence | Status |
 |---|---|---|---|
-| 7.1 | A logistic-regression classifier predicts the **event** from the same 37 features with test accuracy 0.829 (majority baseline 0.252), so the features carry a strong event signature | `artifacts/analyses/confounding/within_event.json` | Verified (artifact) |
+| 7.1 | A logistic-regression classifier (an analysis classifier, not a damage model of the app) predicts the **event** from the same 37 features with test accuracy 0.829 (majority baseline 0.252), so the features carry a strong event signature | `artifacts/analyses/confounding/within_event.json` | Verified (artifact) |
 | 7.2 | Phase 3b confounding-reduced feature sets (LR and DT only, no KNN) did not improve cross-event macro-F1 | `artifacts/experiments/phase3b/summary.json` | Verified (artifact); DT rows only usable for the paper |
-| 7.3 | Other models (context row only): LR 0.527 / 0.290, RF 0.546 / 0.291, threshold baseline 0.383 / 0.193 (within / cross) | `comparison.json` | Verified (artifact) |
+| 7.3 | Other models (context row only): LR 0.527 / 0.290 (saved results from an earlier version of the pipeline that included logistic regression; not trained by the current pipeline), RF 0.546 / 0.291, threshold baseline 0.383 / 0.193 (within / cross) | `comparison.json` | Verified (artifact) |
 
 ## 8. System (brief, for one paragraph and one figure at most)
 
 | # | Claim | Evidence | Status |
 |---|---|---|---|
-| 8.1 | FastAPI backend serving saved scikit-learn pipelines from files; React + TypeScript (Vite) frontend; per-building explanations (KNN neighbours, DT decision path) | `backend/app/api/routes.py`, `backend/app/explain/explain.py`, `frontend/` | Verified (code) |
+| 8.1 | FastAPI backend serving saved scikit-learn pipelines from files; React + TypeScript (Vite) frontend; per-building explanations (KNN neighbours, DT decision path), both shown in the Case File; the app serves KNN (default) and the DT | `backend/app/api/routes.py`, `backend/app/explain/explain.py`, `frontend/`, `config/training.yaml` | Verified (code) |
 | 8.2 | The app never trains during analysis; test-set guard; tests: 148 backend, 37 frontend, 22-check end-to-end (all passing at v1.3) | code; v1.3 verification | Verified (re-run at v1.3) |
 
 ## 9. Missing or unresolved

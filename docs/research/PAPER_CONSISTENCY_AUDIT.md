@@ -51,7 +51,7 @@
 | 95% scene-bootstrap CIs and paired differences (+0.050 [+0.013, +0.084]; −0.023 [−0.034, −0.011]); 2,000 replicates, seed 42 | `scripts/paper_stats.py` → `paper/build/stats.json` | Verified (re-run, byte-identical) |
 | Validation macro-F1 0.581 / 0.576 (cross) | metadata `metrics.val` | Verified (artifact) |
 | Table V per-class P/R/F1; Fig. 3 confusion matrices | metadata `per_class`, `confusion_matrix` | Verified (artifact) |
-| Context row: LR 0.527/0.290, RF 0.546/0.291, threshold rule 0.383/0.193 | `artifacts/metrics/*/four_class/comparison.json` | Verified (artifact) |
+| Context row: LR 0.527/0.290 (saved results from an earlier version of the pipeline that included logistic regression; not trained by the current pipeline), RF 0.546/0.291, threshold rule 0.383/0.193 | `artifacts/metrics/*/four_class/comparison.json` (LR rows kept on disk, unread by the app); `REQUIRED_MODELS` in `backend/app/training/models.py` no longer includes LR | Verified (artifact + code, after the KNN + DT change) |
 | Event signature: event-prediction accuracy 0.829 vs 0.252 | `artifacts/analyses/confounding/within_event.json` | Verified (artifact) |
 | Michael within-event per-event macro-F1 0.367 (KNN) / 0.329 (DT) | metadata `test_per_event` | Verified (artifact) |
 | Drops of 48% (KNN) and 37% (DT) | computed from the four test macro-F1 values | Verified (re-run) |
@@ -62,7 +62,7 @@
 
 | Claim | Evidence | Status |
 |---|---|---|
-| The application explains a KNN prediction by its nearest labelled training buildings; DT root-to-leaf paths in raw feature units come from the saved research models and are shown in the Model Arena's tree view; the DT is not served for live predictions | `backend/app/explain/explain.py` (`knn_neighbours`, `decision_path`, `tree_structure`); Case File (`frontend/src/components/CaseFile.tsx`); Arena tree section (`frontend/src/pages/ModelArenaPage.tsx`, `/api/models/decision_tree/tree`); serving list `config/training.yaml`; screenshots `docs/screenshots/06_casefile_knn.png`, `08_arena.png` | Verified (code + clone UI, after the two-model change) |
+| The application serves both models: it explains a KNN prediction by its nearest labelled training buildings and a DT prediction by its root-to-leaf path in raw feature units, shown in the Case File | `backend/app/explain/explain.py` (`knn_neighbours`, `decision_path`); `explain_building` in `backend/app/inference/analysis.py`; Case File (`frontend/src/components/CaseFile.tsx`, `KnnView`, `TreeView`); serving list `config/training.yaml` (`[knn, decision_tree]`); screenshots `docs/screenshots/04_casefile_knn.png`, `06_casefile_dt.png` | Verified (code + clone UI, after the KNN + DT change) |
 | No claim about removed UI elements (re-run button, demo chip, internal labels) | text search of the final PDF: 0 matches for "Phase 3b", "re-run", "demo mode", "readiness" | Verified |
 
 ## References

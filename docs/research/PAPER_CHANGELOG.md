@@ -14,7 +14,8 @@ references are kept. Only what the evidence or the clone required was changed.
 | 3 | Footnote added to Table I: "Scenes = cached image pairs; 1,179 of them contain at least one labelled building" | Table I | The table's scene counts (e.g. Michael 343) are cached pairs, not split scenes |
 | 4 | The cross-event test set is "every Hurricane Michael scene that contains labelled buildings (333 of 343)" (was "every Hurricane Michael scene") | Sec. V-A | Precision: 10 Michael pairs have no labelled building |
 | 5 | Output path and file name | — | Deliverable location in the clone |
-| 6 | The explanation sentence now says the application explains KNN predictions with nearest labelled training buildings, and that DT root-to-leaf paths are reported from the saved research models and shown in the Model Arena's tree view, but the DT is not served for live predictions (was "In the AfterSight application … a DT prediction by its root-to-leaf path") | Sec. VI-C, last paragraph | The app now serves only LR and KNN (`CHANGELOG.md`, "Two models"). No other text, number, table or figure changed: the rebuilt paper's text differs from the previous build in that sentence only, the embedded figures are byte-identical, and it is still 5 pages |
+| 6 | The explanation sentence now says the application explains KNN predictions with nearest labelled training buildings, and that DT root-to-leaf paths are reported from the saved research models and shown in the Model Arena's tree view, but the DT is not served for live predictions (was "In the AfterSight application … a DT prediction by its root-to-leaf path") | Sec. VI-C, last paragraph | The app then served only LR and KNN (`CHANGELOG.md`, "Two models"). Superseded by change 7 |
+| 7 | Sec. VI-C now says the application serves both models: it explains a KNN prediction by its nearest labelled training buildings and a DT prediction by its root-to-leaf path in raw feature units, shown in the Case File. The Table IV note now calls the logistic-regression figures (0.527/0.290, unchanged) saved results from an earlier version of the pipeline that included logistic regression, not trained by the current pipeline (was "other models trained in the same pipeline") | Sec. VI-C, last paragraph; Table IV note | The app now serves KNN (default) and the DT, and `train.py` no longer trains LR (`CHANGELOG.md`, "KNN and Decision Tree"). The Sec. VI confounding sentence is unchanged. No number, table value or figure changed: the rebuilt text differs from the previous build only in these two places (plus line reflow), the six embedded figures are byte-identical, and it is still 5 pages |
 
 ## Checked and unchanged
 
@@ -35,5 +36,6 @@ The clone's UI changes are listed in `CHANGELOG.md`:
   button, and "Phase 3b" → "feature-set experiment".
 
 None of these was described in the draft paper, so no paper text had to be removed. Later the app was
-reduced to LR and KNN; change 6 above updates the one sentence that described the DT path as an app feature. The paper
+reduced to LR and KNN; change 6 above updated the one sentence that described the DT path as an app feature. The app
+now serves KNN and the DT again, and change 7 restores that sentence's meaning and re-labels the LR context figures. The paper
 never used the name "Phase 3b"; it reports only the confounding check.

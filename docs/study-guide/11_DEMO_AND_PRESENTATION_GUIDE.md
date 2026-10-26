@@ -20,28 +20,27 @@ Scene-level scores are small samples, not the overall result. Say so.
 ## A 5–7 minute demo script
 
 1. **Readiness (30 s).** "Everything is built: 1,239 scene pairs, 71,340 buildings, 37 features, both split
-   manifests, four served models." Point at the headline: **0.527 within-event vs 0.290 cross-event** for the
-   default Logistic Regression. "The gap is the honest story."
+   manifests, two served models." Point at the headline: **0.520 within-event vs 0.271 cross-event** for the
+   default KNN (Decision Tree 0.470 vs 0.294). "The gap is the honest story."
 2. **Library (30 s).** It opens on **held-out test scenes**. Open `santa-rosa-wildfire_00000006`.
 3. **Triage Desk (90 s).**
    - Drag the swipe slider: the burned houses turn ash-grey.
    - Choose **K-Nearest Neighbours** and **Run analysis**.
    - Switch the overlay to *Correct vs wrong*.
    - Point at the scene-level numbers and say they cover one scene only.
-   - Then pick **Logistic Regression**; it runs automatically.
+   - Then pick **Decision Tree**; it runs automatically.
 4. **Case File, KNN (60 s).** Click building `b0002`.
    - Predicted **destroyed** = reference **destroyed**.
    - Confidence **1.00** means "15 of 15 neighbours voted destroyed" (a vote fraction, not a probability).
    - Show the 15 nearest training buildings, all destroyed, nearest distance 1.447.
-5. **Case File, LR (45 s).** Same building with Logistic Regression. Show the top feature contributions
-   (coefficient × standardised value) that push the score for its predicted class. The app no longer serves the
-   Decision Tree; its path for this building is in `05_DECISION_TREE_EXPLAINED.md` and its tree is in the Arena.
+5. **Case File, Decision Tree (45 s).** Same building with the Decision Tree. Show the 8 yes/no questions from
+   the root to a leaf of 971 training buildings, almost all destroyed (see `05_DECISION_TREE_EXPLAINED.md`).
 6. **Model Arena (90 s).**
    - The dumbbell: every model drops on the unseen disaster.
-   - The table: **KNN 0.520 vs DT 0.470 within; 0.271 vs 0.294 cross** (the DT row is labelled a research
-     comparison, not served in the app).
+   - The table: **KNN 0.520 vs DT 0.470 within; 0.271 vs 0.294 cross**.
    - The confusion matrices: KNN calls most minor and major damage "no damage".
-   - The confounding check: **0.829** event-prediction accuracy, so the features recognise *which disaster*.
+   - The confounding check: **0.829** event-prediction accuracy, so the features recognise *which disaster*
+     (an analysis classifier, not a damage model).
    - If asked: the feature-set experiments (saved results, no longer shown in the app) reduced that signature
      but did not fix transfer.
 7. **Reports (30 s).** Download the PDF. It separates the overall test score from scene-level metrics.

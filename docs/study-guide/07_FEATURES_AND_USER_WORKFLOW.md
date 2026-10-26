@@ -16,7 +16,7 @@ Screenshots of the simplified clone are in `docs/screenshots/`.
      data-quality warnings (e.g. a possible misalignment).
    - Training and validation scenes carry a warning that results on them are optimistic.
 2. **Triage Desk** (`/triage/<scene>`, `TriageDeskPage.tsx`, viewer `viewer/SceneViewer.tsx`).
-   - Pick a model: Logistic Regression (default) or K-Nearest Neighbours (the served models in
+   - Pick a model: K-Nearest Neighbours (default) or Decision Tree (the served models in
      `config/training.yaml`). Then press **Run analysis**.
    - Once the result appears, the button disappears. Analyses are deterministic and cached, so there is
      nothing to re-run. Choosing another model runs that model's analysis automatically.
@@ -38,24 +38,24 @@ Screenshots of the simplified clone are in `docs/screenshots/`.
    - Pre and post crops with the footprint outlined.
    - Predicted vs reference label, with "agrees / differs".
    - The **confidence** value, and the class scores labelled with their meaning:
-     - LR: "probability (not calibrated)";
-     - KNN: "vote fraction of neighbours".
+     - KNN: "vote fraction of neighbours";
+     - Decision Tree: "class fraction in the leaf".
    - The split warning on training or validation scenes, and any review reasons.
    - **"Why the model decided this":**
-     - LR: top feature contributions (coefficient × standardised value);
-     - **KNN:** the nearest training buildings, with thumbnails, labels and distances.
+     - **KNN:** the nearest training buildings, with thumbnails, labels and distances;
+     - **Decision Tree:** the yes/no questions from the root to the leaf (values in raw feature units), and the
+       leaf's size and class shares.
    - Quality flags: footprint area, mixed labels (possibly merged), at image edge (may be cut off).
 4. **Model Arena** (`/arena`, `ModelArenaPage.tsx`). How good is each model, honestly?
-   - Within vs cross-event comparison (dumbbell chart) for the threshold baseline, LR, KNN and the Decision Tree.
+   - Within vs cross-event comparison (dumbbell chart) for the threshold baseline, KNN and the Decision Tree.
    - Full comparison table (val and test macro-F1, accuracy, per-class recall, timing).
    - Confusion matrices (test or validation).
    - Per-event scores.
    - The decision tree, as an expandable view.
    - The **event-confounding check** (event-prediction accuracy 0.829 vs 0.252 for always guessing the most
-     common event).
+     common event), made with an analysis classifier (multinomial logistic regression), not a damage model.
    - The 3-class experiment.
-   - The Decision Tree is labelled **"research comparison: not served in the app"**: its saved results stay
-     because the paper compares KNN with it. Random Forest results are kept on disk but not shown.
+   - Random Forest results are kept on disk but not shown.
 5. **Reports** (`/reports`, `ReportsPage.tsx`). Every cached analysis of a served model with its split, model, scene macro-F1
    and review count, and **CSV** and **PDF** downloads. The PDF:
    - quotes the overall test score separately from scene-level metrics;
@@ -69,7 +69,7 @@ Screenshots of the simplified clone are in `docs/screenshots/`.
   - Status tiles: scene cache, feature table, split manifests, models, review thresholds, last analysis.
   - Each tile is **READY**, **PARTIAL** or **NOT READY**, with a reason. A missing piece shows the command
     that builds it.
-  - The headline result card: 0.527 within vs 0.290 cross for the default LR.
+  - The headline result card: KNN (default) 0.520 within vs 0.271 cross; Decision Tree 0.470 vs 0.294.
   - The table of served models: test macro-F1, what confidence means, review threshold.
 - **Feature Lab** (`/features`, `FeatureLabPage.tsx`). Using the **training split only**:
   - every feature ranked by η² (separation score);
@@ -84,7 +84,7 @@ Screenshots of the simplified clone are in `docs/screenshots/`.
   It is clearly labelled "analysis only, never predictions".
 - **Review Queue** (`/review`, `ReviewQueuePage.tsx`). Held-out test buildings **suggested for human
   review**, because their confidence is below the validation-chosen threshold or the other served model
-  disagrees (LR is compared with KNN, and KNN with LR).
+  disagrees (KNN is compared with the Decision Tree, and the Decision Tree with KNN).
   - Framed as suggestions, not errors.
   - If a model has no usable threshold, the page says why and lists only disagreement flags.
 
@@ -94,6 +94,7 @@ These were not working features: a dead navigation state labelled "Arrives in Ph
 "DEMO" chip, a "Re-run analysis" button that only re-fetched the same cached result, and internal "Phase 3b"
 labels. See `CHANGELOG.md`.
 
-Later, to keep the app to two models: the Decision Tree and Random Forest are no longer served (they are still
-trained, and their results kept), and the Arena's feature-set Experiments section was removed (its results are
-kept).
+Later, the app was narrowed to two models, KNN (default) and the Decision Tree, the two the paper compares.
+Logistic Regression is no longer a damage model of the app (it remains only as the confounding check's analysis
+classifier), the Random Forest is not served (its results are kept), and the Arena's feature-set Experiments
+section was removed (its results are kept).

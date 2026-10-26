@@ -59,7 +59,7 @@ manifests: no scene appears in two splits, and the held-out event appears only i
    contrasts, the three |Δ mean colour| features and mean pixel change. This tames very long tails, such as
    a 648,034 px mall complex.
 2. **Median imputation:** there were no missing values in the real data, but it is kept as a safeguard.
-3. **StandardScaler:** puts every feature on the same scale, which LR and KNN need.
+3. **StandardScaler:** puts every feature on the same scale, which KNN needs (its distances depend on it).
 
 Because these steps live inside the scikit-learn `Pipeline`, validation and test data never influence
 them.
@@ -69,11 +69,11 @@ them.
 | Algorithm | Why include it | Key settings (tuned on validation) |
 |---|---|---|
 | **Threshold baseline** (non-ML) | the floor: how far one feature and three thresholds get | best "change" feature + thresholds chosen on validation: `glcm_homogeneity_delta` |
-| **Logistic Regression** | linear, fast, and its coefficients explain decisions; app default | multinomial, `class_weight="balanced"`, C ∈ {0.01, 0.1, 1, 10} → 10 |
-| **K-Nearest Neighbours** | "buildings that look like this were…"; explanation by example | k ∈ {5, 15, 31}, uniform/distance → k=15 uniform; slow at inference (compares with all 49,929 training buildings) |
-| **Decision Tree** | human-readable if/then rules | depth ∈ {4, 6, 8, 12}, min leaf ∈ {20, 100}, balanced → depth 8, leaf 100 |
+| **K-Nearest Neighbours** | "buildings that look like this were…"; explanation by example; **app default** | k ∈ {5, 15, 31}, uniform/distance → k=15 uniform; slow at inference (compares with all 49,929 training buildings) |
+| **Decision Tree** | human-readable if/then rules; served by the app | depth ∈ {4, 6, 8, 12}, min leaf ∈ {20, 100}, balanced → depth 8, leaf 100 |
 | **Random Forest** (optional) | a stronger classical reference: many trees averaged | 200 trees, depth ∈ {12, None}, leaf ∈ {2, 10} |
 | **K-Means** (unsupervised) | do buildings form natural groups at all? Analysis only | k = 2…10, chosen by silhouette |
+| *Logistic regression* (analysis classifier only) | predicts the **disaster**, not damage, to measure the event signature (confounding check, feature-set experiment); not a damage model in the app | multinomial, C ∈ {0.01, 0.1, 1, 10} → 10 |
 
 Tuning uses **validation macro-F1**. The test set is used **exactly once** per final model, and
 `TestSetGuard` raises an error if code tries to evaluate test again.
@@ -87,15 +87,17 @@ useless. So:
 - **Macro-F1 is the primary metric:** F1 is computed per class, then averaged with **equal weight per class**,
   so doing well on *destroyed* and *major* matters as much as on *no-damage*. Accuracy and weighted-F1 are
   reported too.
-- **Side effect:** balanced weights push some no-damage buildings into damaged classes. In the LR confusion
-  matrix, 28% of no-damage buildings are predicted as major damage.
+- **Side effect:** balanced weights push some no-damage buildings into damaged classes: the Decision Tree's
+  no-damage recall is 0.434. KNN has no class weights, so it leans the other way (no-damage recall 0.831,
+  minor 0.270, major 0.254).
 
 ## 7. What the results mean
 
-- **Within-event:** LR reaches 0.527 test macro-F1 (RF 0.546). **Cross-event:** about 0.29 for every model.
-- **The features know which disaster a building is from:** a classifier predicting the *event* from the same
-  37 features scores **82.9%** (majority class 25.2%). Each event alone scores below the pooled within-event
-  figure, so part of 0.53 comes from recognising the disaster.
+- **Within-event:** KNN reaches 0.520 test macro-F1 and the Decision Tree 0.470 (the saved RF reference 0.546).
+  **Cross-event:** 0.271 (KNN) and 0.294 (Decision Tree).
+- **The features know which disaster a building is from:** an analysis classifier (multinomial logistic regression)
+  predicting the *event* from the same 37 features scores **82.9%** (majority class 25.2%). Each event alone
+  scores below the pooled within-event figure, so part of 0.52 comes from recognising the disaster.
 - **Feature-set experiments** (called "Phase 3b" during development; files in `artifacts/experiments/phase3b/`): removing absolute colour levels and normalising by the scene median cut that signature
   (82.9% → 37.4%), but did **not** improve cross-event scores. The gap is real **domain shift**: different
   roofs, imagery and damage appearance across disasters.
@@ -115,7 +117,6 @@ useless. So:
 
 | Model | Per building | Global |
 |---|---|---|
-| LR | top features by coefficient × standardised value (log-odds push toward or away from the predicted class) | coefficients per class |
 | Decision Tree | the exact path of questions, with thresholds converted back to raw units | feature importances |
 | KNN | the 15 most similar training buildings, with their labels, distances and crops | — |
 | all models | — | permutation importance on validation (drop in macro-F1 when a feature is shuffled) |
@@ -126,7 +127,7 @@ useless. So:
 2. The API looks up that scene's buildings in the feature table and runs the saved pipeline's
    `predict_proba`.
 3. The predicted class is the highest score. The confidence is that score, and its meaning depends on the
-   model: an LR probability (not calibrated), a KNN vote fraction, or a tree leaf fraction.
+   model: a KNN vote fraction or a tree leaf fraction (neither is a calibrated probability).
 4. Buildings whose confidence is below the threshold, chosen on **validation** so that confident buildings
    are at least 70% correct, are *suggested for human review*.
 5. The browser draws each building's polygon in **image pixel coordinates** over the pre/post images. The

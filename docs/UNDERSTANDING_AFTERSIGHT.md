@@ -58,19 +58,19 @@ flowchart TB
         A["xBD satellite images<br/>(Parquet files)"] --> B["Find buildings<br/>(from masks)"]
         B --> C["Measure 37<br/>features each"]
         C --> D["Split scenes into<br/>train / val / test"]
-        D --> E["Train classical models<br/>LR · KNN · Tree · RF"]
+        D --> E["Train classical models<br/>KNN · Tree (+ baseline, RF)"]
     end
     subgraph live ["Used live: the app"]
         direction LR
-        F["Saved models (LR + KNN served) +<br/>results (files)"] --> G["FastAPI backend"]
+        F["Saved models (KNN + Tree served) +<br/>results (files)"] --> G["FastAPI backend"]
         G <-->|"you click Run analysis"| H["React web app<br/>Triage Desk, Case File, Arena…"]
     end
     build --> live
 ```
 
 **The one result to remember.** On *new scenes from disasters the models were trained on*, the default model
-scores about **0.53** (macro-F1, explained in Section 7). On a disaster it has *never seen*, it scores about
-**0.29**. Most of this guide builds up to understanding that gap.
+(KNN) scores about **0.52** (macro-F1, explained in Section 7). On a disaster it has *never seen*, it scores about
+**0.27** (the Decision Tree 0.29). Most of this guide builds up to understanding that gap.
 
 ---
 
@@ -189,8 +189,8 @@ seen?"
 
 ### 3.3 Classification vs clustering
 
-- **Classification** learns from labelled examples to predict a label (supervised learning). Logistic
-  Regression, KNN and Decision Trees are classifiers.
+- **Classification** learns from labelled examples to predict a label (supervised learning). KNN and Decision
+  Trees are classifiers (so is logistic regression, which we use only as an analysis tool, Section 6.2).
 - **Clustering** groups examples by similarity **without labels** (unsupervised learning). K-Means is a
   clustering method. We use it only to ask whether buildings naturally fall into damage groups. Its groups
   are never used as predictions.
@@ -220,8 +220,8 @@ be right 58% of the time and completely useless. That is **class imbalance**. We
 It is the state of the art on xBD, but it needs GPUs, is hard to explain, and is outside our course syllabus.
 
 **Classical ML** uses features that *we* design and models that are simple enough to inspect. Every
-AfterSight prediction can be explained: a list of feature contributions, a path of yes/no questions, or the
-similar buildings it was compared with. The price is lower accuracy, and we are honest about it.
+AfterSight prediction can be explained: a path of yes/no questions (Decision Tree) or the similar buildings it
+was compared with (KNN). The price is lower accuracy, and we are honest about it.
 
 ---
 
@@ -240,7 +240,7 @@ flowchart TB
     B --> F["37 features"]
     F --> S["split: test (within-event)"]
     S --> Z["scaling (log1p + z-score)"]
-    Z --> M["LR 0.95 · KNN 15/15 (served)<br/>Tree 0.998 (research model)<br/>→ destroyed"]
+    Z --> M["KNN 15/15 · Tree 0.998<br/>(the two served models)<br/>→ destroyed"]
     M --> U["solid dark footprint on the map<br/>+ explanation in the Case File"]
 ```
 
@@ -367,30 +367,14 @@ building", which is very unusual.*
 
 ### Step 9: how each model predicts
 
-**Logistic Regression** (C = 10; C is a setting explained in Section 6.2). It computes a score for each class by multiplying every scaled feature by a
-learned weight (a **coefficient**) and adding them up, then turns the scores into probabilities. For
-*destroyed*, the biggest pushes were:
-
-| Feature | z-score | Coefficient | Contribution |
-|---|---:|---:|---:|
-| `gray_std_delta` | +1.18 | +5.57 | **+6.60** |
-| `dstd_g` (change in green spread) | +1.15 | −2.74 | −3.15 |
-| `post_mean_b` (mean blue, post) | +1.32 | −2.28 | −3.01 |
-| `dstd_r` | +1.17 | −2.11 | −2.48 |
-| `brightness_ratio` | +2.98 | −0.76 | −2.27 |
-| `ring_dmean` | +1.95 | +1.04 | +2.03 |
-
-Negative contributions push *away* from destroyed, but they are outweighed: what matters is the total. The final
-*destroyed* score was **3.19** (including the intercept of −0.85 and all the other features). The
-probabilities came out as **destroyed 0.951**, minor 0.031, major 0.010, none 0.008.
+The app serves two models, **KNN** (the default) and the **Decision Tree**.
 
 **KNN** (k = 15). It finds the 15 training buildings whose 37 scaled features are closest to ours. **All 15 are
 destroyed buildings**, all from other Santa Rosa scenes (e.g. `santa-rosa-wildfire_00000007_b0047` at distance
 1.45). Vote: 15 of 15 → destroyed, confidence 1.0.
 
-**Decision Tree** (depth 8). It asks yes/no questions. The app does not serve the Decision Tree (it serves LR and
-KNN), so this path comes from the saved research model; the Model Arena shows the same saved tree. Our building's
-path:
+**Decision Tree** (depth 8). It asks yes/no questions. Our building's path (the Case File shows exactly these
+questions):
 
 1. `glcm_homogeneity_delta` −0.240 ≤ −0.146? **yes**
 2. `glcm_homogeneity_post` 0.515 ≤ 0.576? **yes**
@@ -407,29 +391,29 @@ The saved **Random Forest** (not served or shown in the app) also says destroyed
 
 The **confidence** is the highest class score. What it means depends on the model:
 
-- LR: a probability, though not *calibrated*, meaning nobody checked that predictions at 0.9 are right 90% of
-  the time (0.951);
 - KNN: the share of neighbours voting for the class (1.0);
-- Tree (research model): the class share in the leaf (0.998).
+- Tree: the class share in the leaf (0.998).
 
-Each served model has a **review threshold** chosen on validation: LR 0.484 and KNN 0.533 (the saved file also
-holds Tree 0.526 from when the Tree was served; the app no longer reads it). Our building's confidence is well
-above all of them, so it is **not** flagged for human review.
+Neither is a *calibrated* probability: nobody checked that predictions at 0.9 are right 90% of the time.
+
+Each served model has a **review threshold** chosen on validation: KNN 0.533 and Tree 0.526. Our building's
+confidence is well above both, so it is **not** flagged for human review.
 
 ### Step 11: how it appears on the map
 
-When you click **Run analysis** on the Triage Desk with LR, the API returns this building as
-`predicted: destroyed, confidence: 0.951, needs_review: false`, cached as analysis `068527454bebc6bf`. The
+When you click **Run analysis** on the Triage Desk with KNN (the default), the API returns this building as
+`predicted: destroyed, confidence: 1.0, needs_review: false`, cached as analysis `0d1fea8a466bfa5a`. The
 browser draws its polygon over the satellite image with the *destroyed* style: the **darkest plum, solid
 fill**. Each class has its own pattern (outline, dots, hatch, solid), so you can tell them apart without relying
 on colour. In "Correct vs wrong" mode it gets a thin solid green outline, because the prediction matches the
 ground truth.
 
-For the whole scene, LR got **31 of 36** buildings right (accuracy 0.861, scene macro-F1 0.735).
+For the whole scene, KNN got **31 of 36** buildings right (accuracy 0.861, scene macro-F1 0.554); the Decision
+Tree also got 31 of 36 (scene macro-F1 0.581).
 
-![The Triage Desk on this scene](../report/assets/r03_triage.png)
+![The Triage Desk on this scene](figures/understanding/triage_knn.png)
 
-*Figure 5: Triage Desk on `santa-rosa-wildfire_00000006` with LR predictions.*
+*Figure 5: Triage Desk on `santa-rosa-wildfire_00000006` with KNN predictions.*
 
 ### Step 12: how the Case File explains it
 
@@ -438,14 +422,13 @@ Clicking the footprint opens its **Case File**. It shows:
 - the pre and post crops with the outline;
 - *predicted: destroyed* vs *ground truth: destroyed* (✓ agrees);
 - the class scores;
-- the LR contribution bars from Step 9.
+- the explanation: with KNN, the 15 neighbour thumbnails and their votes; with the Decision Tree, its 8
+  questions from Step 9 and the leaf.
 
-With KNN selected, it shows the 15 neighbour thumbnails instead. The app does not serve the Tree, so the Case
-File does not show its 8 questions; they are in Step 9, and the Model Arena shows the saved tree.
+![Case File with the KNN explanation](figures/understanding/casefile_knn.png)
+![Case File with the Decision Tree explanation](figures/understanding/casefile_dt.png)
 
-![Case File with the LR explanation](../report/assets/r04_casefile.png)
-
-*Figure 6: The real Case File for this building.*
+*Figure 6: The real Case File for this building, with KNN (top) and the Decision Tree (bottom).*
 
 ---
 
@@ -551,7 +534,11 @@ t₁ = 0.068 < t₂ = 0.126 < t₃ = 0.202, the class is the number of threshold
   Figure 7, so the baseline misses it.
 - **Here:** test macro-F1 0.383 within-event and 0.193 cross-event.
 
-### 6.2 Logistic Regression
+### 6.2 Logistic regression (an analysis tool here, not a damage model)
+
+Logistic regression is **not one of the app's damage models**. We use a multinomial logistic regression only as
+an *analysis classifier* in the confounding check (Section 7.4), and in the feature-set experiments, to measure
+how strongly the features identify the disaster. It is explained here because those results depend on it.
 
 **Idea.** Give each feature a weight. Multiply, add up, and the class with the highest total wins. Then squash
 the totals into probabilities. **Analogy:** a points checklist, where "+5.6 points for each step of extra
@@ -570,16 +557,17 @@ With two classes this reduces to the familiar **sigmoid** `1 / (1 + e^{-z})`.
 
 ![Sigmoid and our building's softmax output](figures/understanding/lr_idea.png)
 
-*Figure 8: Left, the sigmoid turns any score into a number between 0 and 1. Right, LR's real output for our
-building.*
+*Figure 8: Left, the sigmoid turns any score into a number between 0 and 1. Right, a softmax output for our
+building (from a logistic regression trained on the damage labels in an earlier version of the project; shown
+only to illustrate the formula).*
 
 **C** controls **regularisation**: how strongly the weights are kept small to avoid overfitting. Smaller C means
-stronger regularisation. We tried 0.01, 0.1, 1 and 10; validation chose 10.
+stronger regularisation. For the confounding check we tried 0.01, 0.1, 1 and 10; validation chose 10.
 
-- **Pros:** fast (training took 1.1 s); weights are directly interpretable; outputs probability-like scores.
+- **Pros:** fast; weights are directly interpretable; outputs probability-like scores.
 - **Cons:** assumes each feature pushes in one direction (linear), so it cannot learn "medium is bad, but low
   and high are fine".
-- **Here:** within-event test macro-F1 **0.527**, cross-event **0.290**. It is the app's default model.
+- **Here:** predicting the **event** from the 37 features, it is right 82.9% of the time on test (Section 7.4).
 
 ### 6.3 K-Nearest Neighbours (KNN)
 
@@ -597,8 +585,9 @@ them; confidence = votes for that class ÷ *k*.
 
 - **Pros:** no training needed; the explanation is concrete ("these 15 similar buildings were destroyed").
 - **Cons:** slow at prediction time, because it compares with all 49,929 training buildings (about 20 ms per
-  1,000 buildings, against 0.2 ms for LR). Sensitive to how features are scaled.
-- **Here:** k = 15 with uniform votes; test macro-F1 0.520 within-event, 0.271 cross-event.
+  1,000 buildings, against 0.3 ms for the Decision Tree). Sensitive to how features are scaled.
+- **Here:** k = 15 with uniform votes; test macro-F1 0.520 within-event, 0.271 cross-event. It is the app's
+  default model.
 
 ### 6.4 Decision Tree
 
@@ -617,8 +606,8 @@ makes the two groups most "pure", using **Gini impurity**: `G = 1 − Σ_k p_k²
 - **Pros:** completely readable; handles non-linear patterns; no scaling needed in principle.
 - **Cons:** a single tree is unstable (small data changes can change the tree) and overfits if grown too deep.
 - **Here:** depth 8, at least 100 buildings per leaf, 115 leaves; test macro-F1 0.470 within-event, 0.294
-  cross-event (the best cross-event score, by a hair). It is not served in the app; its saved results are the
-  research comparison with KNN (the paper's question) and appear in the Model Arena with that label.
+  cross-event (the best cross-event score, by a hair). It is the app's second served model; the paper compares it
+  with KNN.
 
 **Random Forest** (a saved reference; not served or shown in the app) averages 200 such trees, each grown on a random sample of data and features. It is
 more accurate (0.546 within-event) but loses the single readable path.
@@ -650,51 +639,54 @@ groups do not line up.*
 ### 7.1 Reading a confusion matrix
 
 A **confusion matrix** counts, for every true class (row), how often the model predicted each class (column).
-The diagonal holds the correct predictions. Here is LR on the within-event test set (10,706 buildings):
+The diagonal holds the correct predictions. Here is KNN (the default model) on the within-event test set (10,706
+buildings):
 
 | true ↓ / predicted → | no damage | minor | major | destroyed | total |
 |---|---:|---:|---:|---:|---:|
-| **no damage** | **3,264** | 779 | 1,757 | 420 | 6,220 |
-| **minor** | 363 | **815** | 297 | 293 | 1,768 |
-| **major** | 276 | 243 | **871** | 150 | 1,540 |
-| **destroyed** | 61 | 90 | 65 | **962** | 1,178 |
+| **no damage** | **5,169** | 233 | 729 | 89 | 6,220 |
+| **minor** | 1,071 | **477** | 124 | 96 | 1,768 |
+| **major** | 911 | 142 | **391** | 96 | 1,540 |
+| **destroyed** | 279 | 90 | 34 | **775** | 1,178 |
 
-*Table 4: Real confusion matrix
-(`artifacts/models/within_event/four_class/logistic_regression.json`).*
+*Table 4: Real confusion matrix (`artifacts/models/within_event/four_class/knn.json`).*
 
-![Confusion matrices within vs cross](../report/assets/fig_cm_lr_pair.png)
+![KNN confusion matrix, within-event](figures/understanding/knn_confusion_within.png)
+![KNN confusion matrix, cross-event](figures/understanding/knn_confusion_cross.png)
 
-*Figure 12: The same matrix as a heatmap (left) and the cross-event one (right). Row % = recall.*
+*Figure 12: The same matrix as a heatmap (top) and the cross-event one (bottom), as saved by training. Row % =
+recall.*
 
 ### 7.2 The metrics, with worked examples from Table 4
 
-- **Accuracy** = correct / all = (3,264 + 815 + 871 + 962) / 10,706 = 5,912 / 10,706 = **0.552**.
+- **Accuracy** = correct / all = (5,169 + 477 + 391 + 775) / 10,706 = 6,812 / 10,706 = **0.636**.
 - **Precision** for a class: of everything *predicted* as that class, the share that really was. For
-  *destroyed*, the column total is 420 + 293 + 150 + 962 = 1,825, so precision = 962 / 1,825 = **0.527**.
+  *destroyed*, the column total is 89 + 96 + 96 + 775 = 1,056, so precision = 775 / 1,056 = **0.734**.
 - **Recall** for a class: of everything that really *is* that class, the share we caught. For *destroyed*:
-  962 / 1,178 = **0.817**.
-- **F1** combines the two (harmonic mean): F1 = 2 · P · R / (P + R) = 2 · 0.527 · 0.817 / (0.527 + 0.817) =
-  **0.641** for *destroyed*.
-- **Macro-F1** is the plain average of the four per-class F1 scores:
-  (0.641 + 0.441 + 0.385 + 0.641) / 4 = **0.527**.
+  775 / 1,178 = **0.658**.
+- **F1** combines the two (harmonic mean): F1 = 2 · P · R / (P + R) = 2 · 0.734 · 0.658 / (0.734 + 0.658) =
+  **0.694** for *destroyed*.
+- **Macro-F1** is the plain average of the four per-class F1 scores (no damage, minor, major, destroyed):
+  (0.757 + 0.352 + 0.278 + 0.694) / 4 = **0.520**.
 
-Why macro-F1? The lazy "always no damage" model would have accuracy 6,220 / 10,706 = 0.58, *higher* than our
-model, but F1 = 0 for three classes, so macro-F1 ≈ 0.18. Macro-F1 cannot be fooled by imbalance.
+Why macro-F1? The lazy "always no damage" model would have accuracy 6,220 / 10,706 = 0.58, not far below our
+model's 0.636, but F1 = 0 for three classes, so macro-F1 ≈ 0.18. Macro-F1 cannot be fooled by imbalance.
 
 Two things the matrix shows:
 
-- **1,757 undamaged buildings were predicted as major damage.** This is the cost of balanced class weights,
-  which make the model eager to find rare classes. It is why major damage has a low precision (0.291).
-- **Destroyed is caught well** (recall 0.817), because rubble changes the texture a lot.
+- **KNN leans towards "no damage".** Most neighbours of any building are undamaged (58% of training
+  buildings), so 1,071 minor and 911 major buildings were predicted as no damage: recall is only 0.270 for minor
+  and 0.254 for major.
+- **Destroyed is caught best among the damaged classes** (recall 0.658, precision 0.734), because rubble changes
+  the texture a lot.
 
-### 7.3 Why 0.53 within-event but 0.29 cross-event
+### 7.3 Why 0.52 within-event but 0.27–0.29 cross-event
 
 | Model | Within-event macro-F1 | Cross-event macro-F1 |
 |---|---:|---:|
 | Threshold baseline | 0.383 | 0.193 |
-| Logistic Regression | 0.527 | 0.290 |
-| KNN | 0.520 | 0.271 |
-| Decision Tree (research comparison: not served in the app) | 0.470 | 0.294 |
+| KNN (app default) | 0.520 | 0.271 |
+| Decision Tree (app) | 0.470 | 0.294 |
 | Random Forest (saved reference; not served or shown in the app) | 0.546 | 0.291 |
 
 *Table 5: Test results, each model evaluated once (`artifacts/metrics/*/four_class/comparison.json`).*
@@ -702,15 +694,15 @@ Two things the matrix shows:
 Within-event, the test scenes come from the *same five disasters* as the training scenes: the same satellite,
 season, region and roof styles. Cross-event, hurricane-michael looks different, and its damage mix is
 different too (23% minor damage vs 14% in the training events). Every model loses between a third and a half of its score.
-**0.53 is an optimistic upper bound; 0.29 is the realistic figure for a new disaster.**
+**0.52 is an optimistic upper bound; 0.27–0.29 is the realistic figure for a new disaster.**
 
 ### 7.4 What the confounding check and the feature-set experiments proved
 
-**Confounding check.** We trained a Logistic Regression to predict the **event** (which disaster) from the same
-37 features. It was right **82.9%** of the time, against 25.2% for always guessing the most common event. So the
+**Confounding check.** We trained an analysis classifier, a multinomial logistic regression (Section 6.2; not a
+damage model in the app), to predict the **event** (which disaster) from the same 37 features. It was right **82.9%** of the time, against 25.2% for always guessing the most common event. So the
 features carry a strong "which disaster is this?" signature. Per-event scores confirm the effect: within-event,
-each disaster alone scores *below* the pooled 0.527 (harvey 0.333, matthew 0.333, michael 0.363, palu 0.529,
-santa-rosa 0.460). Part of the pooled score comes from recognising the disaster and its typical damage mix.
+each disaster alone scores *below* KNN's pooled 0.520 (harvey 0.338, matthew 0.338, michael 0.367, palu 0.470,
+santa-rosa 0.493). Part of the pooled score comes from recognising the disaster and its typical damage mix.
 
 ![Confounding check](../report/assets/fig_confounding.png)
 
@@ -723,7 +715,7 @@ santa-rosa 0.460). Part of the pooled score comes from recognising the disaster 
 - **both combined.**
 
 Event prediction fell from 82.9% to as low as **37.4%**, so the signature shrank. But cross-event macro-F1
-**did not improve** (0.236–0.278, against 0.290), and within-event got worse. **Conclusion:** the poor
+**did not improve** (0.236–0.278, against 0.290–0.294 with all 37 features), and within-event got worse. The experiment used a logistic regression and the Decision Tree as analysis classifiers; its saved results are unchanged. **Conclusion:** the poor
 transfer is not mainly the model "cheating" with the event. It is a genuine **domain shift**: damage
 looks different in different disasters, and these hand-made features can't bridge that.
 
@@ -742,9 +734,9 @@ the supervised models *do* find damage, because they are told what to look for.
 
 - The **frontend** (React, in your browser) only displays things.
 - The **API** (FastAPI, Python, port 8020) loads saved models and data files and answers requests.
-- The app serves two models, Logistic Regression (default) and KNN (`serving.models` in
-  `config/training.yaml`). The Decision Tree and Random Forest are trained by the pipeline for research but not
-  served; asking the API for them gives a clean "Unknown model" error.
+- The app serves two models, KNN (default) and the Decision Tree (`serving.models` in `config/training.yaml`).
+  The Random Forest is trained by the pipeline as a saved reference but not served, and logistic regression is
+  not a damage model of the app; asking the API for either gives a clean "Unknown model" error.
 - Nothing is trained by the app. Training happens only when you run the pipeline scripts.
 
 ### 8.2 What happens when you click "Run analysis"
@@ -768,7 +760,7 @@ sequenceDiagram
     W-->>U: coloured footprints, counts, building list
     U->>W: click a footprint
     W->>A: GET /api/analysis/{id}/buildings/{uid}/explain
-    A-->>W: LR contributions / KNN neighbours
+    A-->>W: KNN neighbours / tree decision path
 ```
 
 On a typical 40-building test scene this takes **8–22 ms** the first time, and about **3 ms** once cached.
@@ -777,20 +769,19 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 
 | Page | Shows | Why it exists |
 |---|---|---|
-| **Readiness** | what is built and trained; the 0.527 vs 0.290 headline; served models with their test macro-F1, confidence meaning and review threshold | know at a glance whether the system is ready, and how good it honestly is |
+| **Readiness** | what is built and trained; the headline (KNN 0.520 vs 0.271, Decision Tree 0.470 vs 0.294); served models with their test macro-F1, confidence meaning and review threshold | know at a glance whether the system is ready, and how good it honestly is |
 | **Library** | scenes, held-out **test** scenes by default, with ground-truth damage bars | choose a scene; training scenes carry a warning |
 | **Triage Desk** | swipe between pre and post, zoom, overlays (ground truth / prediction / correct vs wrong), building list | the main workspace |
 | **Case File** | one building: crops, predicted vs true, confidence, explanation | understand a single decision |
-| **Arena** | LR, KNN and the threshold baseline under both designs, plus the Decision Tree's saved results labelled "research comparison: not served in the app"; confusion matrices, per-event scores, the tree, confounding | compare models honestly |
+| **Arena** | KNN, the Decision Tree and the threshold baseline under both designs; confusion matrices, per-event scores, the tree, confounding | compare models honestly |
 | **Feature Lab** | which features separate the classes (training split) | see *why* the models work or fail |
 | **Cluster Atlas** | precomputed K-Means for k = 2…10: cluster sizes, silhouette, ARI and which damage classes fall into each cluster; clearly marked "never predictions" | unsupervised view of the data; a cluster ID is not a damage class |
-| **Review Queue** | buildings *suggested for human review* (low confidence, or LR and KNN disagree) | where a person should look first |
+| **Review Queue** | buildings *suggested for human review* (low confidence, or KNN and the Decision Tree disagree) | where a person should look first |
 | **Reports** | CSV and PDF per analysis | take the results away |
 
 ![Model Arena](figures/understanding/arena_top.png)
 
-*Figure 14: The Model Arena's first view: every model drops from within-event to cross-event. The Decision Tree
-row is the saved research comparison; the app serves LR and KNN.*
+*Figure 14: The Model Arena's first view: every model drops from within-event to cross-event.*
 
 ---
 
@@ -841,7 +832,7 @@ row is the saved research comparison; the app serves LR and KNN.*
 | `backend/app/training/persistence.py` | save/load models with compatibility checks |
 | `backend/app/evaluation/metrics.py` | metrics and `TestSetGuard` |
 | `backend/app/evaluation/analysis.py` | K-Means and the confounding check |
-| `backend/app/explain/explain.py` | LR contributions and KNN neighbours (the app); tree paths and the tree structure (the saved research tree) |
+| `backend/app/explain/explain.py` | KNN neighbours and Decision Tree paths (the Case File); the tree structure (the Arena) |
 | `backend/app/api/routes.py` | all API endpoints |
 | `backend/app/core/store.py` | file-based data access, ID validation |
 | `backend/app/inference/analysis.py` | runs and caches an analysis; explanations |
@@ -924,10 +915,10 @@ row is the saved research comparison; the app serves LR and KNN.*
 9. Why is the scaler fitted only on training data?
 10. Why is accuracy misleading on this dataset? Give the number.
 11. From Table 4, compute recall for minor damage.
-12. Why does major damage have low precision for LR?
+12. Why does KNN have such low recall for minor and major damage?
 13. How does KNN produce a confidence value? What was it for our building?
 14. Name one pro and one con of a Decision Tree.
-15. What does C control in Logistic Regression, and which value was chosen?
+15. What does C control in logistic regression, and what is logistic regression used for in this project?
 16. Why is K-Means not used for predictions?
 17. What does the cross-event design hold out, and why?
 18. The event can be predicted from the features with 82.9% accuracy. Why does that matter?
@@ -951,15 +942,16 @@ row is the saved research comparison; the app serves LR and KNN.*
 8. Area has a very long tail (up to 648,034 px). The log shrinks huge values so they don't dominate.
 9. Otherwise information from validation and test would leak into training.
 10. 58% of buildings are undamaged, so always answering "no damage" gives about 0.58 accuracy while being useless.
-11. 815 / 1,768 = 0.461.
-12. Balanced weights make it predict major often, and 1,757 undamaged buildings were wrongly predicted as major,
-    so only 871 / 2,990 = 0.291 of "major" predictions were right.
+11. 477 / 1,768 = 0.270.
+12. Most of any building's neighbours are undamaged (58% of training buildings), so the vote often goes to "no
+    damage": 1,071 minor and 911 major buildings were predicted as no damage.
 13. The share of its *k* neighbours voting for the predicted class: 15 / 15 = 1.0.
 14. Pro: readable yes/no rules. Con: unstable and overfits when grown deep.
-15. Regularisation strength (smaller C = stronger). Validation chose C = 10.
+15. Regularisation strength (smaller C = stronger); validation chose C = 10. It is used only as an analysis
+    classifier, to predict the disaster in the confounding check, not as a damage model.
 16. Clusters are formed without labels and don't match damage (ARI 0.04–0.10); they have no damage meaning.
 17. All of hurricane-michael (21,429 buildings), to measure performance on a disaster never seen in training.
-18. Part of the within-event score may come from recognising the disaster, so 0.53 is optimistic.
+18. Part of the within-event score may come from recognising the disaster, so 0.52 is optimistic.
 19. The difficulty is genuine domain shift: damage looks different across disasters. Removing the signature
     also removed useful information.
 20. The prediction disagrees with the ground truth. Check the explanation (which features or neighbours drove

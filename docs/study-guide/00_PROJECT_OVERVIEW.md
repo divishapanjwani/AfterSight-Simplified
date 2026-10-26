@@ -50,7 +50,7 @@ It is split into three questions:
 |---|---|
 | Classify damage on buildings **derived from xBD annotation masks** | Detect buildings in raw imagery |
 | Use classical, explainable ML (scikit-learn) | Use deep learning (it is forbidden in this project) |
-| Explain each prediction (KNN neighbours, DT path, LR contributions) | Give calibrated probabilities |
+| Explain each prediction (KNN neighbours, DT path) | Give calibrated probabilities |
 | Evaluate on held-out scenes and a held-out disaster | Claim readiness for real emergency response |
 | Work offline on a laptop | Use geographic coordinates (everything is in image pixels) |
 
@@ -59,14 +59,14 @@ It is split into three questions:
 - **Readiness:** what is built and trained, the headline results, the served models.
 - **Scene Library:** choose a scene; held-out test scenes are shown by default.
 - **Triage Desk:** before/after swipe viewer, damage overlays, Run analysis, building list. The app serves two
-  models: Logistic Regression (default) and KNN.
+  models, the two the paper compares: KNN (default) and the Decision Tree.
 - **Case File:** one building: crops, predicted vs reference label, confidence, model explanation.
-- **Model Arena:** LR, KNN and the threshold baseline under both designs, confusion matrices, per-event scores,
-  and the event-confounding check. The Decision Tree's saved results (and its tree) are shown as a *research
-  comparison: not served in the app*; the paper's KNN-vs-DT comparison uses them.
+- **Model Arena:** KNN, the Decision Tree and the threshold baseline under both designs, confusion matrices,
+  per-event scores, the tree, and the event-confounding check (made with a logistic-regression analysis
+  classifier, which is not a damage model in the app).
 - **Feature Lab:** which features separate the classes (training data only).
 - **Cluster Atlas:** K-Means groups compared with the labels. Analysis only, never predictions.
-- **Review Queue:** buildings suggested for human review (low confidence, or LR and KNN disagree).
+- **Review Queue:** buildings suggested for human review (low confidence, or KNN and the Decision Tree disagree).
 - **Reports:** CSV and PDF per analysis.
 
 ## The key results (test sets, each model evaluated once)

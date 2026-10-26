@@ -46,7 +46,49 @@ Dataset, features, splits, training, models, saved results, configs, API routes 
 behaviour snapshot (12 demo analyses, 752 explanations, Feature Lab, `/models`) is **IDENTICAL** to the
 baseline taken before any edit.
 
-## Two models: LR and KNN only (branch `two-models`)
+## KNN and Decision Tree; Logistic Regression removed (branch `knn-dt`)
+
+The app's damage models are now **KNN (default)** and the **Decision Tree**, the two models the paper compares.
+**Logistic Regression is removed as a damage model** everywhere: serving, UI, Arena, training, reports, tests
+and docs. Nothing was retrained or regenerated, and nothing in `data/`, `artifacts/` or `outputs/` was deleted
+(the saved LR files stay on disk, unread).
+
+| Change | Files | Why |
+|---|---|---|
+| Serving list `[knn, decision_tree]`, `default_model: knn` | `config/training.yaml`, `backend/app/training/config.py` (defaults) | The paper's two models are the app's two models |
+| The Decision Tree is served again: model pickers, analysis, review queue, readiness, reports | config only (everything reads the list) | |
+| The Case File's **decision-path view** (yes/no questions from root to leaf, leaf shares) is restored verbatim from git history (`bc15abf^` frontend, `ddc7b85^` backend) | `frontend/src/components/CaseFile.tsx`, `types/api.ts`, `backend/app/inference/analysis.py`, `schemas/api.py` | Recovered, not rewritten |
+| `logistic_regression` gets `404 model_not_found` like any unknown model; cached LR analyses/PDFs stay on disk but are hidden and refused (`model_not_served`); the Arena endpoints refuse it (`422`) and leave its comparison rows out | `backend/app/api/routes.py` | Same handling DT/RF had before |
+| The LR contribution view, the `lr_contributions` kind and its types are removed from the app | `CaseFile.tsx`, `types/api.ts`, `schemas/api.py`, `analysis.py` | No served model uses them |
+| Model Arena: baseline + KNN + DT; the "research comparison: not served in the app" labels are gone; KNN preselected | `frontend/src/pages/ModelArenaPage.tsx` | DT is a normal served model |
+| Readiness headline: each served model's saved test macro-F1 (KNN 0.520 → 0.271, DT 0.470 → 0.294), read from `/api/results/comparison` | `frontend/src/pages/ReadinessPage.tsx` | It quoted LR's 0.527 → 0.290 |
+| Review Queue: disagreement is KNN vs DT | config only | |
+| PDF limitations quote the report's own model, not the default model; `REPORT_VERSION` 3 | `backend/app/reports/reports.py` | Cached KNN PDFs quoted LR's scores as "the default model" |
+| `train.py` no longer trains LR (removed from `REQUIRED_MODELS`) | `backend/app/training/models.py` | Not a damage model |
+
+**Kept, as analysis classifiers (not damage models in the app):**
+
+- the **confounding check** (a multinomial logistic regression predicting the disaster, 82.9% vs 25.2%), its own
+  `confounding.grid`, code and saved result; the Arena now names it as such;
+- the **feature-set experiment** (`phase3b.py` names `logistic_regression` explicitly): the
+  `models.logistic_regression` grid stays in `training.yaml` with a comment, and `make_pipeline`'s LR branch,
+  `lr_coefficients` and the LR entry of `CONFIDENCE_KIND` stay so it remains reproducible;
+- `lr_contributions` in `backend/app/explain/explain.py`: not used by the app, kept because
+  `docs/build/understanding_data.py` computes the LR worked example in `docs/UNDERSTANDING_AFTERSIGHT.md` with it.
+
+**Tests:** updated for KNN + DT. New: LR is rejected (analysis, review queue, Arena metrics, comparison rows);
+DT is served and explained (`decision_path`); readiness depends only on KNN + DT (hiding the saved LR changes
+nothing, hiding DT makes it PARTIAL); disagreement is KNN vs DT; the decision-path view renders; the headline
+and Arena never show an LR row; PDF limitations quote their own model; LR still trains when the experiment
+names it.
+
+**Verification:** KNN analyses and explanations are identical to the baseline taken before this change; DT's are
+identical to the snapshot from before the two-model change. Review Queue (test split, 10,706 buildings): KNN
+flags 5,889 (was 5,586 against LR; low-confidence 2,388 unchanged, disagreement-only 3,198 → 3,501); DT flags
+7,372 (5,652 low-confidence, 1,720 disagreement-only). Calibration rerun into a temporary folder: KNN 0.5333,
+DT 0.5257, identical to the saved file.
+
+## Two models: LR and KNN only (branch `two-models`, superseded by `knn-dt`)
 
 The app now serves only **Logistic Regression** (default) and **KNN**, and the Model Arena no longer has the
 feature-set Experiments section. Nothing was retrained or regenerated, and nothing in `data/`, `artifacts/` or

@@ -80,8 +80,8 @@ python scripts/snapshot_behaviour.py check verification/snapshot_before.json   #
 | `.venv/bin/activate` not found | The venv is not at the repo root | `python3.11 -m venv .venv` in the repo root |
 | A page says **"Not available yet"** with a command | That artifact hasn't been built | Run the command shown (usually a script from `scripts/`) |
 | `model_not_trained` (409) | No saved model | `python scripts/train.py` (retrains) |
-| Readiness: **Review thresholds PARTIAL** | Some *required* served model has no usable validation threshold | `python scripts/calibrate_review.py` (validation only). Only the served models (LR and KNN) count. To check without overwriting the saved file: `python scripts/calibrate_review.py --out /tmp/calib_check` |
-| `model_not_found` (404) for `decision_tree` or `random_forest` | The app serves only LR and KNN (`config/training.yaml` → `serving.models`) | Expected. DT results are in the Model Arena as a research comparison |
-| `model_not_served` (404) opening an old analysis or its PDF | The analysis used a model the app no longer serves | Expected. The file stays in `artifacts/analyses/runs/`; run the scene again with LR or KNN |
+| Readiness: **Review thresholds PARTIAL** | Some *required* served model has no usable validation threshold | `python scripts/calibrate_review.py` (validation only). Only the served models (KNN and Decision Tree) count. To check without overwriting the saved file: `python scripts/calibrate_review.py --out /tmp/calib_check` |
+| `model_not_found` (404) for `logistic_regression` or `random_forest` | The app serves only KNN and the Decision Tree (`config/training.yaml` → `serving.models`) | Expected. Logistic Regression is not a damage model of the app; RF results stay in `artifacts/` |
+| `model_not_served` (404) opening an old analysis or its PDF | The analysis used a model the app no longer serves | Expected. The file stays in `artifacts/analyses/runs/`; run the scene again with KNN or the Decision Tree |
 | Model refuses to load (schema or scikit-learn version) | Different library version or feature schema | Install the pinned `backend/requirements.txt`, or retrain |
 | Blank page | The frontend failed to start | Check `outputs/logs/web.log`; run `(cd frontend && npm ci)` |

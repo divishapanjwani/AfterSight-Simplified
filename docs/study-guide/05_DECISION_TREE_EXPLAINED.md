@@ -83,10 +83,9 @@ So texture change is the single most useful question, which matches the Feature 
 
 ## How a DT prediction is explained
 
-The app no longer serves the Decision Tree (it serves LR and KNN), so the Case File does not show this. The
-saved tree is still in the Model Arena as a research comparison, and `decision_path`
-(`backend/app/explain/explain.py`) still returns the questions a building answered from the root to its leaf;
-the example below was made with it.
+The Case File shows it: with the Decision Tree selected, "Why the model decided this" lists the questions the
+building answered from the root to its leaf, then the leaf's size and class shares. They come from
+`decision_path` (`backend/app/explain/explain.py`); the example below was made with it.
 
 **Example:** `santa-rosa-wildfire_00000006_b0002` (destroyed).
 

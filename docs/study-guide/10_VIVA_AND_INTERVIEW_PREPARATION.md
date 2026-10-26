@@ -12,7 +12,7 @@ results.
 - **Short:** It classifies the damage of each building in a pre/post satellite image pair into four levels
   and explains each prediction.
 - **Detailed:** The levels are no damage, minor, major and destroyed. Buildings come from xBD annotation
-  masks. Classical ML models (KNN, Decision Tree, plus LR and RF as context) predict from 37 engineered
+  masks. Two classical ML models, KNN and a Decision Tree, predict from 37 engineered
   features, and the web app shows predictions with explanations.
 - **Follow-ups:** Who would use it? (A damage analyst, as a first pass. It is a research and teaching tool,
   not operational.)
@@ -95,7 +95,7 @@ results.
 - **Short:** Both are classical and explainable, but explain differently: by examples vs by rules.
 - **Detailed:** For a triage tool, the type of explanation matters. They also differ in scaling needs, cost
   and class handling.
-- **Follow-ups:** Where do LR and RF fit? (Context rows only: LR 0.527/0.290, RF 0.546/0.291.)
+- **Follow-ups:** Where do LR and RF fit? (Neither is a damage model of the app. RF is a saved reference, 0.546/0.291, not shown in the app; a logistic regression is used only as the confounding check's analysis classifier.)
 
 **Q14. How is a building's label decided?**
 - **Short:** By majority vote of the damage-mask values inside the blob.
@@ -309,7 +309,7 @@ results.
 - **Follow-ups:** Is that expected? (Yes, under domain shift; the confounding check supports it.)
 
 **Q49. What is the event-confounding check?**
-- **Short:** A logistic regression predicting the *disaster* from the same 37 features: 0.829 accuracy vs
+- **Short:** An analysis classifier (multinomial logistic regression, not a damage model) predicting the *disaster* from the same 37 features: 0.829 accuracy vs
   0.252 for the majority guess.
 - **Detailed:** It shows a strong event signature that can inflate within-event scores.
 - **Follow-ups:** Is the event used as a model input? (Never.)
@@ -317,7 +317,7 @@ results.
 **Q50. What were the feature-set experiments?**
 - **Short:** Reduced or normalised feature sets (called "Phase 3b" during development) to remove the event
   signature.
-- **Detailed:** change-only (17 features), scene-normalised, and both, with LR and DT. Event prediction fell
+- **Detailed:** change-only (17 features), scene-normalised, and both, with a logistic regression and the DT as analysis classifiers. Event prediction fell
   to as low as 0.374, but cross-event macro-F1 did not improve.
 - **Follow-ups:** Conclusion? (The gap is genuine domain shift, not just the model "cheating".)
 
@@ -343,7 +343,7 @@ results.
 - **Short:** It lists test buildings suggested for human review: confidence below a validation-chosen
   threshold, or a model disagreement.
 - **Detailed:** The threshold is the lowest *t* at which validation buildings with confidence ≥ *t* are at
-  least 70% correct: KNN 0.53, DT 0.53, LR 0.48, RF 0.39.
+  least 70% correct: KNN 0.53 and DT 0.53 (the served models).
 - **Follow-ups:** Is a flag an error? (No, it's a suggestion.)
 
 **Q55. What do K-Means results show?**
@@ -375,17 +375,16 @@ results.
 - **Short:** An explicit state, not a crash. Readiness shows NOT READY or PARTIAL with the fix command; a
   broken experiment summary returns `503 results_invalid`.
 - **Detailed:** Tests cover a missing file, bad JSON and missing keys.
-- **Follow-ups:** Which models count? (Only the served ones in config, LR and KNN; the Decision Tree and Random
-  Forest are not served, so they never affect a tile.)
+- **Follow-ups:** Which models count? (Only the served ones in config, KNN and the Decision Tree; Logistic
+  Regression and Random Forest are not served, so they never affect a tile.)
 
 **Q60. Are confidence scores probabilities?**
 - **Short:** No. They are model scores and are not calibrated.
-- **Detailed:** LR's is labelled "probability (not calibrated)"; KNN's is a vote fraction; the DT's a leaf
-  share; RF's a mean of leaf shares.
+- **Detailed:** KNN's is a vote fraction; the DT's a leaf share (class-weighted).
 - **Follow-ups:** How to calibrate? (Isotonic or Platt scaling on validation; future work.)
 
 **Q61. How many tests are there?**
-- **Short:** 149 backend (pytest), 37 frontend (Vitest), and a 20-check end-to-end script, all passing in the
+- **Short:** 155 backend (pytest), 40 frontend (Vitest), and a 20-check end-to-end script, all passing in the
   final clone.
 - **Detailed:** They include leakage, model reload, API and UI states.
 - **Follow-ups:** What do the tests use for data? (Synthetic fixtures, never shown as xBD.)

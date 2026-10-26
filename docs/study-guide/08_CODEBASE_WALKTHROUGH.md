@@ -45,15 +45,15 @@ through `backend/app/core/store.py`.
 | `features/table.py` | `build_feature_table`, `load_feature_table`, `FeatureTable` | the feature table and its fingerprint |
 | `features/variants.py` | `variant_frame`, `scene_normalise` | feature-set experiment variants |
 | `training/splits.py` | `stratified_group_partition`, `build_manifest`, `validate_manifest`, `manifest_hash` | scene-grouped, leakage-checked splits |
-| `training/models.py` | `SkewLog1p`, `make_pipeline`, `param_grid`, `ThresholdRule`, `tune_threshold_rule` | pipelines (KNN, DT, LR, RF, baseline) |
+| `training/models.py` | `SkewLog1p`, `make_pipeline`, `param_grid`, `ThresholdRule`, `tune_threshold_rule` | pipelines (KNN, DT, RF, baseline; LR only for the confounding check and the feature-set experiment) |
 | `training/run.py` | `train_one`, `run_design`, `write_comparison`, `per_event_metrics` | grid search on val, one test evaluation, saving |
 | `training/persistence.py` | `save_model`, `load_model`, `ModelLoadError` | joblib + metadata; refuses incompatible models |
 | `evaluation/metrics.py` | `classification_metrics`, `TestSetGuard`, `timed_predict` | metrics; one test evaluation per model |
 | `evaluation/analysis.py` | `run_kmeans`, `run_confounding` | K-Means and the event-prediction check |
-| `explain/explain.py` | `knn_neighbours`, `decision_path`, `tree_structure`, `lr_contributions`, `raw_threshold`, `permutation_importances` | explanations in raw feature units. The app uses `knn_neighbours` and `lr_contributions`; `tree_structure` saves the research tree during training, and `decision_path` is used by `docs/build/understanding_data.py` |
+| `explain/explain.py` | `knn_neighbours`, `decision_path`, `tree_structure`, `lr_contributions`, `raw_threshold`, `permutation_importances` | explanations in raw feature units. The app uses `knn_neighbours` and `decision_path`; `tree_structure` saves the tree for the Arena. `lr_contributions` is not used by the app (only by `docs/build/understanding_data.py`) |
 | `inference/analysis.py` | `run_analysis`, `predict_rows`, `explain_building`, `load_analysis`, `list_analyses` | per-scene predictions (cached) and explanations |
 | `inference/review.py` | `choose_threshold`, `read_thresholds`, `usable_threshold`, `threshold_status` | review thresholds and READY / PARTIAL / NOT READY |
-| `inference/review_queue.py` | `review_queue` | low-confidence or disagreement suggestions (disagreement between the served models: LR vs KNN) |
+| `inference/review_queue.py` | `review_queue` | low-confidence or disagreement suggestions (disagreement between the served models: KNN vs DT) |
 | `inference/feature_lab.py` | `summary`, `scatter`, `eta_squared`, `class_stats` | Feature Lab statistics (training split only) |
 | `inference/scenes.py` | `list_scenes`, `scene_detail`, `provenance` | Library and scene details, split provenance |
 | `experiments/summary.py` | `load_summary`, `summary_state`, `summary_problem` | validates the saved feature-set experiment summary |
@@ -75,7 +75,7 @@ POST /api/analysis  (api/routes.py: create_analysis)
             predicted = argmax; confidence = max score
             needs_review = confidence < usable_threshold(...)  (validation-chosen)
 GET /api/analysis/{id}/buildings/{uid}/explain
-  └─ explain_building → lr_contributions | knn_neighbours   (served models only)
+  └─ explain_building → knn_neighbours | decision_path   (served models only)
 ```
 
 ## Frontend (`frontend/src/`)

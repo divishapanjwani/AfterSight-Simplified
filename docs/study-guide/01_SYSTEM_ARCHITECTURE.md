@@ -100,7 +100,7 @@ Swagger documentation is at `http://localhost:8020/docs` while the backend runs.
 | Training | `backend/app/training/run.py` → `train_one`, `run_design` | grid search on validation, single test evaluation |
 | Save/load | `backend/app/training/persistence.py` → `save_model`, `load_model` | joblib + metadata JSON, compatibility checks |
 | Metrics | `backend/app/evaluation/metrics.py` → `classification_metrics`, `TestSetGuard` | metrics; one test evaluation per model |
-| Explanations | `backend/app/explain/explain.py` → `knn_neighbours`, `lr_contributions` (the app); `decision_path`, `tree_structure` (research: the saved tree, `docs/build/understanding_data.py`) | per-building "why" |
+| Explanations | `backend/app/explain/explain.py` → `knn_neighbours`, `decision_path` (the Case File); `tree_structure` (the Arena's tree view) | per-building "why" |
 | Inference | `backend/app/inference/analysis.py` → `run_analysis`, `explain_building` | predict a scene, cache, explain |
 
 ## Data flow when you click "Run analysis"
@@ -114,7 +114,7 @@ Swagger documentation is at `http://localhost:8020/docs` while the backend runs.
    - `needs_review` is set when the confidence is below the model's validation-chosen threshold.
 4. It saves the result as JSON (the cache) and returns the buildings, polygons, predictions and split
    provenance.
-5. The browser draws the footprints. Clicking one calls `/explain`, which returns the KNN neighbours, the
-   DT path or the LR contributions.
+5. The browser draws the footprints. Clicking one calls `/explain`, which returns the KNN neighbours or the
+   DT path.
 
 Typical time: a few milliseconds for a cached scene. Training is never triggered.

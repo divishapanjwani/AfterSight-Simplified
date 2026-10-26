@@ -61,7 +61,7 @@ The two metrics give **different winners cross-event**. The paper reports both.
 **Why the within-event score is optimistic:**
 
 - Within events, test scenes share the satellite, season, region and building style with training scenes.
-- The features carry a strong **event signature**: a logistic regression predicts *which disaster* a building
+- The features carry a strong **event signature**: a logistic regression (an analysis classifier, not a damage model in the app) predicts *which disaster* a building
   is from with **0.829** accuracy, against 0.252 for always guessing the largest event
   (`artifacts/analyses/confounding/within_event.json`).
 - When Michael scenes were in training, Michael's test scenes scored 0.367 (KNN) and 0.329 (DT); unseen, 0.271

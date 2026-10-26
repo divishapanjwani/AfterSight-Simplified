@@ -33,21 +33,21 @@ every value it returns is read from an artifact written by the pipeline scripts.
 | GET | `/buildings/{building_uid}/crop/{pre\|post}` | building crop JPEG, `size` 96 / 192 / 384 |
 | GET | `/features/summary` | Feature Lab: per-feature class distributions + separation score (η²), **training split only** |
 | GET | `/features/scatter` | `x`, `y`, `n`: stratified sample of training buildings for a 2-feature scatter |
-| GET | `/models` | the served models (`serving.models` in `config/training.yaml`: LR and KNN; within-event, 4-class): trained state, default (LR), review thresholds |
-| GET | `/models/{name}/metrics` | saved val/test/per-event metrics, search log, preprocessing, timings (`design`, `scheme`; baseline included). A research endpoint: it also reads the saved Decision Tree and Random Forest results, which are not served |
-| GET | `/models/decision_tree/tree` | research endpoint: the saved tree's structure in raw-unit thresholds, pruned to `max_depth` (the Arena's tree section) |
+| GET | `/models` | the served models (`serving.models` in `config/training.yaml`: KNN and Decision Tree; within-event, 4-class): trained state, default (KNN), review thresholds |
+| GET | `/models/{name}/metrics` | saved val/test/per-event metrics, search log, preprocessing, timings (`design`, `scheme`). `name`: `baseline`, `knn`, `decision_tree` or `random_forest` (saved, not served or shown); anything else, including `logistic_regression`, is `422 invalid_request` |
+| GET | `/models/decision_tree/tree` | the saved tree's structure in raw-unit thresholds, pruned to `max_depth` (the Arena's tree section) |
 | GET | `/results/overview` | which saved result groups exist |
-| GET | `/results/comparison` | model comparison per `design` × `scheme` (3-class flagged as an experiment), with `holdout_event` and `test_events` |
-| GET | `/results/confounding` | event-prediction check (analysis only) |
+| GET | `/results/comparison` | model comparison per `design` × `scheme` (3-class flagged as an experiment), with `holdout_event` and `test_events`. Saved `logistic_regression` rows are left out |
+| GET | `/results/confounding` | event-prediction check (analysis only): an analysis classifier (multinomial logistic regression) predicting the disaster; not a damage model |
 | GET | `/results/experiments` | the feature-set experiments (called "Phase 3b" during development, hence `artifacts/experiments/phase3b/` and `scripts/run_phase3b.py`), labelled "Experiments", not selectable |
 | GET | `/clusters` | precomputed K-Means for `k` (and `design`): sizes, contingency, ARI, silhouette, PCA points, inertia curves; `never_predictions: true`. 404 `results_not_found` if not run, 404 `k_not_available` for a k that was not computed |
-| POST | `/analysis` | `{scene_id, model_name}` → predictions, scores, review flags, counts, scene metrics, provenance. `model_name` must be a served model; anything else (including `decision_tree` and `random_forest`) is `404 model_not_found` |
+| POST | `/analysis` | `{scene_id, model_name}` → predictions, scores, review flags, counts, scene metrics, provenance. `model_name` must be a served model; anything else (including `logistic_regression` and `random_forest`) is `404 model_not_found` |
 | GET | `/analyses` | recent cached analyses of **served** models (newest first) for the Reports page |
 | GET | `/analysis/{id}` | a cached analysis. An analysis of a model that is no longer served is `404 model_not_served` (the file stays on disk); the same applies to `/explain`, `export.csv` and `report.pdf` |
-| GET | `/analysis/{id}/buildings/{uid}/explain` | LR contributions / KNN neighbours (+ crop URLs) |
+| GET | `/analysis/{id}/buildings/{uid}/explain` | `nearest_neighbours` (KNN, + crop URLs) / `decision_path` (Decision Tree: root-to-leaf steps in raw units, leaf size and class shares) |
 | GET | `/analysis/{id}/export.csv` | per-building CSV |
 | GET | `/analysis/{id}/report.pdf` | PDF summary with provenance, counts, scene-level metrics, confusion matrix, review flags, limitations. Cached as `outputs/reports/<id>.r<REPORT_VERSION>.pdf` (see `reports.py`) |
-| GET | `/review-queue` | `model` (a served model), `split` (default test): low confidence (threshold chosen on validation) or disagreement with the other served model (LR vs KNN); counts per reason. Without a usable threshold: `threshold`, `threshold_rule` and `target_accuracy` are null, no low-confidence flags, and `threshold_note` says why |
+| GET | `/review-queue` | `model` (a served model), `split` (default test): low confidence (threshold chosen on validation) or disagreement with the other served model (KNN vs Decision Tree); default model `knn`; counts per reason. Without a usable threshold: `threshold`, `threshold_rule` and `target_accuracy` are null, no low-confidence flags, and `threshold_note` says why |
 | POST | `/training/run` | background training job; requires `confirm: true`; one at a time |
 | GET | `/jobs/{job_id}` | job status + last 40 log lines (server paths redacted) |
 
@@ -55,25 +55,28 @@ every value it returns is read from an artifact written by the pipeline scripts.
 > validation column). The field is still returned, so the API contract is unchanged. Validation macro-F1 is still
 > shown in the Model Arena from `/results/comparison`.
 
-## Two models: LR and KNN only
+## Served models: KNN (default) and Decision Tree
 
-- **Served set:** `config/training.yaml` → `serving.models: [logistic_regression, knn]`. `/models`, `/analysis`,
-  `/review-queue` (and its disagreement reasons and `other_models`), the readiness tiles and reports all follow it.
-  No response shape changed; Decision Tree and Random Forest simply leave the lists.
-- **Unserved models:** `decision_tree` and `random_forest` get `404 model_not_found` ("Unknown model. Choose one
-  of: logistic_regression, knn.") from `/analysis` and `/review-queue`, like any unknown model. Old cached analyses
-  of them get `404 model_not_served` and are not listed by `/analyses` or counted by the last-analysis tile.
-- **Unchanged research endpoints:** `/models/{name}/metrics`, `/models/decision_tree/tree` and
-  `/results/comparison` still return the saved DT and RF results; the Model Arena shows DT from them, labelled
-  "research comparison: not served in the app", and does not show RF.
+- **Served set:** `config/training.yaml` → `serving.models: [knn, decision_tree]`, `default_model: knn`. `/models`,
+  `/analysis`, `/explain`, `/review-queue` (and its disagreement reasons and `other_models`), the readiness tiles
+  and reports all follow it. The Decision Tree's explanation (`kind: decision_path`) is served again.
+- **Logistic Regression is not a damage model of the app:** `logistic_regression` gets `404 model_not_found`
+  ("Unknown model. Choose one of: knn, decision_tree.") from `/analysis` and `/review-queue`, and `422` from
+  `/models/{name}/metrics`, like any unknown model; its saved rows are left out of `/results/comparison`. Old
+  cached LR analyses get `404 model_not_served` and are not listed by `/analyses` or counted by the last-analysis
+  tile. The `lr_contributions` explanation kind no longer exists.
+- **Random Forest** gets the same `404 model_not_found`; `/models/random_forest/metrics` and its comparison rows
+  still return its saved results, which the UI does not show.
+- **PDF reports** (`REPORT_VERSION` 3): the limitations quote the report's own model's saved within- and
+  cross-event macro-F1 (they used to quote the default model's).
 - **Returned but no longer shown by the UI:**
   - `/results/experiments` (the whole feature-set experiment summary) is unchanged and still served, but no page
     requests it: the Arena's Experiments section was removed, together with the feature-set bars in the
     confounding chart;
   - `/results/overview` → `experiments` is still returned and not displayed;
   - `/results/comparison` rows for `random_forest`;
-  - `review_thresholds.json` entries for `decision_tree` and `random_forest` (the file was not regenerated; only
-    the served models' entries are read);
+  - `review_thresholds.json` entries for `logistic_regression` and `random_forest` (the file was not regenerated;
+    only the served models' entries are read);
   - the `optional` flag on `/models` and comparison rows (no served model is optional now).
 
 ## Changes in v1.2 (additive; existing fields keep their meaning)
@@ -105,8 +108,8 @@ every value it returns is read from an artifact written by the pipeline scripts.
 
 `confidence` is the model's highest class score. Its meaning comes from the model metadata (`confidence_kind`):
 
-- **LR:** "probability (not calibrated)";
-- **KNN:** "vote fraction of neighbours".
+- **KNN:** "vote fraction of neighbours";
+- **Decision Tree:** "class fraction in the leaf".
 
 The review-queue threshold per model is the lowest `t` on **validation** at which buildings with
 confidence ≥ `t` are at least 70% correct (`scripts/calibrate_review.py` →
@@ -114,9 +117,9 @@ confidence ≥ `t` are at least 70% correct (`scripts/calibrate_review.py` →
 
 | Model | t | share flagged on val |
 |---|---:|---:|
-| LR | 0.484 | 40% |
 | KNN | 0.533 | 22% |
+| Decision Tree | 0.526 | 55% |
 
-The saved file also has entries for the Decision Tree (0.526) and the Random Forest (0.387) from when they were
+The saved file also has entries for Logistic Regression (0.484) and the Random Forest (0.387) from when they were
 served; they are not read. `python scripts/calibrate_review.py --out <folder>` recomputes the thresholds into
 another folder for checking, without touching the saved file.

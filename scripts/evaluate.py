@@ -11,6 +11,8 @@ from app.core.config import REPO_ROOT
 
 METRICS = REPO_ROOT / "artifacts" / "metrics"
 ANALYSES = REPO_ROOT / "artifacts" / "analyses"
+# Saved rows of models that are not damage models of this project (the files are left as they are).
+NOT_DAMAGE_MODELS = {"logistic_regression"}
 
 
 def main() -> int:
@@ -24,15 +26,16 @@ def main() -> int:
         print(f"\n{doc['design_label']} · {doc['scheme_label']}  (TEST SET unless noted)")
         head = f"  {'model':<22}{'val mF1':>8}{'test mF1':>9}{'acc':>7}" + "".join(f"{'R ' + c[:9]:>13}" for c in classes) + f"{'train s':>9}{'ms/1k':>9}"
         print(head)
-        for r in doc["models"]:
+        for r in (r for r in doc["models"] if r["model"] not in NOT_DAMAGE_MODELS):
             name = r["model"] + (" (optional)" if r["optional"] else "")
             print(f"  {name:<22}{r['val_macro_f1']:>8.3f}{r['test_macro_f1']:>9.3f}{r['test_accuracy']:>7.3f}"
                   + "".join(f"{(r['test_recall'][c] or 0):>13.3f}" for c in classes)
                   + f"{r['train_seconds']:>9.1f}{1000 * r['inference_seconds_per_1000']:>9.1f}")
+    print("\n(Saved logistic_regression rows are not shown: it is not a damage model of this project.)")
     conf = ANALYSES / "confounding" / "within_event.json"
     if conf.is_file():
         c = json.loads(conf.read_text())
-        print(f"\nEvent-confounding (within-event, TEST): accuracy {c['test_metrics']['accuracy']}, "
+        print(f"\nEvent-confounding (within-event, TEST; analysis classifier: multinomial logistic regression): accuracy {c['test_metrics']['accuracy']}, "
               f"macro-F1 {c['test_metrics']['macro_f1']}, majority-class {c['majority_class_accuracy']}")
     return 0
 

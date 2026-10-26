@@ -29,6 +29,7 @@ from app.core.store import Store, StorePaths  # noqa: E402
 from app.datasets import xbd_parquet  # noqa: E402
 from app.explain.explain import decision_path, knn_neighbours, lr_contributions  # noqa: E402
 from app.features.schema import FEATURE_COLUMNS  # noqa: E402
+from app.training.persistence import load_model  # noqa: E402
 from app.training.splits import load_manifest  # noqa: E402
 
 OUT = ROOT / "docs" / "figures" / "understanding"
@@ -71,10 +72,18 @@ x = table.X.loc[[i]]
 feat = {k: float(v) for k, v in x.iloc[0].items()}
 within = load_manifest(ROOT / "data/splits/within_event_v1.json")
 cross = load_manifest(ROOT / "data/splits/cross_event_v1.json")
-lr, lr_meta = store.model("logistic_regression")
-knn, _ = store.model("knn")
-dt, _ = store.model("decision_tree")
-rf, _ = store.model("random_forest")
+
+
+def saved_model(name):
+    """Load a saved model straight from its artifact (not through the app's served-model list): this guide also
+    uses models the app does not serve (the earlier logistic regression, the research random forest)."""
+    return load_model(store.model_dir() / f"{name}.joblib", expected_manifest_hash=store.manifest()["manifest_hash"])
+
+
+lr, lr_meta = saved_model("logistic_regression")
+knn, _ = saved_model("knn")
+dt, _ = saved_model("decision_tree")
+rf, _ = saved_model("random_forest")
 z = lr[:-1].transform(x)[0]
 z_of = {f: float(z[j]) for j, f in enumerate(FEATURE_COLUMNS)}
 logged = [FEATURE_COLUMNS[j] for j in lr.named_steps["log"].log_columns_]

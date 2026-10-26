@@ -15,13 +15,7 @@ import { DAMAGE, DamageSwatch } from '../theme/damage'
 import { featureLabel, fmtValue } from '../theme/features'
 import type { Comparison, DamageClass, TreeNode } from '../types/api'
 
-const NAMES: Record<string, string> = {
-  baseline: 'Threshold baseline', logistic_regression: 'Logistic Regression', knn: 'KNN', decision_tree: 'Decision Tree',
-}
-// Saved results of models the app no longer serves that the Arena still shows, as research evidence (the paper compares
-// KNN with the Decision Tree). Random Forest results stay on disk but are not shown.
-const RESEARCH_MODELS = ['decision_tree']
-const RESEARCH_NOTE = 'research comparison: not served in the app'
+const NAMES: Record<string, string> = { baseline: 'Threshold baseline', knn: 'KNN', decision_tree: 'Decision Tree' }
 const f3 = (v: number | null | undefined) => (v === null || v === undefined ? 'not available' : v.toFixed(3))
 const SECTIONS = ['story', 'table', 'confusion', 'events', 'tree', 'confounding', 'three'] as const
 const SECTION_LABELS: Record<(typeof SECTIONS)[number], string> = {
@@ -33,16 +27,14 @@ function useComparison(design: string, scheme: string) {
   return useQuery({ queryKey: ['comparison', design, scheme], queryFn: () => api.comparison(design, scheme), retry: false })
 }
 
-/** The models the Arena shows: the threshold baseline, the served models (from the config, via /api/models) and the
- *  research comparison models. `label` marks a research model as not served. */
+/** The models the Arena shows: the threshold baseline and the served models (from the config, via /api/models).
+ *  Saved Random Forest results stay on disk but are not shown. */
 function useArenaModels() {
   const q = useQuery({ queryKey: ['models'], queryFn: api.models })
   const served = q.data ? q.data.models.map((m) => m.name) : []
-  const names = ['baseline', ...served, ...RESEARCH_MODELS.filter((m) => !served.includes(m))]
-  const research = (m: string) => !served.includes(m) && m !== 'baseline'
-  const label = (m: string) => `${NAMES[m] ?? m}${research(m) ? ` (${RESEARCH_NOTE})` : ''}`
-  const short = (m: string) => `${NAMES[m] ?? m}${research(m) ? ' (research)' : ''}`
-  return { ready: q.isSuccess, names, research, label, short }
+  const names = ['baseline', ...served]
+  const label = (m: string) => NAMES[m] ?? m
+  return { names, label, defaultModel: q.data?.default_model }
 }
 
 function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; label: string }) {
@@ -59,16 +51,12 @@ function Segmented<T extends string>({ value, options, onChange, label }: { valu
 function Story({ within, cross, title }: { within: Comparison; cross: Comparison; title: string }) {
   const arena = useArenaModels()
   const rows = within.models.filter((m) => arena.names.includes(m.model)).map((m) => ({
-    label: arena.short(m.model), a: m.test_macro_f1, b: cross.models.find((c) => c.model === m.model)?.test_macro_f1 ?? null,
-    research: arena.ready && arena.research(m.model),
+    label: arena.label(m.model), a: m.test_macro_f1, b: cross.models.find((c) => c.model === m.model)?.test_macro_f1 ?? null,
   }))
   return (
     <div className="grid grid-cols-[1fr_300px] gap-6">
-      <div>
       <Dumbbell rows={rows} aLabel="within-event · new scenes, known disasters" bLabel={`cross-event · unseen disaster (${cross.holdout_event ?? cross.test_events.join(', ')})`}
         axisLabel={`${title} · test macro-F1 (each model evaluated on its test set once)`} />
-      {rows.some((r) => r.research) && <p className="mt-1 text-[11px] text-ink-3">Decision Tree (research): saved results shown as a {RESEARCH_NOTE}.</p>}
-      </div>
       <div className="space-y-3 text-xs leading-5 text-ink-2">
         <p><b className="text-ink">Within-event.</b> {within.split_note}</p>
         <p><b className="text-ink">Cross-event.</b> {cross.split_note}</p>
@@ -115,13 +103,10 @@ function ComparisonTable({ c }: { c: Comparison }) {
   )
 }
 
-function ResearchNote({ show }: { show: boolean }) {
-  return show ? <p className="text-xs text-ink-3">Decision Tree: saved results shown as a {RESEARCH_NOTE}.</p> : null
-}
-
 function ConfusionSection() {
   const arena = useArenaModels()
-  const [model, setModel] = useState('logistic_regression')
+  const [picked, setModel] = useState<string>()
+  const model = picked ?? arena.defaultModel ?? 'knn'
   const [design, setDesign] = useState<'within_event' | 'cross_event'>('within_event')
   const [split, setSplit] = useState<'test' | 'val'>('test')
   const q = useQuery({ queryKey: ['metrics', model, design], queryFn: () => api.modelMetrics(model, design) })
@@ -130,11 +115,10 @@ function ConfusionSection() {
     <div className="space-y-3">
       <div className="flex flex-wrap gap-3">
         <Segmented label="Model" value={model} onChange={setModel}
-          options={arena.names.map((k) => ({ value: k, label: arena.short(k) }))} />
+          options={arena.names.map((k) => ({ value: k, label: arena.label(k) }))} />
         <Segmented label="Design" value={design} onChange={setDesign} options={[{ value: 'within_event', label: 'within-event' }, { value: 'cross_event', label: 'cross-event' }]} />
         <Segmented label="Split" value={split} onChange={setSplit} options={[{ value: 'test', label: 'test' }, { value: 'val', label: 'validation' }]} />
       </div>
-      <ResearchNote show={arena.ready && arena.research(model)} />
       {q.isPending && <LoadingState label="Loading metrics…" />}
       {q.isError && <ErrorState error={q.error} what={`${NAMES[model] ?? model} metrics`} />}
       {m && (
@@ -156,13 +140,13 @@ function ConfusionSection() {
 
 function EventsSection() {
   const arena = useArenaModels()
-  const [model, setModel] = useState('logistic_regression')
+  const [picked, setModel] = useState<string>()
+  const model = picked ?? arena.defaultModel ?? 'knn'
   const q = useQuery({ queryKey: ['metrics', model, 'within_event'], queryFn: () => api.modelMetrics(model, 'within_event') })
   const events = q.data ? Object.entries(q.data.metrics.test_per_event) : []
   return (
     <div className="space-y-3">
-      <Segmented label="Model" value={model} onChange={setModel} options={arena.names.filter((k) => k !== 'baseline').map((k) => ({ value: k, label: arena.short(k) }))} />
-      <ResearchNote show={arena.ready && arena.research(model)} />
+      <Segmented label="Model" value={model} onChange={setModel} options={arena.names.filter((k) => k !== 'baseline').map((k) => ({ value: k, label: arena.label(k) }))} />
       {q.isPending && <LoadingState label="Loading per-event metrics…" />}
       {q.isError && <ErrorState error={q.error} what="per-event metrics" />}
       {q.data && (
@@ -246,7 +230,8 @@ function ConfoundingSection() {
   return (
     <div className="grid grid-cols-[1fr_1fr] gap-8">
       <div className="space-y-3">
-        <p className="text-sm text-ink-2">A classifier given the <b>same features as the damage models</b> was asked which <b>disaster</b> each building comes from. Event is never an input to any damage model.</p>
+        <p className="text-sm text-ink-2">An analysis classifier (multinomial logistic regression) given the <b>same features as the damage models</b> was asked which <b>disaster</b> each building comes from.
+          It is used only to measure this disaster fingerprint; it is not a damage model in the app. Event is never an input to any damage model.</p>
         <BarList items={[
           { label: 'Event prediction accuracy (same features)', value: m.accuracy },
           { label: `Always guess the most common event (${c.data.majority_class})`, value: c.data.majority_class_accuracy },
@@ -293,8 +278,7 @@ export function ModelArenaPage() {
 
       <div id="confusion"><CaseFolder tab="ARENA · 03" title="Confusion matrices"><ConfusionSection /></CaseFolder></div>
       <div id="events"><CaseFolder tab="ARENA · 04" title="Per-event scores (within-event test)"><EventsSection /></CaseFolder></div>
-      <div id="tree"><CaseFolder tab="ARENA · 05" title="Decision tree"
-        aside={<span className="font-mono text-[10px] tracking-wider text-ink-3">{RESEARCH_NOTE.toUpperCase()}</span>}><TreeSection /></CaseFolder></div>
+      <div id="tree"><CaseFolder tab="ARENA · 05" title="Decision tree"><TreeSection /></CaseFolder></div>
       <div id="confounding"><CaseFolder tab="ARENA · 06" title="Event-confounding check" aside={<span className="font-mono text-[10px] tracking-wider text-ink-3">ANALYSIS ONLY</span>}><ConfoundingSection /></CaseFolder></div>
 
       <div id="three"><CaseFolder tab="ARENA · 07 · EXPERIMENT" title="3-class experiment: no-damage / damaged / destroyed"

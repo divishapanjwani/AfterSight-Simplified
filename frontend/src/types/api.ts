@@ -197,12 +197,11 @@ export interface AnalysisResult {
   buildings: BuildingPrediction[]
 }
 
-export interface LrContribution {
+export interface PathStep {
   feature: string
   value_raw: number
-  standardised: number
-  coefficient: number
-  contribution: number
+  op: '<=' | '>'
+  threshold_raw: number
 }
 
 export interface Neighbour {
@@ -217,18 +216,17 @@ export interface Explanation {
   analysis_id: string
   building_uid: string
   model: string
-  kind: 'lr_contributions' | 'nearest_neighbours'
+  kind: 'decision_path' | 'nearest_neighbours'
   predicted: DamageClass
   true_label: DamageClass
   confidence: number
   confidence_kind: string
   detail: {
-    // lr_contributions
-    predicted_class?: string
-    intercept?: number
-    score?: number
-    top_features?: LrContribution[]
-    note?: string
+    // decision_path
+    steps?: PathStep[]
+    leaf_samples?: number
+    leaf_class_fractions?: Record<string, number>
+    prediction?: string
     // nearest_neighbours
     k?: number
     weights?: string

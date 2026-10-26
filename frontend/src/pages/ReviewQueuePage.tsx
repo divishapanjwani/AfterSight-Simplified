@@ -11,9 +11,9 @@ const PAGE = 25
 
 export function ReviewQueuePage() {
   const [params, setParams] = useSearchParams()
-  const model = params.get('model') ?? 'logistic_regression'
-  const page = Math.max(1, Number(params.get('page') ?? 1) || 1)
   const models = useQuery({ queryKey: ['models'], queryFn: api.models })
+  const model = params.get('model') ?? models.data?.default_model ?? 'knn'
+  const page = Math.max(1, Number(params.get('page') ?? 1) || 1)
   const q = useQuery({ queryKey: ['review', model, page], queryFn: () => api.reviewQueue(model, (page - 1) * PAGE, PAGE), placeholderData: keepPreviousData })
   const set = (k: string, v: string) => { const n = new URLSearchParams(params); n.set(k, v); if (k !== 'page') n.delete('page'); setParams(n) }
   const d = q.data

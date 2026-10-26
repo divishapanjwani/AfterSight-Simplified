@@ -9,7 +9,7 @@ export const readyStatus: DatasetStatus = {
     scene_cache: { ready: true, detail: { scenes: 12, events: ['ev-a', 'ev-b'], buildings: 345 }, fix: null },
     features: { ready: true, detail: { buildings: 340, features: 37, schema_version: 1 }, fix: null },
     splits: { ready: true, detail: { within_event: 'aaaa1111', cross_event: 'bbbb2222' }, fix: null },
-    models: { ready: true, detail: { trained: { logistic_regression: true, knn: true } }, fix: null },
+    models: { ready: true, detail: { trained: { knn: true, decision_tree: true } }, fix: null },
     review_thresholds: { ready: true, detail: { rule: 'lowest t' }, fix: null },
     last_analysis: { ready: false, detail: {}, fix: 'POST /api/analysis' },
   },
@@ -25,13 +25,13 @@ export const missingStatus: DatasetStatus = {
 
 export const models: ModelList = {
   serving_design: 'within_event', serving_design_label: 'within-event generalisation', serving_scheme: 'four_class',
-  default_model: 'logistic_regression',
+  default_model: 'knn',
   models: [
-    { name: 'logistic_regression', label: 'Logistic Regression', selectable: true, optional: false, default: true, trained: true,
-      design: 'within_event', scheme: 'four_class', confidence: 'probability (not calibrated)', hyperparameters: { C: 10 },
+    { name: 'knn', label: 'K-Nearest Neighbours', selectable: true, optional: false, default: true, trained: true,
+      design: 'within_event', scheme: 'four_class', confidence: 'vote fraction of neighbours', hyperparameters: { n_neighbors: 31 },
       val_macro_f1: 0.611, test_macro_f1: 0.622, trained_at: 't', review_threshold: 0.44, fix: null },
-    { name: 'knn', label: 'K-Nearest Neighbours', selectable: true, optional: false, default: false, trained: false,
-      design: 'within_event', scheme: 'four_class', confidence: 'vote fraction of neighbours', hyperparameters: null,
+    { name: 'decision_tree', label: 'Decision Tree', selectable: true, optional: false, default: false, trained: false,
+      design: 'within_event', scheme: 'four_class', confidence: 'class fraction in the leaf', hyperparameters: null,
       val_macro_f1: null, test_macro_f1: null, trained_at: null, review_threshold: null, fix: 'python scripts/train.py' },
   ],
 }
@@ -39,11 +39,11 @@ export const models: ModelList = {
 const row = (model: string, f1: number) => ({ model, optional: false, val_macro_f1: f1, test_macro_f1: f1, test_accuracy: f1,
   test_recall: {}, train_seconds: 1, inference_seconds_per_1000: 0.001 })
 
-export const comparison = (design: string, lr: number, other: number): Comparison => ({
+export const comparison = (design: string, knn: number, tree: number): Comparison => ({
   design, design_label: design === 'within_event' ? 'within-event generalisation' : 'cross-event generalisation',
   scheme: 'four_class', scheme_label: '4-class', classes: [], split_note: '', experiment: false, provenance: 'TEST SET',
   holdout_event: design === 'cross_event' ? 'ev-c' : null, test_events: design === 'cross_event' ? ['ev-c'] : ['ev-a', 'ev-b', 'ev-c'],
-  models: [row('logistic_regression', lr), row('decision_tree', other)],
+  models: [row('knn', knn), row('decision_tree', tree)],
 })
 
 export const scene = (id: string, split: SceneSummary['split']): SceneSummary => ({
@@ -82,11 +82,11 @@ const prediction = (uid: string, true_label: BuildingPrediction['true_label'], p
   area_px: 400, mixed_label: false, touches_border: false, polygon: square(x),
 })
 
-export const analysisFor = (id: string, model = 'logistic_regression', split: SceneSummary['split'] = 'test', warning: string | null = null): AnalysisResult => ({
+export const analysisFor = (id: string, model = 'knn', split: SceneSummary['split'] = 'test', warning: string | null = null): AnalysisResult => ({
   analysis_id: 'abcdef0123456789', cached: false, created_at: 't', scene_id: id, event: 'ev-a', disaster_type: 'flooding',
-  model: { name: model, label: model === 'knn' ? 'K-Nearest Neighbours' : 'Logistic Regression',
+  model: { name: model, label: model === 'knn' ? 'K-Nearest Neighbours' : 'Decision Tree',
     design: 'within_event', design_label: 'within-event generalisation', scheme: 'four_class', trained_at: 't', hyperparameters: {}, test_macro_f1: 0.5, optional: false },
-  confidence_kind: model === 'knn' ? 'vote fraction of neighbours' : 'probability (not calibrated)',
+  confidence_kind: model === 'knn' ? 'vote fraction of neighbours' : 'class fraction in the leaf',
   review_threshold: 0.48, review_rule: 'rule',
   provenance: { split, design: 'within_event', design_label: 'within-event generalisation', warning, note: 'note' },
   counts: { ground_truth: { 'no-damage': 1, 'minor-damage': 0, 'major-damage': 0, destroyed: 1 }, predicted: { 'no-damage': 0, 'minor-damage': 0, 'major-damage': 0, destroyed: 2 } },
@@ -99,10 +99,9 @@ const base = { analysis_id: 'abcdef0123456789', model: 'x', predicted: 'destroye
   confidence_kind: 'k', global_top_features: [{ feature: 'gray_std_post', mean: 0.27, std: 0.01 }], crop_urls: { pre: '', post: '' } }
 
 export const explanations: Record<string, Explanation> = {
-  logistic_regression: { ...base, building_uid: 'x', kind: 'lr_contributions', detail: { intercept: -0.85, score: 2.44, top_features: [
-    { feature: 'post_mean_b', value_raw: 155.9, standardised: 1.2, coefficient: -3.6, contribution: -4.37 },
-    { feature: 'ring_dmean', value_raw: 4.2, standardised: 0.9, coefficient: 3.4, contribution: 3.07 },
-  ] } },
+  decision_tree: { ...base, building_uid: 'x', kind: 'decision_path', detail: { prediction: 'destroyed', leaf_samples: 3677,
+    leaf_class_fractions: { destroyed: 0.6, 'no-damage': 0.4 },
+    steps: [{ feature: 'glcm_homogeneity_delta', value_raw: -0.022, op: '>', threshold_raw: -0.146 }] } },
   knn: { ...base, building_uid: 'x', kind: 'nearest_neighbours', detail: { k: 2, weights: 'uniform', neighbours: [
     { sample_id: 'ev-b_00000001_b0003', label: 'destroyed', distance: 1.5, split: 'train', crop_urls: { pre: '/p', post: '/q' } },
     { sample_id: 'ev-b_00000002_b0004', label: 'minor-damage', distance: 1.9, split: 'train', crop_urls: { pre: '/p', post: '/q' } },

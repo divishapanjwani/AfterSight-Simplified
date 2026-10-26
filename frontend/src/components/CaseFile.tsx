@@ -1,6 +1,6 @@
 /**
  * Building Case File: crops, predicted vs ground truth, confidence (with its meaning), and the model's
- * explanation — LR contributions or the KNN neighbours.
+ * explanation — the decision-tree path or the KNN neighbours.
  * All values come from the API.
  */
 import { useQuery } from '@tanstack/react-query'
@@ -99,27 +99,29 @@ function Scores({ building, kind }: { building: BuildingPrediction; kind: string
   )
 }
 
-function LrView({ e }: { e: Explanation }) {
-  const rows = e.detail.top_features ?? []
-  const max = Math.max(...rows.map((r) => Math.abs(r.contribution)), 1e-9)
+function TreeView({ e }: { e: Explanation }) {
+  const steps = e.detail.steps ?? []
   return (
     <div>
-      <p className="mb-2 text-xs text-ink-2">Top features pushing the score for <b>{DAMAGE[e.predicted].label.toLowerCase()}</b> up (right) or down (left).
-        Contribution = coefficient × standardised value, in log-odds.</p>
-      <ul className="space-y-1.5">
-        {rows.map((r) => (
-          <li key={r.feature} className="grid grid-cols-[1fr_110px_48px] items-center gap-2 text-xs">
-            <span className="truncate text-ink" title={r.feature}>{featureLabel(r.feature)} <span className="num text-ink-3">= {fmtValue(r.value_raw)}</span></span>
-            <span className="relative h-3" aria-hidden="true">
-              <span className="absolute inset-y-0 left-1/2 w-px bg-rule-strong" />
-              <span className={`absolute inset-y-0.5 ${r.contribution >= 0 ? 'left-1/2 bg-ink-2' : 'right-1/2 bg-ink-3/60'}`}
-                style={{ width: `${(Math.abs(r.contribution) / max) * 50}%` }} />
+      <p className="mb-2 text-xs text-ink-2">The questions the decision tree asked, from the root to the leaf (values in raw feature units).</p>
+      <ol className="space-y-1">
+        {steps.map((s, i) => (
+          <li key={i} className="grid grid-cols-[20px_1fr] gap-2 text-xs">
+            <span className="num text-ink-3">{i + 1}</span>
+            <span className="text-ink">
+              {featureLabel(s.feature)} <span className="num text-ink-2">{fmtValue(s.value_raw)} {s.op === '<=' ? '≤' : '>'} {fmtValue(s.threshold_raw)}</span>
+              <span className="ml-1 font-mono text-[10px] text-ink-3">{s.feature}</span>
             </span>
-            <span className="num text-right text-ink">{r.contribution >= 0 ? '+' : ''}{r.contribution.toFixed(2)}</span>
           </li>
         ))}
-      </ul>
-      <p className="num mt-2 text-[11px] text-ink-3">intercept {e.detail.intercept?.toFixed(2)} · total score {e.detail.score?.toFixed(2)}</p>
+        <li className="grid grid-cols-[20px_1fr] gap-2 text-xs">
+          <span aria-hidden="true" className="text-ink-3">→</span>
+          <span className="text-ink">Leaf of <span className="num">{e.detail.leaf_samples}</span> training buildings:{' '}
+            <span className="num text-ink-2">{Object.entries(e.detail.leaf_class_fractions ?? {}).map(([c, p]) => `${shortName(c)} ${(p * 100).toFixed(0)}%`).join(' · ')}</span>
+          </span>
+        </li>
+      </ol>
+      <p className="mt-2 text-[11px] text-ink-3">Leaf shares are class-weighted training fractions, not calibrated probabilities.</p>
     </div>
   )
 }
@@ -158,8 +160,8 @@ function KnnView({ e }: { e: Explanation }) {
 /** Picks the explanation view that matches the model (the API's `kind` field). */
 function ExplanationView({ e }: { e: Explanation }) {
   switch (e.kind) {
-    case 'lr_contributions':
-      return <LrView e={e} />
+    case 'decision_path':
+      return <TreeView e={e} />
     case 'nearest_neighbours':
       return <KnnView e={e} />
     default:

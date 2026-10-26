@@ -20,12 +20,30 @@ describe('Readiness board', () => {
     const cache = (await screen.findByText('Scene cache')).closest('section')!
     expect(within(cache).getByText('345')).toBeInTheDocument()
     expect(within(cache).getByText('✓ READY')).toBeInTheDocument()
-    expect(await screen.findByText('0.876')).toBeInTheDocument() // within-event LR, from the API
-    expect(screen.getByText('0.111')).toBeInTheDocument() // cross-event LR
-    // "best" only considers the served models: the Decision Tree's higher 0.222 is a research result, not served
-    expect(screen.getByText('best served model: logistic regression 0.111')).toBeInTheDocument()
-    expect(screen.queryByText(/decision tree/i)).not.toBeInTheDocument()
+    expect(await screen.findByText('0.876')).toBeInTheDocument() // within-event KNN, from the API
+    expect(screen.getByText('0.500')).toBeInTheDocument() // within-event Decision Tree
+    expect(screen.getByText('0.111')).toBeInTheDocument() // cross-event KNN
+    expect(screen.getByText('0.222')).toBeInTheDocument() // cross-event Decision Tree
+    expect(screen.getAllByText('macro-F1 · K-Nearest Neighbours (default)')).toHaveLength(2)
+    expect(screen.getAllByText('macro-F1 · Decision Tree')).toHaveLength(2)
     expect(screen.getByText('Damage classification on building footprints derived from xBD annotations.')).toBeInTheDocument()
+  })
+
+  it('the headline depends only on the served models: a Logistic Regression row is never shown', async () => {
+    const withLr = (design: string, knn: number, tree: number) => {
+      const c = comparison(design, knn, tree)
+      return { ...c, models: [...c.models, { ...c.models[0], model: 'logistic_regression', test_macro_f1: 0.999 }] }
+    }
+    mockApi({
+      '/api/health': { body: health }, '/api/dataset/status': { body: readyStatus }, '/api/models': { body: models },
+      '/api/results/comparison': (url) => ({ body: url.searchParams.get('design') === 'cross_event' ? withLr('cross_event', 0.271, 0.294) : withLr('within_event', 0.52, 0.47) }),
+    })
+    page()
+    const headline = (await screen.findByText('How well does it work?')).closest('section')!
+    expect(await within(headline).findByText('0.520')).toBeInTheDocument()
+    for (const v of ['0.470', '0.271', '0.294']) expect(within(headline).getByText(v)).toBeInTheDocument()
+    expect(within(headline).queryByText('0.999')).not.toBeInTheDocument()
+    expect(screen.queryByText(/logistic/i)).not.toBeInTheDocument()
   })
 
   it('marks untrained models and shows the command that fixes them', async () => {
@@ -39,47 +57,46 @@ describe('Readiness board', () => {
 
   it('shows PARTIAL review thresholds with the reason and "not available" for the missing model', async () => {
     const partial = { ...readyStatus, tiles: { ...readyStatus.tiles,
-      review_thresholds: { ready: false, state: 'partial' as const, reason: 'usable for logistic_regression; missing for knn',
-        detail: { rule: 'lowest t', thresholds: { logistic_regression: 0.4836, knn: null } }, fix: 'python scripts/calibrate_review.py' } } }
+      review_thresholds: { ready: false, state: 'partial' as const, reason: 'usable for knn; missing for decision_tree',
+        detail: { rule: 'lowest t', thresholds: { knn: 0.5333, decision_tree: null } }, fix: 'python scripts/calibrate_review.py' } } }
     mockApi({ '/api/health': { body: health }, '/api/dataset/status': { body: partial }, '/api/models': { body: models },
       '/api/results/comparison': { body: comparison('within_event', 0.5, 0.5) } })
     page()
     const tile = (await screen.findByText('Review thresholds')).closest('section')!
     expect(within(tile).getByText('◐ PARTIAL')).toBeInTheDocument()
-    expect(within(tile).getByText('0.48')).toBeInTheDocument()
+    expect(within(tile).getByText('0.53')).toBeInTheDocument()
     expect(within(tile).getByText('not available')).toBeInTheDocument()
-    expect(within(tile).getByText('usable for logistic_regression; missing for knn')).toBeInTheDocument()
+    expect(within(tile).getByText('usable for knn; missing for decision_tree')).toBeInTheDocument()
     expect(within(tile).getByText('$ python scripts/calibrate_review.py')).toBeInTheDocument()
     expect(within(tile).queryByText('✓ READY')).not.toBeInTheDocument()
   })
 
-  it('review thresholds are READY with only the served models (LR and KNN), and the tile lists exactly those', async () => {
+  it('review thresholds are READY with only the served models (KNN and Decision Tree), and the tile lists exactly those', async () => {
     const status = { ...readyStatus, tiles: { ...readyStatus.tiles,
       review_thresholds: { ready: true, state: 'ready' as const,
-        reason: 'usable for every required served model (logistic_regression, knn)',
-        detail: { rule: 'lowest t', thresholds: { logistic_regression: 0.4836, knn: 0.5333 } }, fix: null } } }
+        reason: 'usable for every required served model (knn, decision_tree)',
+        detail: { rule: 'lowest t', thresholds: { knn: 0.5333, decision_tree: 0.5257 } }, fix: null } } }
     mockApi({ '/api/health': { body: health }, '/api/dataset/status': { body: status }, '/api/models': { body: models },
       '/api/results/comparison': { body: comparison('within_event', 0.5, 0.5) } })
     page()
     const tile = (await screen.findByText('Review thresholds')).closest('section')!
     expect(within(tile).getByText('✓ READY')).toBeInTheDocument()
-    expect(within(tile).getByText('0.48')).toBeInTheDocument()
-    expect(within(tile).getByText('0.53')).toBeInTheDocument()
-    expect(within(tile).getByText('usable for every required served model (logistic_regression, knn)')).toBeInTheDocument()
-    expect(within(tile).queryByText(/decision_tree|random_forest/)).not.toBeInTheDocument()
+    expect(within(tile).getAllByText('0.53')).toHaveLength(2) // 0.5333 and 0.5257, both shown to 2 decimals
+    expect(within(tile).getByText('usable for every required served model (knn, decision_tree)')).toBeInTheDocument()
+    expect(within(tile).queryByText(/logistic_regression|random_forest/)).not.toBeInTheDocument()
   })
 
-  it('models tile is READY when the served models (LR and KNN) are trained', async () => {
+  it('models tile is READY when the served models (KNN and Decision Tree) are trained', async () => {
     const status = { ...readyStatus, tiles: { ...readyStatus.tiles,
       models: { ready: true, state: 'ready' as const, reason: 'all required served models are trained',
-        detail: { trained: { logistic_regression: true, knn: true } }, fix: null } } }
+        detail: { trained: { knn: true, decision_tree: true } }, fix: null } } }
     mockApi({ '/api/health': { body: health }, '/api/dataset/status': { body: status }, '/api/models': { body: models },
       '/api/results/comparison': { body: comparison('within_event', 0.5, 0.5) } })
     page()
     const tile = (await screen.findByText('Models')).closest('section')!
     expect(within(tile).getByText('✓ READY')).toBeInTheDocument()
     expect(within(tile).getByText('all required served models are trained')).toBeInTheDocument()
-    expect(within(tile).queryByText(/decision_tree|random_forest|optional/)).not.toBeInTheDocument()
+    expect(within(tile).queryByText(/logistic_regression|random_forest|optional/)).not.toBeInTheDocument()
   })
 
   it('models table shows test macro-F1, confidence meaning and review threshold, but no validation column', async () => {
@@ -88,7 +105,7 @@ describe('Readiness board', () => {
     page()
     const table = (await screen.findByText('Models served to the Triage Desk')).closest('section')!
     expect(await within(table).findByText('0.622')).toBeInTheDocument() // test macro-F1 from /api/models
-    expect(within(table).getByText('probability (not calibrated)')).toBeInTheDocument()
+    expect(within(table).getByText('vote fraction of neighbours')).toBeInTheDocument()
     expect(within(table).getByText('0.44')).toBeInTheDocument()
     // val_macro_f1 is still in the API response (0.611) but is no longer displayed here
     expect(within(table).queryByText('0.611')).not.toBeInTheDocument()

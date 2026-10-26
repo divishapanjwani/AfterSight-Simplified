@@ -132,7 +132,7 @@ export function TriageDeskPage() {
   }
 
   const models = useQuery({ queryKey: ['models'], queryFn: api.models })
-  const model = params.get('model') ?? models.data?.default_model ?? 'logistic_regression'
+  const model = params.get('model') ?? models.data?.default_model ?? 'knn'
   const scene = useQuery({ queryKey: ['scene', sceneId], queryFn: () => api.scene(sceneId!), enabled: Boolean(sceneId) })
   const runRequested = params.get('run') === '1' // set by "Run analysis"; kept in the URL so reloads restore it
   const run = useQuery({ queryKey: ['analysis', sceneId, model], queryFn: () => api.analyse(sceneId!, model),

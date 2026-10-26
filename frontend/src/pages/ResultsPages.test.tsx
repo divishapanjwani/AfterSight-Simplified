@@ -19,7 +19,7 @@ describe('Model Arena', () => {
     '/api/results/comparison': (url: URL) => ({ body: url.searchParams.get('design') === 'cross_event' ? comparison('cross_event', 0.291, 0.301) : comparison('within_event', 0.532, 0.481) }),
     '/api/models': (url: URL) => url.pathname === '/api/models' ? { body: models }
       : url.pathname.endsWith('/metrics')
-        ? { body: { model: 'logistic_regression', hyperparameters: { C: 10 }, metrics: { val: metrics, test: metrics, test_per_event: { 'ev-a': metrics } } } }
+        ? { body: { model: 'knn', hyperparameters: { n_neighbors: 31 }, metrics: { val: metrics, test: metrics, test_per_event: { 'ev-a': metrics } } } }
         : { body: { root: { id: 0, depth: 0, samples: 50, class_fractions: {}, majority: 'destroyed', leaf: true }, n_nodes: 1, max_depth: 0, n_leaves: 1, classes: [], view_max_depth: 3 } },
     '/api/results/confounding': { body: { design_label: 'within-event generalisation', target: 'event', test_metrics: { ...metrics, accuracy: 0.829, confusion_matrix: { labels: ['ev-a', 'ev-b'], rows_true_cols_pred: [[5, 1], [2, 4]] } }, majority_class: 'ev-a', majority_class_accuracy: 0.252, chance_accuracy_uniform: 0.2 } },
   })
@@ -48,14 +48,33 @@ describe('Model Arena', () => {
     expect(calls.some((u) => u.pathname === '/api/results/experiments')).toBe(false)
   })
 
-  it('labels the Decision Tree as a research comparison and does not show Random Forest', async () => {
+  it('shows KNN and the Decision Tree as served models (no research labels), never LR or Random Forest', async () => {
+    const routes = arenaRoutes()
+    // even if a saved Logistic Regression row reached the page, the Arena lists only the baseline and the served models
+    const withLr = (url: URL) => {
+      const body = routes['/api/results/comparison'](url).body
+      return { body: { ...body, models: [...body.models, { ...body.models[0], model: 'logistic_regression', test_macro_f1: 0.999 }] } }
+    }
+    const calls = mockApi({ ...routes, '/api/results/comparison': withLr })
+    renderAt(<ModelArenaPage />, '/arena')
+    expect(await screen.findAllByText('0.48 → 0.30')).not.toHaveLength(0) // Decision Tree, within → cross
+    expect(screen.getAllByText('Decision Tree').length).toBeGreaterThan(0)
+    expect(screen.queryByText(/research/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/not served/i)).not.toBeInTheDocument()
+    expect(screen.queryByText('Logistic Regression')).not.toBeInTheDocument()
+    expect(screen.queryByText('0.999')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Random Forest/)).not.toBeInTheDocument()
+    const confusionModels = screen.getAllByRole('radiogroup', { name: 'Model' })[0]
+    expect(within(confusionModels).getAllByRole('radio').map((r) => r.textContent)).toEqual(['Threshold baseline', 'KNN', 'Decision Tree'])
+    expect(await within(confusionModels).findByRole('radio', { name: 'KNN' })).toHaveAttribute('aria-checked', 'true') // the default
+    expect(calls.some((u) => u.pathname.includes('logistic_regression'))).toBe(false)
+  })
+
+  it('describes the confounding classifier as an analysis tool, not a damage model', async () => {
     mockApi(arenaRoutes())
     renderAt(<ModelArenaPage />, '/arena')
-    expect((await screen.findAllByText('Decision Tree (research comparison: not served in the app)')).length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Logistic Regression').length).toBeGreaterThan(0) // served: no research label
-    expect(screen.getByText('RESEARCH COMPARISON: NOT SERVED IN THE APP')).toBeInTheDocument() // tree section
-    expect(screen.queryByText(/Random Forest/)).not.toBeInTheDocument()
-    expect(within(screen.getAllByRole('radiogroup', { name: 'Model' })[0]).getByRole('radio', { name: 'Decision Tree (research)' })).toBeInTheDocument()
+    expect(await screen.findByText(/An analysis classifier \(multinomial logistic regression\)/)).toHaveTextContent(
+      'It is used only to measure this disaster fingerprint; it is not a damage model in the app.')
   })
 })
 
@@ -63,7 +82,7 @@ describe('Review Queue', () => {
   it('frames flags neutrally and reconciles the totals', async () => {
     const calls = mockApi({
       '/api/models': { body: models },
-      '/api/review-queue': { body: { model: 'logistic_regression', split: 'test', framing: 'Suggested for human review — low confidence or model disagreement, not confirmed errors.',
+      '/api/review-queue': { body: { model: 'knn', split: 'test', framing: 'Suggested for human review — low confidence or model disagreement, not confirmed errors.',
         threshold: 0.48, threshold_rule: 'r', target_accuracy: 0.7, total_buildings: 100, total_flagged: 70, flagged_low_confidence: 40, flagged_disagreement_only: 30, offset: 0, limit: 25,
         items: [{ building_uid: 'ev-a_00000001_b0003', scene_id: 'ev-a_00000001', event: 'ev-a', predicted: 'minor-damage', true_label: 'no-damage', confidence: 0.31,
           reasons: ['low confidence (0.31 < 0.48)'], other_models: {} }] } },
@@ -72,10 +91,13 @@ describe('Review Queue', () => {
     expect(await screen.findByText(/not confirmed errors/)).toBeInTheDocument()
     expect(screen.getByText(/test buildings/).closest('p')).toHaveTextContent('70 of 100 test buildings (70%) are suggested for human review')
     expect(screen.getByText(/low confidence ·/).closest('p')).toHaveTextContent('40 low confidence · 30 confident, but another model disagrees')
-    expect(screen.getByRole('link', { name: 'Open →' })).toHaveAttribute('href', '/triage/ev-a_00000001?model=logistic_regression&run=1&b=ev-a_00000001_b0003')
+    expect(screen.getByRole('link', { name: 'Open →' })).toHaveAttribute('href', '/triage/ev-a_00000001?model=knn&run=1&b=ev-a_00000001_b0003')
     expect(screen.getByText(/test buildings/).closest('p')).toHaveTextContent('at least 70% correct')
     expect(screen.queryByText(/error rate/i)).not.toBeInTheDocument()
     expect(calls.find((u) => u.pathname === '/api/review-queue')!.searchParams.get('split')).toBe('test')
+    expect(calls.find((u) => u.pathname === '/api/review-queue')!.searchParams.get('model')).toBe('knn') // the default
+    const picker = screen.getByRole('radiogroup', { name: 'Model' })
+    expect(within(picker).getAllByRole('radio').map((r) => r.textContent)).toEqual(['K-Nearest Neighbours', 'Decision Tree'])
   })
 })
 
@@ -83,17 +105,17 @@ describe('Review Queue without a usable threshold', () => {
   it('says why there are no low-confidence flags and never quotes a validation threshold', async () => {
     mockApi({
       '/api/models': { body: models },
-      '/api/review-queue': { body: { model: 'logistic_regression', split: 'test', framing: 'Suggested for human review — low confidence or model disagreement, not confirmed errors.',
+      '/api/review-queue': { body: { model: 'knn', split: 'test', framing: 'Suggested for human review — low confidence or model disagreement, not confirmed errors.',
         threshold: null, threshold_rule: null, target_accuracy: null,
-        threshold_note: 'calibration found no threshold for logistic_regression that reaches 70% accuracy on validation',
+        threshold_note: 'calibration found no threshold for knn that reaches 70% accuracy on validation',
         total_buildings: 100, total_flagged: 30, flagged_low_confidence: 0, flagged_disagreement_only: 30, offset: 0, limit: 25,
         items: [{ building_uid: 'ev-a_00000001_b0003', scene_id: 'ev-a_00000001', event: 'ev-a', predicted: 'minor-damage', true_label: 'no-damage', confidence: 0.31,
-          reasons: ['other models disagree: knn says no-damage'], other_models: { knn: 'no-damage' } }] } },
+          reasons: ['other models disagree: decision_tree says no-damage'], other_models: { decision_tree: 'no-damage' } }] } },
     })
     renderAt(<ReviewQueuePage />, '/review')
     const note = await screen.findByRole('note')
     expect(note).toHaveTextContent('No low-confidence flags for this model.')
-    expect(note).toHaveTextContent('calibration found no threshold for logistic_regression that reaches 70% accuracy on validation')
+    expect(note).toHaveTextContent('calibration found no threshold for knn that reaches 70% accuracy on validation')
     expect(note).toHaveTextContent('Only model-disagreement flags are listed.')
     const summary = screen.getByText(/test buildings/).closest('p')!
     expect(summary).toHaveTextContent('30 of 100 test buildings (30%) are suggested for human review with this model: another model disagrees with it.')
@@ -108,7 +130,7 @@ describe('Review Queue paging', () => {
   it('a page past the end is not reported as an empty queue', async () => {
     mockApi({
       '/api/models': { body: models },
-      '/api/review-queue': { body: { model: 'logistic_regression', split: 'test', framing: 'Suggested for human review — low confidence or model disagreement, not confirmed errors.',
+      '/api/review-queue': { body: { model: 'knn', split: 'test', framing: 'Suggested for human review — low confidence or model disagreement, not confirmed errors.',
         threshold: 0.48, threshold_rule: 'r', target_accuracy: 0.7, threshold_note: null, total_buildings: 100, total_flagged: 30,
         flagged_low_confidence: 20, flagged_disagreement_only: 10, offset: 2450, limit: 25, items: [] } },
     })

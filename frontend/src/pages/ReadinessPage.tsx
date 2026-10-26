@@ -5,7 +5,7 @@ import { CaseFolder } from '../components/CaseFolder'
 import { Chip } from '../components/Chip'
 import { CommandBlock, ErrorState, LoadingState } from '../components/States'
 import { api } from '../services/api'
-import type { Comparison, StatusTile } from '../types/api'
+import type { Comparison, ModelInfo, StatusTile } from '../types/api'
 import { DamageLegend } from '../theme/damage'
 
 const TILE_ORDER: { key: string; title: string }[] = [
@@ -109,11 +109,10 @@ function ReadyBadge({ tile }: { tile: StatusTile }) {
   return <span className="inline-flex items-center gap-1 rounded-[3px] border border-dashed border-ink-3 px-1.5 py-px font-mono text-[10px] tracking-wider text-ink-3">○ NOT READY</span>
 }
 
-function Headline({ within, cross, served }: { within: Comparison; cross: Comparison; served: string[] }) {
-  const lr = (c: Comparison) => c.models.find((m) => m.model === 'logistic_regression')
-  // only the models the app serves (config, via /api/models); the Arena has the research comparisons
-  const best = (c: Comparison) => c.models.filter((m) => served.includes(m.model)).reduce<Comparison['models'][number] | null>(
-    (a, b) => (a === null || b.test_macro_f1 > a.test_macro_f1 ? b : a), null)
+function Headline({ within, cross, served }: { within: Comparison; cross: Comparison; served: ModelInfo[] }) {
+  // the served models (config, via /api/models), default first; each score is read from the saved comparison
+  const ordered = [...served].sort((a, b) => Number(b.default) - Number(a.default))
+  const score = (c: Comparison, name: string) => c.models.find((m) => m.model === name)?.test_macro_f1
   const rows = [
     { c: within, title: 'Within-event', text: `New scenes from the same ${within.test_events.length} disasters the models were trained on.` },
     { c: cross, title: 'Cross-event', text: `A disaster never seen in training (${cross.holdout_event ?? cross.test_events.join(', ')}).` },
@@ -127,11 +126,14 @@ function Headline({ within, cross, served }: { within: Comparison; cross: Compar
             <Chip kind="test" />
           </div>
           <p className="mt-0.5 text-xs text-ink-3">{text}</p>
-          <p className="mt-2 flex items-baseline gap-2">
-            <span className="num text-3xl font-medium text-ink">{fmt(lr(c)?.test_macro_f1)}</span>
-            <span className="text-xs text-ink-2">macro-F1 · Logistic Regression (default)</span>
-          </p>
-          {best(c) && <p className="num mt-1 text-xs text-ink-3">best served model: {best(c)!.model.replaceAll('_', ' ')} {fmt(best(c)!.test_macro_f1)}</p>}
+          <ul className="mt-2 space-y-1">
+            {ordered.map((m) => (
+              <li key={m.name} className="flex items-baseline gap-2">
+                <span className={`num font-medium text-ink ${m.default ? 'text-3xl' : 'text-2xl'}`}>{fmt(score(c, m.name))}</span>
+                <span className="text-xs text-ink-2">macro-F1 · {m.label}{m.default && ' (default)'}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       ))}
     </div>
@@ -179,7 +181,7 @@ export function ReadinessPage() {
         {cross.isError && !within.isError && <ErrorState error={cross.error} what="cross-event results" />}
         {within.isSuccess && cross.isSuccess && (
           <>
-            <Headline within={within.data} cross={cross.data} served={(models.data?.models ?? []).map((m) => m.name)} />
+            <Headline within={within.data} cross={cross.data} served={models.data?.models ?? []} />
             <p className="mt-3 text-xs leading-5 text-ink-2">
               The gap is the honest story: on scenes from disasters it has seen, the model does much better than on a new
               disaster. The full comparison, per-event scores and the confounding check live in the Model Arena.

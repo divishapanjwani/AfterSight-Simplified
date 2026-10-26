@@ -18,9 +18,9 @@ function api(split: 'test' | 'train' = 'test') {
     '/api/models': { body: models },
     [`/api/scenes/${ID}`]: { body: sceneDetail(ID, split, split === 'train' ? TRAIN_WARNING : null) },
     '/api/analysis': (url) => {
-      if (url.pathname.endsWith('/explain')) return { body: explanations.logistic_regression }
+      if (url.pathname.endsWith('/explain')) return { body: explanations.knn }
       if (url.pathname.startsWith('/api/analysis/abcdef')) return { body: analysisFor(ID) }
-      return { body: analysisFor(ID, 'logistic_regression', split, split === 'train' ? TRAIN_WARNING : null) }
+      return { body: analysisFor(ID, 'knn', split, split === 'train' ? TRAIN_WARNING : null) }
     },
   })
   return { urls, calls }
@@ -47,12 +47,15 @@ describe('Triage Desk', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(TRAIN_WARNING)
   })
 
-  it('untrained models cannot be selected; the default model is preselected', async () => {
+  it('offers exactly the served models (KNN, Decision Tree); untrained ones cannot be selected; KNN is preselected', async () => {
     api()
     page()
     await screen.findByText(ID)
-    expect(await screen.findByRole('radio', { name: 'K-Nearest Neighbours' })).toBeDisabled() // untrained in this fixture
-    expect(screen.getByRole('radio', { name: 'Logistic Regression' })).toHaveAttribute('aria-checked', 'true')
+    expect(await screen.findByRole('radio', { name: 'Decision Tree' })).toBeDisabled() // untrained in this fixture
+    expect(screen.getByRole('radio', { name: 'K-Nearest Neighbours' })).toHaveAttribute('aria-checked', 'true')
+    const picker = screen.getByRole('radiogroup', { name: 'Model' })
+    expect(within(picker).getAllByRole('radio').map((r) => r.textContent)).toEqual(['K-Nearest Neighbours', 'Decision Tree'])
+    expect(screen.queryByText(/Logistic Regression/)).not.toBeInTheDocument()
   })
 
   it('running the analysis posts scene + model and shows counts and review suggestions from the API', async () => {
@@ -62,7 +65,7 @@ describe('Triage Desk', () => {
     const summary = (await screen.findByText('ANALYSIS · abcdef01')).closest('section')!
     expect(summary).toHaveTextContent('1 of 2 buildings are suggested for human review') // 1 of 2 below 0.48
     expect(within(summary).getByText('0.48')).toBeInTheDocument()
-    expect(within(summary).getByText('probability (not calibrated)', { exact: false })).toBeInTheDocument()
+    expect(within(summary).getByText('vote fraction of neighbours', { exact: false })).toBeInTheDocument()
     expect(urls.some((u) => u.pathname === '/api/analysis')).toBe(true)
     expect(screen.getByRole('radio', { name: 'Prediction' })).not.toBeDisabled()
     // the analysis is cached and deterministic, so there is no misleading 'Re-run' button once it is shown
@@ -76,8 +79,8 @@ describe('Triage Desk', () => {
     fireEvent.pointerUp(screen.getByRole('button', { name: `Building ${ID}_b0002` }))
     expect(await screen.findByText('CASE · B-0002')).toBeInTheDocument()
     expect(screen.getByText('✓ agrees with ground truth')).toBeInTheDocument()
-    expect(await screen.findByText('Mean blue, post', { exact: false })).toBeInTheDocument()
-    expect(screen.getByText('-4.37')).toBeInTheDocument()
+    expect(await screen.findByText('Votes:', { exact: false })).toBeInTheDocument()
+    expect(screen.getByText('d 1.50')).toBeInTheDocument() // nearest neighbour's distance, from the API
   })
 
   it('selecting a low-confidence building from the list shows it as suggested for review, neutrally', async () => {
@@ -106,7 +109,7 @@ it('keyboard: Enter on a focused footprint opens it; arrow keys pan without erro
 
 describe('Case file page', () => {
   it.each([
-    ['logistic_regression', 'intercept', 'Surroundings brightness change'],
+    ['decision_tree', 'Leaf of', 'Texture smoothness change'],
     ['knn', 'Votes:', 'minor'],
   ])('renders the %s explanation', async (model, text, detail) => {
     mockApi({
@@ -115,6 +118,20 @@ describe('Case file page', () => {
     renderAt(<Routes><Route path="/case/:analysisId/:buildingUid" element={<CasePage />} /></Routes>, `/case/abcdef0123456789/${ID}_b0002`)
     expect(await screen.findByText(text, { exact: false })).toBeInTheDocument()
     expect(screen.getAllByText(detail, { exact: false }).length).toBeGreaterThan(0)
+  })
+
+  it('the decision-path view lists the yes/no questions from root to leaf, with the leaf shares', async () => {
+    mockApi({
+      '/api/analysis': (url) => url.pathname.endsWith('/explain') ? { body: explanations.decision_tree } : { body: analysisFor(ID, 'decision_tree') },
+    })
+    renderAt(<Routes><Route path="/case/:analysisId/:buildingUid" element={<CasePage />} /></Routes>, `/case/abcdef0123456789/${ID}_b0002`)
+    expect(await screen.findByText(/The questions the decision tree asked, from the root to the leaf/)).toBeInTheDocument()
+    const steps = screen.getByText(/Leaf of/).closest('ol')! // the ordered list of questions, ending in the leaf
+    expect(within(steps).getAllByRole('listitem')).toHaveLength(2) // one question + the leaf
+    expect(steps).toHaveTextContent('Texture smoothness change -0.022 > -0.146')
+    expect(steps).toHaveTextContent('Leaf of 3677 training buildings: destroyed 60% · none 40%')
+    expect(screen.getByText('Leaf shares are class-weighted training fractions, not calibrated probabilities.')).toBeInTheDocument()
+    expect(screen.getByText('class fraction in the leaf', { exact: false })).toBeInTheDocument()
   })
 
   it('unknown analysis shows a clean error', async () => {

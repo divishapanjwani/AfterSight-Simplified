@@ -216,12 +216,13 @@ export interface Explanation {
   analysis_id: string
   building_uid: string
   model: string
-  kind: 'decision_path' | 'nearest_neighbours'
+  kind: 'decision_path' | 'nearest_neighbours' | 'none'
   predicted: DamageClass
   true_label: DamageClass
   confidence: number
   confidence_kind: string
   detail: {
+    note?: string // none (random forest)
     // decision_path
     steps?: PathStep[]
     leaf_samples?: number
@@ -364,4 +365,52 @@ export interface AnalysisSummary {
   macro_f1: number | null
   csv_url: string
   pdf_url: string
+}
+
+// ---------------------------------------------------------------- model comparison & ensemble (Arena only)
+export interface ComparisonMetrics {
+  n: number
+  accuracy: number
+  macro_precision: number
+  macro_recall: number
+  macro_f1: number
+  per_class: Record<string, { precision: number | null; recall: number | null; f1: number | null; support: number }>
+  confusion_matrix: { labels: string[]; rows_true_cols_pred: number[][] }
+}
+
+export interface ComparedModel {
+  model: string
+  label: string
+  kind: 'default' | 'optimised' | 'ensemble'
+  ensemble_type?: 'parallel' | 'serial'
+  source: string
+  hyperparameters?: Record<string, unknown>
+  members?: string[]
+  weights?: number[]
+  implementation?: string
+  trained_on?: string
+  metrics: ComparisonMetrics
+}
+
+export interface GridSearchResult {
+  label: string
+  grid: Record<string, unknown[]>
+  fixed: Record<string, unknown>
+  cv: string
+  trained_on: string
+  best_params: Record<string, unknown>
+  best_cv_macro_f1: number
+  test_macro_f1_default: number
+  test_macro_f1_optimised: number
+  difference: number
+}
+
+export interface ModelComparison {
+  label: string
+  created_at: string
+  seed: number
+  designs: Record<string, { design_label: string; classes: string[]; n_test: number;
+    svm_sample: { buildings: number; scenes: number; of_training_buildings: number; seed: number }; models: ComparedModel[] }>
+  grid_search: Record<string, GridSearchResult>
+  notes: string[]
 }

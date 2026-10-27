@@ -181,7 +181,7 @@ class Explanation(BaseModel):
     analysis_id: str
     building_uid: str
     model: str
-    kind: Literal["decision_path", "nearest_neighbours"]
+    kind: Literal["decision_path", "nearest_neighbours", "none"]
     predicted: str
     true_label: str
     confidence: float

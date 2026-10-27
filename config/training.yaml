@@ -75,10 +75,11 @@ confounding:   # an analysis classifier (multinomial logistic regression) predic
 serving:
   design: within_event          # Triage Desk models: within-event split, 4-class
   scheme: four_class
-  # Served by the app (model pickers, analysis, explanations, review queue, readiness, reports): KNN (the default)
-  # and the Decision Tree. Random Forest is still trained by scripts/train.py as an optional reference and its saved
-  # results stay in artifacts/, but the app does not serve it. Logistic Regression is not a damage model of the app.
-  models: [knn, decision_tree]
+  # Served by the app (model pickers, analysis, explanations, review queue, readiness, reports): KNN (the default),
+  # the Decision Tree and the saved Random Forest (marked optional above, so it never makes a tile PARTIAL).
+  # Logistic Regression is not a damage model of the app. The SVM and the soft-voting ensemble are Model Arena only
+  # (scripts/run_model_comparison.py).
+  models: [knn, decision_tree, random_forest]
 
 review:
   # Per model, on VALIDATION: the lowest confidence threshold t such that buildings with confidence >= t

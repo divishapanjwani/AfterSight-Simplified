@@ -1,6 +1,6 @@
 /**
  * Building Case File: crops, predicted vs ground truth, confidence (with its meaning), and the model's
- * explanation — the decision-tree path or the KNN neighbours.
+ * explanation — the decision-tree path, the KNN neighbours, or (random forest) a note that there is none.
  * All values come from the API.
  */
 import { useQuery } from '@tanstack/react-query'
@@ -164,6 +164,8 @@ function ExplanationView({ e }: { e: Explanation }) {
       return <TreeView e={e} />
     case 'nearest_neighbours':
       return <KnnView e={e} />
+    case 'none': // random forest: an average over many trees has no single readable path
+      return <p className="text-xs text-ink-2">{e.detail.note}</p>
     default:
       return null
   }

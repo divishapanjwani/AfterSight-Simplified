@@ -2,8 +2,8 @@
 
 Used by the API tests and by scripts/e2e_check.py.
 
-Steps mirror the scripts: inspect (+cache) -> features -> manifests -> train KNN/DT (RF deliberately left untrained,
-to test the "not trained" path) -> review thresholds. NOT xBD data. A Logistic Regression is also saved next to the
+Steps mirror the scripts: inspect (+cache) -> features -> manifests -> train KNN/DT/RF (the served models)
+-> review thresholds. NOT xBD data. A Logistic Regression is also saved next to the
 served models, like the old LR files left on disk in a real deployment, so tests can show the app never serves it.
 """
 
@@ -55,8 +55,8 @@ def build_deployment(base: Path) -> Store:
                    "knn": ModelSettings(grid={"n_neighbors": [5], "weights": ["distance"]}),
                    "decision_tree": ModelSettings(grid={"max_depth": [4], "min_samples_leaf": [5]}),
                    "baseline": ModelSettings(quantile_step=0.1),
-                   # kept from the real config so random_forest stays marked optional (it is left untrained here)
-                   "random_forest": real.models["random_forest"]},
+                   # marked optional as in the real config; a small forest keeps the fixture fast
+                   "random_forest": real.models["random_forest"].model_copy(update={"n_estimators": 20, "grid": {"max_depth": [6]}})},
         "explain": real.explain.model_copy(update={"permutation_sample": 100, "permutation_repeats": 1}),
         "kmeans": real.kmeans.model_copy(update={"k_values": [2, 3, 4], "silhouette_sample": 100, "pca_sample": 100}),
     })
@@ -68,15 +68,16 @@ def build_deployment(base: Path) -> Store:
     roots = OutputRoots(artifacts / "models", artifacts / "metrics", artifacts / "analyses", outputs / "figures" / "models")
     guard = TestSetGuard()
     serving = design_data(table, manifests["within_event"], "four_class", cfg.label_schemes["four_class"])
-    run_design(serving, cfg, guard, roots, ["baseline", "logistic_regression", "knn", "decision_tree"], say=lambda _m: None)
+    run_design(serving, cfg, guard, roots, ["baseline", "logistic_regression", "knn", "decision_tree", "random_forest"],
+               say=lambda _m: None)
     cross = design_data(table, manifests["cross_event"], "four_class", cfg.label_schemes["four_class"])
-    run_design(cross, cfg, guard, roots, ["knn", "decision_tree"], say=lambda _m: None)
+    run_design(cross, cfg, guard, roots, ["knn", "decision_tree", "random_forest"], say=lambda _m: None)
     run_kmeans(serving, cfg, roots)
     run_confounding(serving, cfg, guard, roots)
 
     from app.training.persistence import load_model
     thresholds = {"rule": "lowest t with accuracy(confidence >= t) >= 0.5", "models": {}}
-    for name in ("logistic_regression", "knn", "decision_tree"):  # LR: an unserved entry, like the real file
+    for name in ("logistic_regression", "knn", "decision_tree", "random_forest"):  # LR: an unserved entry, like the real file
         pipe, _ = load_model(roots.models / "within_event" / "four_class" / f"{name}.joblib")
         proba = pipe.predict_proba(serving.X["val"])
         thresholds["models"][name] = choose_threshold(proba.max(axis=1), pipe.classes_[proba.argmax(axis=1)] == serving.y["val"].to_numpy(), 0.5)

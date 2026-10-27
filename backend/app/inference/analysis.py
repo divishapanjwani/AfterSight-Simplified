@@ -22,7 +22,7 @@ from app.training.models import CONFIDENCE_KIND
 
 ANALYSIS_VERSION = 1
 MODEL_LABELS = {"knn": "K-Nearest Neighbours", "decision_tree": "Decision Tree",
-                "random_forest": "Random Forest (optional)", "baseline": "Threshold baseline"}
+                "random_forest": "Random Forest", "baseline": "Threshold baseline"}
 
 
 def _analysis_id(scene_id: str, model: str, meta: dict[str, Any]) -> str:
@@ -149,6 +149,8 @@ def explain_building(store: Store, analysis_id: str, building_uid: str) -> dict[
         for neighbour in detail["neighbours"]:
             neighbour["crop_urls"] = crop_urls(neighbour["sample_id"])
             neighbour["split"] = "train"  # KNN only ever searches the training buildings
+    elif name == "random_forest":  # an average over 200 trees has no single readable path
+        kind, detail = "none", {"note": "No per-building explanation for this model."}
     else:  # only reachable if a new model is added to the serving list without an explainer
         raise NotFound(f"No per-building explanation is implemented for {name}.", code="explanation_not_available")
     explain = store.read_json(f"analyses/{meta['design']}/{meta['scheme']}/{name}_explain.json") or {}

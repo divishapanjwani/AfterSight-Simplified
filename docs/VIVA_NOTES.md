@@ -52,8 +52,11 @@ domain shift.
   0.542, KNN 0.520, SVM 0.514, Decision Tree 0.470, AdaBoost 0.396. Cross-event: Decision Tree 0.294, Random Forest
   0.291, soft voting 0.282, SVM 0.275, AdaBoost 0.273, KNN 0.271. Every model drops to about 0.27–0.29 on the unseen
   disaster, so no choice of classifier fixes the domain shift.
-- **Which models does the app serve?** KNN (default), the Decision Tree and the Random Forest (Triage Desk, Case
-  File, Review Queue, reports). The SVM, the ensembles and the optimised versions are in the Model Arena only.
+- **Which models does the app serve?** KNN (default), the Decision Tree, the Random Forest, the SVM and the
+  soft-voting ensemble (Triage Desk, Case File, Review Queue, reports). The SVM and the ensemble are the already-
+  trained experiment models, not retrained; their review thresholds (0.4461 and 0.375) were chosen on validation.
+  The Review Queue's disagreement check still compares only KNN, DT and RF. The optimised versions and AdaBoost are
+  in the Model Arena only.
 - **Why these two models?** They are the two models the paper compares, and they explain themselves in two
   different, easy-to-show ways: KNN by its most similar labelled training buildings, the Decision Tree by the
   yes/no questions from the root to its leaf (both in the Case File).

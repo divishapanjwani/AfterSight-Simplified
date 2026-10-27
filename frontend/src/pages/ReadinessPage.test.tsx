@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppShell } from '../components/AppShell'
-import { comparison, missingStatus, models, readyStatus } from '../test/fixtures'
+import { comparison, fiveModels, missingStatus, models, readyStatus } from '../test/fixtures'
 import { health, mockApi, renderAt } from '../test/utils'
 import { ReadinessPage } from './ReadinessPage'
 
@@ -44,6 +44,18 @@ describe('Readiness board', () => {
     for (const v of ['0.470', '0.271', '0.294']) expect(within(headline).getByText(v)).toBeInTheDocument()
     expect(within(headline).queryByText('0.999')).not.toBeInTheDocument()
     expect(screen.queryByText(/logistic/i)).not.toBeInTheDocument()
+  })
+
+  it('headline lists the models with saved comparison rows; the SVM and the ensemble point to the Arena', async () => {
+    mockApi({ '/api/health': { body: health }, '/api/dataset/status': { body: readyStatus }, '/api/models': { body: fiveModels },
+      '/api/results/comparison': { body: comparison('within_event', 0.52, 0.47) } })
+    page()
+    const headline = (await screen.findByText('How well does it work?')).closest('section')!
+    await within(headline).findAllByText('macro-F1 · K-Nearest Neighbours (default)')
+    expect(within(headline).queryByText('macro-F1 · SVM')).not.toBeInTheDocument()
+    expect(within(headline).getByText(/SVM and Soft Voting \(SVM \+ RF \+ KNN\): test results in the Model Arena/)).toBeInTheDocument()
+    const table = (await screen.findByText('Models served to the Triage Desk')).closest('section')!
+    for (const v of ['0.514', '0.542']) expect(within(table).getByText(v)).toBeInTheDocument()
   })
 
   it('marks untrained models and shows the command that fixes them', async () => {

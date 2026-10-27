@@ -10,7 +10,7 @@ from app.api.deps import get_jobs, get_store
 from app.core.config import SCOPE_LABEL
 from app.core.errors import AppError, InvalidRequest, NotFound
 from app.core.jobs import JobManager
-from app.core.store import FIX, Store
+from app.core.store import FIX, Store, model_fix
 from app.features.schema import FEATURE_COLUMNS
 from app.inference import feature_lab, images, review_queue, scenes
 from app.inference.analysis import (MODEL_LABELS, explain_building, list_analyses, load_analysis, run_analysis,
@@ -83,7 +83,7 @@ def models_tile(store) -> StatusTile:
     return StatusTile(ready=any(trained.values()), state=state, reason=reason,  # `ready` keeps its v1 meaning
                       detail={"serving_design": store.serving.design, "trained": trained,
                               "default_model": store.training_config.default_model},
-                      fix=None if all(trained.values()) else FIX["models"])
+                      fix=None if all(trained.values()) else model_fix(next(m for m, t in trained.items() if not t)))
 
 
 def review_thresholds_tile(store) -> StatusTile:
@@ -153,7 +153,7 @@ def list_models(store: StoreDep) -> dict[str, Any]:
             "test_macro_f1": meta["metrics"]["test"]["macro_f1"] if meta else None,
             "trained_at": meta["created_at"] if meta else None,
             "review_threshold": usable_threshold(thresholds, name),
-            "fix": None if meta else FIX["models"],
+            "fix": None if meta else model_fix(name),
         })
     design = store.serving.design
     return {"serving_design": design, "serving_design_label": store.training_config.splits.designs[design].label,

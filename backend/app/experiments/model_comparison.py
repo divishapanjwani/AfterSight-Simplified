@@ -1,4 +1,5 @@
-"""Model comparison & ensemble analysis (Model Arena only; nothing here is served in the Triage Desk).
+"""Model comparison & ensemble analysis (Model Arena). The within-event SVM and soft-voting ensemble can also be
+served in the Triage Desk (serve_comparison_models); the optimised versions and AdaBoost are Arena only.
 
 For each split design (within-event, cross-event), 4-class:
   * SVM: the shared preprocessing + SVC(class_weight="balanced", probability=True), trained on a scene-grouped
@@ -30,7 +31,7 @@ from app.core.config import REPO_ROOT
 from app.core.errors import NotFound, ResultsInvalid
 from app.evaluation.metrics import TestSetGuard, classification_metrics
 from app.training.config import TrainingConfig
-from app.training.models import make_pipeline
+from app.training.models import CONFIDENCE_KIND, make_pipeline
 from app.training.persistence import load_model
 from app.training.run import DesignData
 
@@ -250,3 +251,50 @@ def run_adaboost(cfg: TrainingConfig, designs: dict[str, DesignData], root: Path
     doc["notes"].append("AdaBoost (serial ensemble, boosting) over decision stumps is unweighted: no class weights.")
     path.write_text(json.dumps(doc, indent=1, default=float), encoding="utf-8")
     return doc
+
+
+SERVED_FROM_COMPARISON = ["svm", "soft_voting"]
+
+
+def serve_comparison_models(cfg: TrainingConfig, data: DesignData, root: Path = ROOT, models_root: Path = MODELS_ROOT,
+                            say: Callable[[str], None] = print) -> dict[str, Path]:
+    """Make the experiment's within-event SVM and soft-voting ensemble loadable by the app, without retraining.
+
+    The SVM pipeline is the one saved by run_model_comparison; the ensemble is VotingClassifier(voting="soft") over
+    the saved SVM, Random Forest and KNN wrapped in FrozenEstimator (its fit only records the class order). Test
+    metrics are copied from the experiment summary (each model was evaluated on test once there); validation metrics
+    are computed here on the validation split. Nothing touches the test set.
+    """
+    from app.training.persistence import save_model
+
+    summary = json.loads((root / "summary.json").read_text(encoding="utf-8"))
+    tested = {m["model"]: m for m in summary["designs"][data.design]["models"]}
+    svm = joblib.load(root / "models" / f"svm_{data.design}.joblib")
+    knn, _ = _saved(models_root, data.design, "knn", data)
+    rf, _ = _saved(models_root, data.design, "random_forest", data)
+    members = {"svm": svm, "random_forest": rf, "knn": knn}
+    order = [str(c) for c in svm.classes_]
+    if any([str(c) for c in m.classes_] != order for m in members.values()) or sorted(order) != sorted(data.classes):
+        raise ValueError("class orders differ between the SVM, Random Forest and KNN")
+    voting = VotingClassifier([(n, FrozenEstimator(members[n])) for n in ENSEMBLE_MEMBERS], voting="soft")
+    voting.fit(data.X["train"], data.y["train"])  # frozen members: records classes only, refits nothing
+    Xva, yva = data.X["val"], data.y["val"].to_numpy()
+    if not np.allclose(voting.predict_proba(Xva), np.mean([members[n].predict_proba(Xva) for n in ENSEMBLE_MEMBERS], axis=0)):
+        raise ValueError("soft voting does not equal the average of the members' probabilities")
+    paths = {}
+    for name, pipe in (("svm", svm), ("soft_voting", voting)):
+        entry = tested[name]
+        meta = {"design": data.design, "design_label": data.design_label, "scheme": data.scheme,
+                "scheme_label": data.scheme_label, "classes": data.classes, "optional": True, "feature_set": data.feature_set,
+                "hyperparameters": entry.get("hyperparameters") or {"members": ENSEMBLE_MEMBERS, "weights": [1, 1, 1],
+                                                                    "voting": "soft"},
+                "source": "scripts/run_model_comparison.py (served via scripts/serve_comparison_models.py; not retrained)",
+                "trained_on": entry.get("trained_on") or "members as saved (SVM: scene-grouped sample; RF, KNN: full training split)",
+                "manifest_hash": data.manifest_hash, "feature_table_fingerprint": data.fingerprint, "seed": cfg.seed,
+                "confidence": CONFIDENCE_KIND[name],
+                "metrics": {"val": classification_metrics(yva, pipe.predict(Xva), data.classes), "test": entry["metrics"]},
+                "test_evaluations": 1, "created_at": summary["created_at"]}
+        paths[name] = save_model(pipe, meta, models_root / data.design / data.scheme, name)["model"]
+        say(f"{name}: served from {paths[name]} (val macro-F1 {meta['metrics']['val']['macro_f1']}, "
+            f"test macro-F1 {entry['metrics']['macro_f1']} from the experiment)")
+    return paths

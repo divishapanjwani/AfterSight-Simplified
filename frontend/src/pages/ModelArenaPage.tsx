@@ -27,12 +27,12 @@ function useComparison(design: string, scheme: string) {
   return useQuery({ queryKey: ['comparison', design, scheme], queryFn: () => api.comparison(design, scheme), retry: false })
 }
 
-/** The models the Arena shows: the served models (from the config, via /api/models). The threshold baseline is no
- *  longer in active use (its saved files stay on disk); the SVM and ensembles are in the comparison section. */
+/** The models cards 01–05 show: the served models (from the config, via /api/models) that have saved training
+ *  results (KNN, Decision Tree, Random Forest). The SVM and the ensembles are in the comparison section (06). */
 function useArenaModels() {
   const q = useQuery({ queryKey: ['models'], queryFn: api.models })
   const served = q.data ? q.data.models.map((m) => m.name) : []
-  const names = served
+  const names = served.filter((m) => m in NAMES)
   const label = (m: string) => NAMES[m] ?? m
   return { names, label, defaultModel: q.data?.default_model }
 }
@@ -255,7 +255,7 @@ export function ModelArenaPage() {
       <div id="events"><CaseFolder tab="ARENA · 04" title="Per-event scores (within-event test)"><EventsSection /></CaseFolder></div>
       <div id="tree"><CaseFolder tab="ARENA · 05" title="Decision tree"><TreeSection /></CaseFolder></div>
       <div id="ensembles"><CaseFolder tab="ARENA · 06" title="Model Comparison & Ensemble Analysis"
-        aside={<span className="font-mono text-[10px] tracking-wider text-ink-3">ARENA ONLY · SVM AND ENSEMBLE ARE NOT IN THE TRIAGE DESK</span>}><ModelComparisonSection /></CaseFolder></div>
+        aside={<span className="font-mono text-[10px] tracking-wider text-ink-3">SAVED RESULTS · OPTIMISED VERSIONS AND ADABOOST ARE ARENA ONLY</span>}><ModelComparisonSection /></CaseFolder></div>
     </div>
   )
 }

@@ -13,8 +13,8 @@ Data = Parquet mirror of the xBD train split (masks only, no polygons); footprin
 - `un-classified` / unknown labels / unexpected mask values / blobs with no damage value: exclude and count, never coerce.
 
 ## ML
-- scikit-learn only. Served damage models: **KNN (default)**, **Decision Tree** and **Random Forest** (saved model,
-  no per-building explanation). Arena-only comparison models: SVM, soft-voting ensemble (SVM + RF + KNN),
+- scikit-learn only. Served damage models: **KNN (default)**, **Decision Tree**, **Random Forest**, **SVM** and the
+  **soft-voting ensemble** (SVM + RF + KNN); RF, SVM and the ensemble have no per-building explanation. Arena-only:
   GridSearchCV-optimised KNN/DT/SVM, AdaBoost. K-Means is analysis only. The threshold baseline is no longer in active use.
 - Logistic Regression is **not a damage model**: it is used only as an analysis classifier for the confounding
   check and the feature-set experiment.

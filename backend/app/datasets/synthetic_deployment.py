@@ -56,7 +56,8 @@ def build_deployment(base: Path) -> Store:
                    "decision_tree": ModelSettings(grid={"max_depth": [4], "min_samples_leaf": [5]}),
                    "baseline": ModelSettings(quantile_step=0.1),
                    # marked optional as in the real config; a small forest keeps the fixture fast
-                   "random_forest": real.models["random_forest"].model_copy(update={"n_estimators": 20, "grid": {"max_depth": [6]}})},
+                   "random_forest": real.models["random_forest"].model_copy(update={"n_estimators": 20, "grid": {"max_depth": [6]}}),
+                   "svm": real.models["svm"], "soft_voting": real.models["soft_voting"]},  # optional, as in the real config
         "explain": real.explain.model_copy(update={"permutation_sample": 100, "permutation_repeats": 1}),
         "kmeans": real.kmeans.model_copy(update={"k_values": [2, 3, 4], "silhouette_sample": 100, "pca_sample": 100}),
     })
@@ -72,12 +73,18 @@ def build_deployment(base: Path) -> Store:
                say=lambda _m: None)
     cross = design_data(table, manifests["cross_event"], "four_class", cfg.label_schemes["four_class"])
     run_design(cross, cfg, guard, roots, ["knn", "decision_tree", "random_forest"], say=lambda _m: None)
+    # the SVM and soft-voting ensemble (served optional models), exactly as the real scripts produce them
+    from app.experiments.model_comparison import run_model_comparison, serve_comparison_models
+    comparison_root = artifacts / "experiments" / "model_comparison"
+    run_model_comparison(cfg, {"within_event": serving}, root=comparison_root, say=lambda _m: None, svm_sample=150,
+                         grids={"knn": {"model__n_neighbors": [5]}}, models_root=roots.models)
+    serve_comparison_models(cfg, serving, root=comparison_root, models_root=roots.models, say=lambda _m: None)
     run_kmeans(serving, cfg, roots)
     run_confounding(serving, cfg, guard, roots)
 
     from app.training.persistence import load_model
     thresholds = {"rule": "lowest t with accuracy(confidence >= t) >= 0.5", "models": {}}
-    for name in ("logistic_regression", "knn", "decision_tree", "random_forest"):  # LR: an unserved entry, like the real file
+    for name in ("logistic_regression", "knn", "decision_tree", "random_forest", "svm", "soft_voting"):  # LR: unserved entry
         pipe, _ = load_model(roots.models / "within_event" / "four_class" / f"{name}.joblib")
         proba = pipe.predict_proba(serving.X["val"])
         thresholds["models"][name] = choose_threshold(proba.max(axis=1), pipe.classes_[proba.argmax(axis=1)] == serving.y["val"].to_numpy(), 0.5)

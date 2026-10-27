@@ -30,7 +30,8 @@ def review_queue(store: Store, model: str, split: str, offset: int, limit: int) 
     store.model(name)  # raises ModelNotTrained with the fix command
     main = _split_predictions(store, name, split)
     others: dict[str, dict[str, Any]] = {}
-    for other in store.serving.models:
+    # only the configured disagreement models (KNN, DT, RF) are compared, whichever served model is reviewed
+    for other in store.training_config.review.disagreement_models or store.serving.models:
         if other == name:
             continue
         try:

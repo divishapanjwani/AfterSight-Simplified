@@ -33,15 +33,17 @@ learning** on hand-crafted image features can go on this task, and where it stop
 3. **Honest splits:** grouped by scene, in two designs:
    - **within-event:** new scenes of the same disasters;
    - **cross-event:** hurricane-michael held out completely, a disaster the models never saw.
-4. **Models:** the app serves **KNN** (default), the **Decision Tree** and the **Random Forest**
-   (`serving.models` in `config/training.yaml`). The Model Arena also compares an **SVM**, a **soft-voting
-   ensemble** (SVM + RF + KNN), **GridSearchCV-optimised** KNN / DT / SVM and an AdaBoost (boosting) ensemble
-   (`scripts/run_model_comparison.py`; Arena only). K-Means is analysis only. Every model is tuned on validation
+4. **Models:** the app serves **KNN** (default), the **Decision Tree**, the **Random Forest**, the **SVM** and the
+   **soft-voting ensemble** (SVM + RF + KNN) (`serving.models` in `config/training.yaml`). The SVM and the ensemble
+   come from `scripts/run_model_comparison.py` and are served by `scripts/serve_comparison_models.py` without
+   retraining. The Model Arena also compares **GridSearchCV-optimised** KNN / DT / SVM and an AdaBoost (boosting)
+   ensemble (Arena only). K-Means is analysis only. Every model is tuned on validation
    or grouped cross-validation, and each final model is evaluated on its test set **once**. Logistic Regression is
    not a damage model of the app; a multinomial logistic regression is used only as an *analysis classifier*
    in the confounding check (see below).
 5. **Explanations:** KNN nearest neighbours, the Decision Tree's root-to-leaf decision path, and permutation
-   importance. The Random Forest has no per-building explanation (the Case File says so and shows its scores).
+   importance. The Random Forest, the SVM and the ensemble have no per-building explanation (the Case File says so and
+   shows their scores).
 6. **Web app:** FastAPI + React.
    - Triage Desk (before/after swipe, overlays) and Building Case File.
    - Model Arena, Feature Lab, Cluster Atlas, Review Queue and Reports (CSV/PDF).
@@ -59,8 +61,8 @@ saved models; the rest from `artifacts/experiments/model_comparison/summary.json
 | **KNN** (app default) | default | 0.636 / 0.560 / 0.503 / **0.520** | 0.554 / 0.275 / 0.317 / **0.271** |
 | **Decision Tree** | default | 0.484 / 0.467 / 0.541 / **0.470** | 0.502 / 0.284 / 0.339 / **0.294** |
 | **Random Forest** | default (bagging) | 0.590 / 0.528 / 0.586 / **0.546** | 0.606 / 0.299 / 0.349 / **0.291** |
-| SVM (RBF, C=1; 10k-building sample) | default, Arena only | 0.536 / 0.505 / 0.581 / **0.514** | 0.380 / 0.287 / 0.340 / **0.275** |
-| Soft voting (SVM + RF + KNN) | parallel ensemble, Arena only | 0.635 / 0.563 / 0.541 / **0.542** | 0.597 / 0.283 / 0.341 / **0.282** |
+| SVM (RBF, C=1; 10k-building sample) | default, served | 0.536 / 0.505 / 0.581 / **0.514** | 0.380 / 0.287 / 0.340 / **0.275** |
+| Soft voting (SVM + RF + KNN) | parallel ensemble, served | 0.635 / 0.563 / 0.541 / **0.542** | 0.597 / 0.283 / 0.341 / **0.282** |
 | AdaBoost (200 stumps) | serial ensemble, Arena only | 0.624 / 0.523 / 0.404 / **0.396** | 0.619 / 0.285 / 0.314 / **0.273** |
 | KNN / DT / SVM optimised (GridSearchCV) | optimised, Arena only | macro-F1 **0.520 / 0.474 / 0.514** | not evaluated |
 
@@ -123,12 +125,12 @@ cd frontend && npm run dev                                                    # 
 |---|---|
 | **Readiness** (`/`) | what is built and trained, headline results, served models (test macro-F1, what confidence means, review threshold) |
 | **Library** | browse scenes (held-out **test** scenes by default); filter by event, disaster type and split |
-| **Triage Desk** | pick a model (KNN, Decision Tree, Random Forest) → **Run analysis** → swipe pre/post, zoom/pan, switch overlay (Ground truth / Prediction / Correct vs wrong), click a footprint |
+| **Triage Desk** | pick a model (KNN, Decision Tree, Random Forest, SVM, Soft Voting) → **Run analysis** → swipe pre/post, zoom/pan, switch overlay (Ground truth / Prediction / Correct vs wrong), click a footprint |
 | **Case file** | crops, predicted vs ground truth, confidence and what it means, the model's explanation |
 | **Arena** | within- vs cross-event chart, comparison (KNN, Decision Tree, Random Forest), confusion matrices, per-event scores, tree, and **Model Comparison & Ensemble Analysis** (SVM, soft voting, AdaBoost, GridSearchCV, per-model confusion matrix and per-class metrics) |
 | **Feature Lab** | which features separate the classes (training split), box plots and a scatter |
 | **Cluster Atlas** | precomputed K-Means for k = 2…10: cluster sizes, silhouette, adjusted Rand index, clusters vs reference labels. Analysis only, never predictions |
-| **Review Queue** | buildings *suggested for human review* (low confidence, or another served model disagrees) |
+| **Review Queue** | buildings *suggested for human review* (low confidence, or KNN, the Decision Tree or the Random Forest disagrees) |
 | **Reports** | CSV and PDF per analysis |
 
 Three demo scenes are pre-cached (see [docs/VIVA_NOTES.md](docs/VIVA_NOTES.md)).
@@ -214,7 +216,8 @@ Synthetic fixtures are generated by the tests and are never shown as xBD data.
 | Model refuses to load (schema/sklearn version) | install the pinned `backend/requirements.txt`, or retrain |
 | Blank page in the browser | check `outputs/logs/web.log`; run `(cd frontend && npm ci)` |
 | Readiness: **Review thresholds PARTIAL / NOT READY** | the tile names the models without a usable threshold; `python scripts/calibrate_review.py` (validation only). A model whose calibration found no threshold stays without low-confidence flags |
-| `model_not_found` (404) for `logistic_regression`, `baseline` or `svm` | expected: the app serves KNN, the Decision Tree and the Random Forest. Logistic Regression is not a damage model, the threshold baseline is no longer used, and the SVM is Arena only |
+| `model_not_found` (404) for `logistic_regression` or `baseline` | expected: the app serves KNN, the Decision Tree, the Random Forest, the SVM and soft voting. Logistic Regression is not a damage model and the threshold baseline is no longer used |
+| SVM / Soft Voting "not trained" | `python scripts/run_model_comparison.py && python scripts/serve_comparison_models.py`, then `python scripts/calibrate_review.py --models svm soft_voting` |
 | Arena: "Not available yet: the model comparison" | `python scripts/run_model_comparison.py` (about a minute; add `--adaboost-only` afterwards for the boosting row) |
 | `model_not_served` (404) when opening an old analysis | the analysis used a model the app no longer serves; the file stays in `artifacts/analyses/runs/` |
 

@@ -39,6 +39,18 @@ export const models: ModelList = {
 const row = (model: string, f1: number) => ({ model, optional: false, val_macro_f1: f1, test_macro_f1: f1, test_accuracy: f1,
   test_recall: {}, train_seconds: 1, inference_seconds_per_1000: 0.001 })
 
+/** All five served models (KNN default, all trained), as the real API lists them. */
+export const fiveModels: ModelList = {
+  ...models,
+  models: [
+    { ...models.models[0] },
+    { ...models.models[1], trained: true, fix: null, test_macro_f1: 0.47 },
+    { ...models.models[1], name: 'random_forest', label: 'Random Forest', optional: true, trained: true, fix: null, confidence: 'mean of tree leaf fractions', test_macro_f1: 0.546 },
+    { ...models.models[1], name: 'svm', label: 'SVM', optional: true, trained: true, fix: null, confidence: 'Platt-scaled SVM score (not calibrated on validation)', test_macro_f1: 0.514 },
+    { ...models.models[1], name: 'soft_voting', label: 'Soft Voting (SVM + RF + KNN)', optional: true, trained: true, fix: null, confidence: 'mean of the SVM, Random Forest and KNN scores', test_macro_f1: 0.542 },
+  ],
+}
+
 export const comparison = (design: string, knn: number, tree: number): Comparison => ({
   design, design_label: design === 'within_event' ? 'within-event generalisation' : 'cross-event generalisation',
   scheme: 'four_class', scheme_label: '4-class', classes: [], split_note: '', experiment: false, provenance: 'TEST SET',
@@ -84,7 +96,7 @@ const prediction = (uid: string, true_label: BuildingPrediction['true_label'], p
 
 export const analysisFor = (id: string, model = 'knn', split: SceneSummary['split'] = 'test', warning: string | null = null): AnalysisResult => ({
   analysis_id: 'abcdef0123456789', cached: false, created_at: 't', scene_id: id, event: 'ev-a', disaster_type: 'flooding',
-  model: { name: model, label: model === 'knn' ? 'K-Nearest Neighbours' : model === 'random_forest' ? 'Random Forest' : 'Decision Tree',
+  model: { name: model, label: ({ knn: 'K-Nearest Neighbours', random_forest: 'Random Forest', svm: 'SVM', soft_voting: 'Soft Voting (SVM + RF + KNN)' } as Record<string, string>)[model] ?? 'Decision Tree',
     design: 'within_event', design_label: 'within-event generalisation', scheme: 'four_class', trained_at: 't', hyperparameters: {}, test_macro_f1: 0.5, optional: false },
   confidence_kind: model === 'knn' ? 'vote fraction of neighbours' : model === 'random_forest' ? 'mean of tree leaf fractions' : 'class fraction in the leaf',
   review_threshold: 0.48, review_rule: 'rule',
@@ -103,6 +115,8 @@ export const explanations: Record<string, Explanation> = {
     leaf_class_fractions: { destroyed: 0.6, 'no-damage': 0.4 },
     steps: [{ feature: 'glcm_homogeneity_delta', value_raw: -0.022, op: '>', threshold_raw: -0.146 }] } },
   random_forest: { ...base, building_uid: 'x', kind: 'none', detail: { note: 'No per-building explanation for this model.' } },
+  svm: { ...base, building_uid: 'x', kind: 'none', detail: { note: 'No per-building explanation for this model.' } },
+  soft_voting: { ...base, building_uid: 'x', kind: 'none', detail: { note: 'No per-building explanation for this model.' } },
   knn: { ...base, building_uid: 'x', kind: 'nearest_neighbours', detail: { k: 2, weights: 'uniform', neighbours: [
     { sample_id: 'ev-b_00000001_b0003', label: 'destroyed', distance: 1.5, split: 'train', crop_urls: { pre: '/p', post: '/q' } },
     { sample_id: 'ev-b_00000002_b0004', label: 'minor-damage', distance: 1.9, split: 'train', crop_urls: { pre: '/p', post: '/q' } },

@@ -2,7 +2,7 @@ import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { analysisFor, explanations, models, sceneDetail } from '../test/fixtures'
+import { analysisFor, explanations, fiveModels, models, sceneDetail } from '../test/fixtures'
 import { mockApi, renderAt } from '../test/utils'
 import { CasePage } from './CasePage'
 import { TriageDeskPage } from './TriageDeskPage'
@@ -56,6 +56,18 @@ describe('Triage Desk', () => {
     const picker = screen.getByRole('radiogroup', { name: 'Model' })
     expect(within(picker).getAllByRole('radio').map((r) => r.textContent)).toEqual(['K-Nearest Neighbours', 'Decision Tree'])
     expect(screen.queryByText(/Logistic Regression/)).not.toBeInTheDocument()
+  })
+
+  it('the SVM and the soft-voting ensemble are selectable alongside KNN, DT and RF; KNN stays the default', async () => {
+    mockApi({ '/api/models': { body: fiveModels }, [`/api/scenes/${ID}`]: { body: sceneDetail(ID, 'test', null) },
+      '/api/analysis': { body: analysisFor(ID, 'knn') } })
+    page()
+    const picker = await screen.findByRole('radiogroup', { name: 'Model' })
+    await within(picker).findByRole('radio', { name: 'SVM' })
+    expect(within(picker).getAllByRole('radio').map((r) => r.textContent)).toEqual(
+      ['K-Nearest Neighbours', 'Decision Tree', 'Random Forest', 'SVM', 'Soft Voting (SVM + RF + KNN)'])
+    expect(within(picker).getAllByRole('radio').every((r) => !r.hasAttribute('disabled'))).toBe(true)
+    expect(within(picker).getByRole('radio', { name: 'K-Nearest Neighbours' })).toHaveAttribute('aria-checked', 'true')
   })
 
   it('running the analysis posts scene + model and shows counts and review suggestions from the API', async () => {
@@ -112,6 +124,8 @@ describe('Case file page', () => {
     ['decision_tree', 'Leaf of', 'Texture smoothness change'],
     ['knn', 'Votes:', 'minor'],
     ['random_forest', 'No per-building explanation for this model.', 'mean of tree leaf fractions'],
+    ['svm', 'No per-building explanation for this model.', 'Destroyed'],
+    ['soft_voting', 'No per-building explanation for this model.', 'Destroyed'],
   ])('renders the %s explanation', async (model, text, detail) => {
     mockApi({
       '/api/analysis': (url) => url.pathname.endsWith('/explain') ? { body: explanations[model] } : { body: analysisFor(ID, model) },

@@ -88,6 +88,7 @@ class ServingConfig(BaseModel):
 
 class ReviewConfig(BaseModel):
     target_accuracy: float = Field(0.70, gt=0, lt=1)
+    disagreement_models: list[str] | None = None  # None: every served model
 
 
 class TrainingConfig(BaseModel):
@@ -105,7 +106,8 @@ class TrainingConfig(BaseModel):
 
     @model_validator(mode="after")
     def _known_models(self) -> "TrainingConfig":
-        unknown = set(self.models) - {"baseline", "logistic_regression", "knn", "decision_tree", "random_forest"}
+        unknown = set(self.models) - {"baseline", "logistic_regression", "knn", "decision_tree", "random_forest", "svm",
+                                      "soft_voting"}
         if unknown:
             raise ValueError(f"unknown models in config: {sorted(unknown)}")
         return self

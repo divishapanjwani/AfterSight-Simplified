@@ -110,9 +110,10 @@ function ReadyBadge({ tile }: { tile: StatusTile }) {
 }
 
 function Headline({ within, cross, served }: { within: Comparison; cross: Comparison; served: ModelInfo[] }) {
-  // the served models (config, via /api/models), default first; each score is read from the saved comparison
-  const ordered = [...served].sort((a, b) => Number(b.default) - Number(a.default))
+  // the served models (config, via /api/models) that have a row in the saved comparison, default first
   const score = (c: Comparison, name: string) => c.models.find((m) => m.model === name)?.test_macro_f1
+  const ordered = [...served].filter((m) => score(within, m.name) !== undefined).sort((a, b) => Number(b.default) - Number(a.default))
+  const elsewhere = served.filter((m) => score(within, m.name) === undefined)
   const rows = [
     { c: within, title: 'Within-event', text: `New scenes from the same ${within.test_events.length} disasters the models were trained on.` },
     { c: cross, title: 'Cross-event', text: `A disaster never seen in training (${cross.holdout_event ?? cross.test_events.join(', ')}).` },
@@ -136,6 +137,7 @@ function Headline({ within, cross, served }: { within: Comparison; cross: Compar
           </ul>
         </div>
       ))}
+      {elsewhere.length > 0 && <p className="col-span-2 text-xs text-ink-3">{elsewhere.map((m) => m.label).join(' and ')}: test results in the Model Arena (06 · Model Comparison &amp; Ensemble Analysis) and in the table below.</p>}
     </div>
   )
 }

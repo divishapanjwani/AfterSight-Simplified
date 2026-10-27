@@ -38,6 +38,13 @@ FIX = {
     "review": "python scripts/calibrate_review.py",
     "experiments": "python scripts/run_phase3b.py",
 }
+# models that are not produced by scripts/train.py, and the commands that produce them
+MODEL_FIX = {"svm": "python scripts/run_model_comparison.py && python scripts/serve_comparison_models.py",
+             "soft_voting": "python scripts/run_model_comparison.py && python scripts/serve_comparison_models.py"}
+
+
+def model_fix(name: str) -> str:
+    return MODEL_FIX.get(name, FIX["models"])
 
 
 @dataclass(frozen=True)
@@ -219,7 +226,7 @@ class Store:
                     try:
                         self._models[name] = load_model(self.model_dir() / f"{name}.joblib", expected_manifest_hash=manifest_hash)
                     except ModelLoadError as exc:
-                        raise ModelNotTrained(str(exc), fix=FIX["models"]) from exc
+                        raise ModelNotTrained(str(exc), fix=model_fix(name)) from exc
         return self._models[name]
 
     def model_meta(self, name: str, design: str | None = None, scheme: str | None = None) -> dict[str, Any] | None:

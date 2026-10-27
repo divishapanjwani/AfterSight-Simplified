@@ -57,6 +57,10 @@ models:   # tuned on validation macro-F1; the best setting is evaluated on test 
     optional: true
     n_estimators: 200
     grid: {max_depth: [12, null], min_samples_leaf: [2, 10]}
+  svm:                         # served from scripts/run_model_comparison.py + scripts/serve_comparison_models.py;
+    optional: true             # never trained by scripts/train.py (no grid here), so optional for readiness
+  soft_voting:                 # SVM + RF + KNN, equal-weight soft voting over the saved models (nothing refitted)
+    optional: true
 
 explain:
   permutation_sample: 4000     # stratified validation sample for permutation importance
@@ -76,12 +80,14 @@ serving:
   design: within_event          # Triage Desk models: within-event split, 4-class
   scheme: four_class
   # Served by the app (model pickers, analysis, explanations, review queue, readiness, reports): KNN (the default),
-  # the Decision Tree and the saved Random Forest (marked optional above, so it never makes a tile PARTIAL).
-  # Logistic Regression is not a damage model of the app. The SVM and the soft-voting ensemble are Model Arena only
-  # (scripts/run_model_comparison.py).
-  models: [knn, decision_tree, random_forest]
+  # the Decision Tree, the saved Random Forest, and the SVM and soft-voting ensemble from the model comparison
+  # (marked optional above, so they never make a tile PARTIAL). Logistic Regression is not a damage model of the app.
+  models: [knn, decision_tree, random_forest, svm, soft_voting]
 
 review:
   # Per model, on VALIDATION: the lowest confidence threshold t such that buildings with confidence >= t
   # are at least this accurate. Buildings below t are "suggested for human review" (not "errors").
   target_accuracy: 0.70
+  # The Review Queue's model-disagreement check compares only these served models (the SVM and the ensemble,
+  # which itself averages RF and KNN, are not part of it).
+  disagreement_models: [knn, decision_tree, random_forest]

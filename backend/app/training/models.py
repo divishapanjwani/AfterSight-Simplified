@@ -31,7 +31,8 @@ CONFIDENCE_KIND = {
     "knn": "vote fraction of neighbours",
     "decision_tree": "class fraction in the leaf",
     "random_forest": "mean of tree leaf fractions",
-    "svm": "Platt-scaled SVM score (not calibrated on validation)",  # model-comparison experiment only, not served
+    "svm": "Platt-scaled SVM score (not calibrated on validation)",
+    "soft_voting": "mean of the SVM, Random Forest and KNN scores",
 }
 
 # Candidates for the single-feature baseline: features that measure change between pre and post.

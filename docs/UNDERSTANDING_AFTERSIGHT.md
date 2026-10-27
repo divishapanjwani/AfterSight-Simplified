@@ -773,7 +773,7 @@ On a typical 40-building test scene this takes **8–22 ms** the first time, and
 | **Library** | scenes, held-out **test** scenes by default, with ground-truth damage bars | choose a scene; training scenes carry a warning |
 | **Triage Desk** | swipe between pre and post, zoom, overlays (ground truth / prediction / correct vs wrong), building list | the main workspace |
 | **Case File** | one building: crops, predicted vs true, confidence, explanation | understand a single decision |
-| **Arena** | KNN, the Decision Tree and the threshold baseline under both designs; confusion matrices, per-event scores, the tree, confounding | compare models honestly |
+| **Arena** | KNN, the Decision Tree and the Random Forest under both designs; confusion matrices, per-event scores, the tree, and the model comparison & ensemble analysis (SVM, soft voting, GridSearchCV). The confounding check (Section 7.4) and the 3-class experiment are saved results, no longer Arena cards | compare models honestly |
 | **Feature Lab** | which features separate the classes (training split) | see *why* the models work or fail |
 | **Cluster Atlas** | precomputed K-Means for k = 2…10: cluster sizes, silhouette, ARI and which damage classes fall into each cluster; clearly marked "never predictions" | unsupervised view of the data; a cluster ID is not a damage class |
 | **Review Queue** | buildings *suggested for human review* (low confidence, or KNN and the Decision Tree disagree) | where a person should look first |

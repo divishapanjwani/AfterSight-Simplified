@@ -125,7 +125,7 @@ cd frontend && npm run dev                                                    # 
 | **Library** | browse scenes (held-out **test** scenes by default); filter by event, disaster type and split |
 | **Triage Desk** | pick a model (KNN, Decision Tree, Random Forest) → **Run analysis** → swipe pre/post, zoom/pan, switch overlay (Ground truth / Prediction / Correct vs wrong), click a footprint |
 | **Case file** | crops, predicted vs ground truth, confidence and what it means, the model's explanation |
-| **Arena** | within- vs cross-event chart, comparison (KNN, Decision Tree, Random Forest), confusion matrices, per-event scores, tree, confounding, 3-class, and **Model Comparison & Ensemble Analysis** (SVM, soft voting, AdaBoost, GridSearchCV, per-model confusion matrix and per-class metrics) |
+| **Arena** | within- vs cross-event chart, comparison (KNN, Decision Tree, Random Forest), confusion matrices, per-event scores, tree, and **Model Comparison & Ensemble Analysis** (SVM, soft voting, AdaBoost, GridSearchCV, per-model confusion matrix and per-class metrics) |
 | **Feature Lab** | which features separate the classes (training split), box plots and a scatter |
 | **Cluster Atlas** | precomputed K-Means for k = 2…10: cluster sizes, silhouette, adjusted Rand index, clusters vs reference labels. Analysis only, never predictions |
 | **Review Queue** | buildings *suggested for human review* (low confidence, or another served model disagrees) |

@@ -4,7 +4,6 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { BarList } from '../charts/BarList'
 import { Dumbbell } from '../charts/Dumbbell'
 import { Heatmap } from '../charts/Heatmap'
 import { CaseFolder } from '../components/CaseFolder'
@@ -18,10 +17,10 @@ import type { Comparison, DamageClass, TreeNode } from '../types/api'
 
 const NAMES: Record<string, string> = { knn: 'KNN', decision_tree: 'Decision Tree', random_forest: 'Random Forest' }
 const f3 = (v: number | null | undefined) => (v === null || v === undefined ? 'not available' : v.toFixed(3))
-const SECTIONS = ['story', 'table', 'confusion', 'events', 'tree', 'confounding', 'three', 'ensembles'] as const
+const SECTIONS = ['story', 'table', 'confusion', 'events', 'tree', 'ensembles'] as const
 const SECTION_LABELS: Record<(typeof SECTIONS)[number], string> = {
   story: 'Honest headline', table: 'Comparison', confusion: 'Confusion', events: 'Per event', tree: 'Decision tree',
-  confounding: 'Confounding', three: '3-class', ensembles: 'Comparison & ensembles',
+  ensembles: 'Comparison & ensembles',
 }
 
 function useComparison(design: string, scheme: string) {
@@ -61,8 +60,8 @@ function Story({ within, cross, title }: { within: Comparison; cross: Comparison
       <div className="space-y-3 text-xs leading-5 text-ink-2">
         <p><b className="text-ink">Within-event.</b> {within.split_note}</p>
         <p><b className="text-ink">Cross-event.</b> {cross.split_note}</p>
-        <p>Every model loses a large part of its score on the unseen disaster. Read the within-event numbers as an optimistic upper bound;
-          the confounding check below shows why.</p>
+        <p>Every model loses a large part of its score on the unseen disaster. Read the within-event numbers as an optimistic upper bound:
+          the same features identify which disaster a building comes from, so part of the within-event score is recognising the event.</p>
       </div>
     </div>
   )
@@ -223,35 +222,10 @@ function TreeSection() {
   )
 }
 
-function ConfoundingSection() {
-  const c = useQuery({ queryKey: ['confounding'], queryFn: api.confounding, retry: false })
-  if (c.isPending) return <LoadingState label="Loading the confounding check…" />
-  if (c.isError) return <ErrorState error={c.error} what="the confounding check" />
-  const m = c.data.test_metrics
-  return (
-    <div className="grid grid-cols-[1fr_1fr] gap-8">
-      <div className="space-y-3">
-        <p className="text-sm text-ink-2">An analysis classifier (multinomial logistic regression) given the <b>same features as the damage models</b> was asked which <b>disaster</b> each building comes from.
-          It is used only to measure this disaster fingerprint; it is not a damage model in the app. Event is never an input to any damage model.</p>
-        <BarList items={[
-          { label: 'Event prediction accuracy (same features)', value: m.accuracy },
-          { label: `Always guess the most common event (${c.data.majority_class})`, value: c.data.majority_class_accuracy },
-          { label: `Uniform chance (${m.confusion_matrix.labels.length} events)`, value: c.data.chance_accuracy_uniform },
-        ]} />
-        <p className="text-xs leading-5 text-ink-2">The features carry a strong signature of <i>which</i> disaster a building is from (sensor, region, vegetation, roofs).</p>
-      </div>
-      <Heatmap rows={m.confusion_matrix.labels} cols={m.confusion_matrix.labels.map((e) => e.replace('hurricane-', 'h-'))} matrix={m.confusion_matrix.rows_true_cols_pred}
-        rowTitle="true event" colTitle="predicted" cell={56} caption={`TEST SET (${c.data.design_label}) · predicting EVENT, analysis only`} />
-    </div>
-  )
-}
-
 export function ModelArenaPage() {
   const [design, setDesign] = useState<'within_event' | 'cross_event'>('within_event')
   const within = useComparison('within_event', 'four_class')
   const cross = useComparison('cross_event', 'four_class')
-  const within3 = useComparison('within_event', 'three_class')
-  const cross3 = useComparison('cross_event', 'three_class')
   const table = design === 'within_event' ? within : cross
 
   return (
@@ -280,15 +254,7 @@ export function ModelArenaPage() {
       <div id="confusion"><CaseFolder tab="ARENA · 03" title="Confusion matrices"><ConfusionSection /></CaseFolder></div>
       <div id="events"><CaseFolder tab="ARENA · 04" title="Per-event scores (within-event test)"><EventsSection /></CaseFolder></div>
       <div id="tree"><CaseFolder tab="ARENA · 05" title="Decision tree"><TreeSection /></CaseFolder></div>
-      <div id="confounding"><CaseFolder tab="ARENA · 06" title="Event-confounding check" aside={<span className="font-mono text-[10px] tracking-wider text-ink-3">ANALYSIS ONLY</span>}><ConfoundingSection /></CaseFolder></div>
-
-      <div id="three"><CaseFolder tab="ARENA · 07 · EXPERIMENT" title="3-class experiment: no-damage / damaged / destroyed"
-        aside={<span className="font-mono text-[10px] tracking-wider text-ink-3">SEPARATE EXPERIMENT · 4-CLASS STAYS PRIMARY</span>}>
-        {within3.isSuccess && cross3.isSuccess ? <Story within={within3.data} cross={cross3.data} title="3-class (experiment)" />
-          : within3.isError ? <ErrorState error={within3.error} what="the 3-class results" /> : <LoadingState label="Loading…" />}
-      </CaseFolder></div>
-
-      <div id="ensembles"><CaseFolder tab="ARENA · 08" title="Model Comparison & Ensemble Analysis"
+      <div id="ensembles"><CaseFolder tab="ARENA · 06" title="Model Comparison & Ensemble Analysis"
         aside={<span className="font-mono text-[10px] tracking-wider text-ink-3">ARENA ONLY · SVM AND ENSEMBLE ARE NOT IN THE TRIAGE DESK</span>}><ModelComparisonSection /></CaseFolder></div>
     </div>
   )

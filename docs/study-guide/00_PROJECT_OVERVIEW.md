@@ -61,9 +61,10 @@ It is split into three questions:
 - **Triage Desk:** before/after swipe viewer, damage overlays, Run analysis, building list. The app serves two
   models, the two the paper compares: KNN (default) and the Decision Tree.
 - **Case File:** one building: crops, predicted vs reference label, confidence, model explanation.
-- **Model Arena:** KNN, the Decision Tree and the threshold baseline under both designs, confusion matrices,
-  per-event scores, the tree, and the event-confounding check (made with a logistic-regression analysis
-  classifier, which is not a damage model in the app).
+- **Model Arena:** KNN, the Decision Tree and the Random Forest under both designs, confusion matrices,
+  per-event scores, the tree, and the model comparison & ensemble analysis (SVM, soft voting, GridSearchCV,
+  AdaBoost). The event-confounding check (a logistic-regression analysis classifier, not a damage model) is a
+  saved result, no longer shown in the Arena.
 - **Feature Lab:** which features separate the classes (training data only).
 - **Cluster Atlas:** K-Means groups compared with the labels. Analysis only, never predictions.
 - **Review Queue:** buildings suggested for human review (low confidence, or KNN and the Decision Tree disagree).

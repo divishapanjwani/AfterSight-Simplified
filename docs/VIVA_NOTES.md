@@ -133,9 +133,10 @@ domain shift.
    questions.
 5. **Wind scene `hurricane-matthew_00000185` (30 s):** all four classes mixed. Minor vs major get confused, which is
    the hardest distinction.
-6. **Arena (60 s):** the dumbbell (every model drops on the unseen disaster), then the confounding check (82.9%
-   event-prediction accuracy vs 25.2% for always guessing the most common event; an analysis classifier, not a
-   damage model). The KNN and Decision Tree rows are the paper's comparison. Then **Arena · 08**: the comparison
+6. **Arena (60 s):** the dumbbell (every model drops on the unseen disaster). If asked why, quote the confounding
+   check (82.9% event-prediction accuracy vs 25.2% for always guessing the most common event; an analysis classifier,
+   not a damage model; a saved result, no longer an Arena card). The KNN and Decision Tree rows are the paper's
+   comparison. Then **Arena · 06**: the comparison
    table, the GridSearchCV table and the soft-voting explanation (0.542 vs the Random Forest's 0.546).
 7. **Report (30 s):** download the PDF. It carries the split, the metrics and the limitations.
 

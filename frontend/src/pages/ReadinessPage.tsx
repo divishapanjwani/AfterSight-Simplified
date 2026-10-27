@@ -184,7 +184,7 @@ export function ReadinessPage() {
             <Headline within={within.data} cross={cross.data} served={models.data?.models ?? []} />
             <p className="mt-3 text-xs leading-5 text-ink-2">
               The gap is the honest story: on scenes from disasters it has seen, the model does much better than on a new
-              disaster. The full comparison, per-event scores and the confounding check live in the Model Arena.
+              disaster. The full comparison, per-event scores and the model and ensemble comparison live in the Model Arena.
             </p>
           </>
         )}

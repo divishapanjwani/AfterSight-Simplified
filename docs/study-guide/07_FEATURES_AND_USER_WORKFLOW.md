@@ -47,15 +47,16 @@ Screenshots of the simplified clone are in `docs/screenshots/`.
        leaf's size and class shares.
    - Quality flags: footprint area, mixed labels (possibly merged), at image edge (may be cut off).
 4. **Model Arena** (`/arena`, `ModelArenaPage.tsx`). How good is each model, honestly?
-   - Within vs cross-event comparison (dumbbell chart) for the threshold baseline, KNN and the Decision Tree.
+   - Within vs cross-event comparison (dumbbell chart) for KNN, the Decision Tree and the Random Forest.
    - Full comparison table (val and test macro-F1, accuracy, per-class recall, timing).
    - Confusion matrices (test or validation).
    - Per-event scores.
    - The decision tree, as an expandable view.
-   - The **event-confounding check** (event-prediction accuracy 0.829 vs 0.252 for always guessing the most
-     common event), made with an analysis classifier (multinomial logistic regression), not a damage model.
-   - The 3-class experiment.
-   - Random Forest results are kept on disk but not shown.
+   - **Model Comparison & Ensemble Analysis**: SVM, soft voting, GridSearchCV-optimised versions and AdaBoost,
+     with a comparison table, a macro-F1 chart, the grid-search table, any model's confusion matrix and
+     per-class metrics, and how the ensemble works.
+   - Not shown any more (saved results and API endpoints kept): the **event-confounding check** (0.829 vs 0.252,
+     an analysis classifier, not a damage model) and the 3-class experiment.
 5. **Reports** (`/reports`, `ReportsPage.tsx`). Every cached analysis of a served model with its split, model, scene macro-F1
    and review count, and **CSV** and **PDF** downloads. The PDF:
    - quotes the overall test score separately from scene-level metrics;

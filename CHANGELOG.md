@@ -57,6 +57,7 @@ baseline taken before any edit.
 | **AdaBoost** over 200 decision stumps (optional, serial ensemble), appended with `--adaboost-only` | same | Optional step; time allowed it |
 | New endpoint `GET /api/results/model-comparison`; new Arena card **"ARENA · 08 Model Comparison & Ensemble Analysis"** (comparison table, macro-F1 chart with a within/cross toggle, GridSearchCV table, confusion matrix and per-class metrics for any model, ensemble explanation) | `routes.py`, `frontend/src/components/ModelComparisonSection.tsx`, `ModelArenaPage.tsx` | Show everything in the app, from saved results only |
 | **Threshold baseline removed from active use**: Arena rows and charts, `/models/{name}/metrics`, comparison rows and `evaluate.py`. Its saved files stay on disk | `routes.py`, `ModelArenaPage.tsx`, `scripts/evaluate.py` | Faculty request |
+| **Two Arena cards removed from the UI**: "Event-confounding check" and "3-class experiment" (with their frontend-only code: `ConfoundingSection`, `api.confounding`, the `Confounding` type and the 3-class queries). Their saved results, `GET /api/results/confounding`, `GET /api/results/comparison?scheme=three_class` and their docs are kept. The model-comparison card is now ARENA · 06 | `ModelArenaPage.tsx`, `services/api.ts`, `types/api.ts` | Faculty choice |
 
 **Real results** are in the README and `docs/VIVA_NOTES.md`. Soft voting (0.542 within, 0.282 cross) beats KNN and
 the SVM but not the Random Forest (0.546, 0.291). GridSearchCV kept KNN (k=15, uniform) and SVM (RBF, C=1) at their

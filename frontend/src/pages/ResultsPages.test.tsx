@@ -22,23 +22,36 @@ describe('Model Arena', () => {
       : url.pathname.endsWith('/metrics')
         ? { body: { model: 'knn', hyperparameters: { n_neighbors: 31 }, metrics: { val: metrics, test: metrics, test_per_event: { 'ev-a': metrics } } } }
         : { body: { root: { id: 0, depth: 0, samples: 50, class_fractions: {}, majority: 'destroyed', leaf: true }, n_nodes: 1, max_depth: 0, n_leaves: 1, classes: [], view_max_depth: 3 } },
-    '/api/results/confounding': { body: { design_label: 'within-event generalisation', target: 'event', test_metrics: { ...metrics, accuracy: 0.829, confusion_matrix: { labels: ['ev-a', 'ev-b'], rows_true_cols_pred: [[5, 1], [2, 4]] } }, majority_class: 'ev-a', majority_class_accuracy: 0.252, chance_accuracy_uniform: 0.2 } },
+    '/api/results/model-comparison': { body: modelComparison },
   })
 
-  it('tells the within- vs cross-event story with API numbers, and keeps the confounding result', async () => {
+  it('tells the within- vs cross-event story with API numbers', async () => {
     mockApi(arenaRoutes())
     renderAt(<ModelArenaPage />, '/arena')
     expect(await screen.findAllByText('0.53 → 0.29')).not.toHaveLength(0)
-    expect(await screen.findByText('0.829')).toBeInTheDocument() // event-prediction accuracy
-    expect(screen.getByText('0.252')).toBeInTheDocument()
-    expect(screen.getByText('SEPARATE EXPERIMENT · 4-CLASS STAYS PRIMARY')).toBeInTheDocument()
     expect(screen.queryByText(/Phase 3b/i)).not.toBeInTheDocument()
+  })
+
+  it('has six cards in order, without the confounding check or the 3-class experiment, and never requests their results', async () => {
+    const calls = mockApi(arenaRoutes())
+    const { container } = renderAt(<ModelArenaPage />, '/arena')
+    await screen.findByText('A. All models on the test sets')
+    expect([...container.querySelectorAll('section.relative h2')].map((h) => h.textContent)).toEqual([
+      'The same models on known vs unseen disasters', 'Model comparison (4-class)', 'Confusion matrices',
+      'Per-event scores (within-event test)', 'Decision tree', 'Model Comparison & Ensemble Analysis'])
+    for (const gone of ['Event-confounding check', '3-class experiment: no-damage / damaged / destroyed', 'SEPARATE EXPERIMENT · 4-CLASS STAYS PRIMARY']) {
+      expect(screen.queryByText(gone)).not.toBeInTheDocument()
+    }
+    expect(screen.queryByRole('link', { name: 'Confounding' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '3-class' })).not.toBeInTheDocument()
+    expect(calls.some((u) => u.pathname === '/api/results/confounding')).toBe(false)
+    expect(calls.some((u) => u.searchParams.get('scheme') === 'three_class')).toBe(false)
   })
 
   it('has no feature-set Experiments section and never requests its results', async () => {
     const calls = mockApi(arenaRoutes())
     renderAt(<ModelArenaPage />, '/arena')
-    expect(await screen.findByText('0.829')).toBeInTheDocument()
+    expect(await screen.findAllByText('0.53 → 0.29')).not.toHaveLength(0)
     for (const gone of ['EXPERIMENTS · FEATURE SETS', 'Experiments: confounding-reduced feature sets', 'NOT SELECTABLE IN THE TRIAGE DESK']) {
       expect(screen.queryByText(gone)).not.toBeInTheDocument()
     }
@@ -64,19 +77,14 @@ describe('Model Arena', () => {
     expect(screen.queryByText(/not served/i)).not.toBeInTheDocument()
     expect(screen.queryByText('Logistic Regression')).not.toBeInTheDocument()
     expect(screen.queryByText('0.999')).not.toBeInTheDocument()
-    expect(screen.queryByText(/Random Forest/)).not.toBeInTheDocument()
+    // Random Forest is not served in this fixture: it appears only inside the model-comparison card
+    expect(screen.queryAllByText(/Random Forest/).every((el) => el.closest('#ensembles'))).toBe(true)
     const confusionModels = screen.getAllByRole('radiogroup', { name: 'Model' })[0]
     expect(within(confusionModels).getAllByRole('radio').map((r) => r.textContent)).toEqual(['KNN', 'Decision Tree'])
     expect(await within(confusionModels).findByRole('radio', { name: 'KNN' })).toHaveAttribute('aria-checked', 'true') // the default
     expect(calls.some((u) => u.pathname.includes('logistic_regression'))).toBe(false)
   })
 
-  it('describes the confounding classifier as an analysis tool, not a damage model', async () => {
-    mockApi(arenaRoutes())
-    renderAt(<ModelArenaPage />, '/arena')
-    expect(await screen.findByText(/An analysis classifier \(multinomial logistic regression\)/)).toHaveTextContent(
-      'It is used only to measure this disaster fingerprint; it is not a damage model in the app.')
-  })
 })
 
 describe('Review Queue', () => {

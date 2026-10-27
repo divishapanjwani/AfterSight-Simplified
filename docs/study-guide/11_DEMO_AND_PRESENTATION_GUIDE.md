@@ -39,8 +39,9 @@ Scene-level scores are small samples, not the overall result. Say so.
    - The dumbbell: every model drops on the unseen disaster.
    - The table: **KNN 0.520 vs DT 0.470 within; 0.271 vs 0.294 cross**.
    - The confusion matrices: KNN calls most minor and major damage "no damage".
-   - The confounding check: **0.829** event-prediction accuracy, so the features recognise *which disaster*
-     (an analysis classifier, not a damage model).
+   - If asked why: the confounding check (a saved result, no longer an Arena card): **0.829** event-prediction
+     accuracy, so the features recognise *which disaster* (an analysis classifier, not a damage model).
+   - Arena · 06: the model comparison, GridSearchCV and soft-voting results.
    - If asked: the feature-set experiments (saved results, no longer shown in the app) reduced that signature
      but did not fix transfer.
 7. **Reports (30 s).** Download the PDF. It separates the overall test score from scene-level metrics.

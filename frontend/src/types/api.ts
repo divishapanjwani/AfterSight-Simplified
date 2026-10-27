@@ -278,15 +278,6 @@ export interface TreeView {
   root: TreeNode
 }
 
-export interface Confounding {
-  design_label: string
-  target: string
-  test_metrics: ClassificationMetrics
-  majority_class: string
-  majority_class_accuracy: number
-  chance_accuracy_uniform: number
-}
-
 export interface FeatureSummary {
   split: 'train'
   n: number

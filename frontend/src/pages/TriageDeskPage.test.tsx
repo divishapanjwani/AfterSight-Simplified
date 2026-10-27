@@ -111,6 +111,7 @@ describe('Case file page', () => {
   it.each([
     ['decision_tree', 'Leaf of', 'Texture smoothness change'],
     ['knn', 'Votes:', 'minor'],
+    ['random_forest', 'No per-building explanation for this model.', 'mean of tree leaf fractions'],
   ])('renders the %s explanation', async (model, text, detail) => {
     mockApi({
       '/api/analysis': (url) => url.pathname.endsWith('/explain') ? { body: explanations[model] } : { body: analysisFor(ID, model) },

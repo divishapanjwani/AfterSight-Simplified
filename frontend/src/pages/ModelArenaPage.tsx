@@ -8,6 +8,7 @@ import { BarList } from '../charts/BarList'
 import { Dumbbell } from '../charts/Dumbbell'
 import { Heatmap } from '../charts/Heatmap'
 import { CaseFolder } from '../components/CaseFolder'
+import { ModelComparisonSection } from '../components/ModelComparisonSection'
 import { Chip } from '../components/Chip'
 import { ErrorState, LoadingState } from '../components/States'
 import { api } from '../services/api'
@@ -15,24 +16,24 @@ import { DAMAGE, DamageSwatch } from '../theme/damage'
 import { featureLabel, fmtValue } from '../theme/features'
 import type { Comparison, DamageClass, TreeNode } from '../types/api'
 
-const NAMES: Record<string, string> = { baseline: 'Threshold baseline', knn: 'KNN', decision_tree: 'Decision Tree' }
+const NAMES: Record<string, string> = { knn: 'KNN', decision_tree: 'Decision Tree', random_forest: 'Random Forest' }
 const f3 = (v: number | null | undefined) => (v === null || v === undefined ? 'not available' : v.toFixed(3))
-const SECTIONS = ['story', 'table', 'confusion', 'events', 'tree', 'confounding', 'three'] as const
+const SECTIONS = ['story', 'table', 'confusion', 'events', 'tree', 'confounding', 'three', 'ensembles'] as const
 const SECTION_LABELS: Record<(typeof SECTIONS)[number], string> = {
   story: 'Honest headline', table: 'Comparison', confusion: 'Confusion', events: 'Per event', tree: 'Decision tree',
-  confounding: 'Confounding', three: '3-class',
+  confounding: 'Confounding', three: '3-class', ensembles: 'Comparison & ensembles',
 }
 
 function useComparison(design: string, scheme: string) {
   return useQuery({ queryKey: ['comparison', design, scheme], queryFn: () => api.comparison(design, scheme), retry: false })
 }
 
-/** The models the Arena shows: the threshold baseline and the served models (from the config, via /api/models).
- *  Saved Random Forest results stay on disk but are not shown. */
+/** The models the Arena shows: the served models (from the config, via /api/models). The threshold baseline is no
+ *  longer in active use (its saved files stay on disk); the SVM and ensembles are in the comparison section. */
 function useArenaModels() {
   const q = useQuery({ queryKey: ['models'], queryFn: api.models })
   const served = q.data ? q.data.models.map((m) => m.name) : []
-  const names = ['baseline', ...served]
+  const names = served
   const label = (m: string) => NAMES[m] ?? m
   return { names, label, defaultModel: q.data?.default_model }
 }
@@ -89,7 +90,7 @@ function ComparisonTable({ c }: { c: Comparison }) {
       <tbody>
         {c.models.filter((m) => arena.names.includes(m.model)).map((m) => (
           <tr key={m.model} className="border-b border-rule/60 last:border-0">
-            <td className="py-1.5 text-ink">{arena.label(m.model)}{m.model === 'baseline' && <span className="ml-1 text-ink-3">· non-ML</span>}</td>
+            <td className="py-1.5 text-ink">{arena.label(m.model)}</td>
             <td className="num py-1.5 text-right">{f3(m.val_macro_f1)}</td>
             <td className="num py-1.5 text-right font-medium text-ink">{f3(m.test_macro_f1)}</td>
             <td className="num py-1.5 text-right">{f3(m.test_accuracy)}</td>
@@ -146,7 +147,7 @@ function EventsSection() {
   const events = q.data ? Object.entries(q.data.metrics.test_per_event) : []
   return (
     <div className="space-y-3">
-      <Segmented label="Model" value={model} onChange={setModel} options={arena.names.filter((k) => k !== 'baseline').map((k) => ({ value: k, label: arena.label(k) }))} />
+      <Segmented label="Model" value={model} onChange={setModel} options={arena.names.map((k) => ({ value: k, label: arena.label(k) }))} />
       {q.isPending && <LoadingState label="Loading per-event metrics…" />}
       {q.isError && <ErrorState error={q.error} what="per-event metrics" />}
       {q.data && (
@@ -286,6 +287,9 @@ export function ModelArenaPage() {
         {within3.isSuccess && cross3.isSuccess ? <Story within={within3.data} cross={cross3.data} title="3-class (experiment)" />
           : within3.isError ? <ErrorState error={within3.error} what="the 3-class results" /> : <LoadingState label="Loading…" />}
       </CaseFolder></div>
+
+      <div id="ensembles"><CaseFolder tab="ARENA · 08" title="Model Comparison & Ensemble Analysis"
+        aside={<span className="font-mono text-[10px] tracking-wider text-ink-3">ARENA ONLY · SVM AND ENSEMBLE ARE NOT IN THE TRIAGE DESK</span>}><ModelComparisonSection /></CaseFolder></div>
     </div>
   )
 }

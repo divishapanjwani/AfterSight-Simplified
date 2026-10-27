@@ -233,3 +233,39 @@ def test_raw_threshold_inverts_preprocessing(table) -> None:
     j = FEATURE_COLUMNS.index("area_px")
     z = pipe[:-1].transform(table.X.iloc[[0]])[0, j]
     assert raw_threshold(pipe, j, z) == pytest.approx(table.X.iloc[0, j], rel=1e-6)
+
+
+def test_model_comparison_svm_soft_voting_and_grid_search(trained, cfg, tmp_path) -> None:
+    """SVM on a scene-grouped sample, soft voting = equal-weight average of SVM + RF + KNN, GridSearchCV by scene;
+    every new model touches the test set once and the saved KNN/DT/RF are not re-evaluated."""
+    from app.experiments.model_comparison import run_model_comparison, scene_sample
+    data, roots, _guard, _rows = trained
+    rows = scene_sample(data.ids["train"]["scene_id"], 300, 42)
+    scenes = set(data.ids["train"]["scene_id"].iloc[rows])
+    assert len(rows) >= 300 and len(rows) == data.ids["train"]["scene_id"].isin(scenes).sum()  # whole scenes only
+    grids = {"knn": {"model__n_neighbors": [5, 15]}, "decision_tree": {"model__max_depth": [3, 5]},
+             "svm": {"model__C": [1], "model__kernel": ["rbf"]}}
+    doc = run_model_comparison(cfg, {"within_event": data}, root=tmp_path, say=lambda _m: None, svm_sample=300,
+                               grids=grids, models_root=roots.models)
+    assert set(doc["test_evaluations"]) == {"within_event/svm", "within_event/soft_voting", "within_event/knn_optimised",
+                                            "within_event/decision_tree_optimised", "within_event/svm_optimised"}
+    models = {m["model"]: m for m in doc["designs"]["within_event"]["models"]}
+    assert [m["kind"] for m in models.values()] == ["default"] * 4 + ["ensemble"] + ["optimised"] * 3
+    assert models["soft_voting"]["members"] == ["svm", "random_forest", "knn"]
+    for m in models.values():
+        assert m["metrics"]["confusion_matrix"]["labels"] == data.classes
+        assert 0 <= m["metrics"]["macro_f1"] <= 1 and m["metrics"]["macro_precision"] is not None
+    saved_knn = json.loads((roots.models / "within_event" / "four_class" / "knn.json").read_text())
+    assert models["knn"]["metrics"]["macro_f1"] == saved_knn["metrics"]["test"]["macro_f1"]  # read, not re-evaluated
+    gs = doc["grid_search"]["decision_tree"]
+    assert gs["best_params"]["max_depth"] in (3, 5) and len(gs["cv_results"]) == 2
+    assert gs["difference"] == pytest.approx(gs["test_macro_f1_optimised"] - gs["test_macro_f1_default"], abs=1e-4)
+    assert (tmp_path / "summary.json").is_file()
+
+    # the optional serial ensemble is appended without evaluating the other models again, and only once
+    from app.experiments.model_comparison import run_adaboost
+    doc = run_adaboost(cfg, {"within_event": data}, root=tmp_path, say=lambda _m: None)
+    ada = doc["designs"]["within_event"]["models"][-1]
+    assert ada["model"] == "adaboost" and ada["ensemble_type"] == "serial" and doc["test_evaluations"]["within_event/adaboost"] == 1
+    with pytest.raises(ValueError, match="already evaluated"):
+        run_adaboost(cfg, {"within_event": data}, root=tmp_path, say=lambda _m: None)

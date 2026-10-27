@@ -11,8 +11,9 @@ from app.core.config import REPO_ROOT
 
 METRICS = REPO_ROOT / "artifacts" / "metrics"
 ANALYSES = REPO_ROOT / "artifacts" / "analyses"
-# Saved rows of models that are not damage models of this project (the files are left as they are).
-NOT_DAMAGE_MODELS = {"logistic_regression"}
+# Saved rows not shown (the files are left as they are): logistic regression is not a damage model of this project,
+# and the threshold baseline is no longer in active use.
+NOT_DAMAGE_MODELS = {"logistic_regression", "baseline"}
 
 
 def main() -> int:
@@ -31,7 +32,8 @@ def main() -> int:
             print(f"  {name:<22}{r['val_macro_f1']:>8.3f}{r['test_macro_f1']:>9.3f}{r['test_accuracy']:>7.3f}"
                   + "".join(f"{(r['test_recall'][c] or 0):>13.3f}" for c in classes)
                   + f"{r['train_seconds']:>9.1f}{1000 * r['inference_seconds_per_1000']:>9.1f}")
-    print("\n(Saved logistic_regression rows are not shown: it is not a damage model of this project.)")
+    print("\n(Saved logistic_regression and baseline rows are not shown. SVM and ensembles: "
+          "artifacts/experiments/model_comparison/summary.json.)")
     conf = ANALYSES / "confounding" / "within_event.json"
     if conf.is_file():
         c = json.loads(conf.read_text())

@@ -14,6 +14,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -30,6 +31,7 @@ CONFIDENCE_KIND = {
     "knn": "vote fraction of neighbours",
     "decision_tree": "class fraction in the leaf",
     "random_forest": "mean of tree leaf fractions",
+    "svm": "Platt-scaled SVM score (not calibrated on validation)",  # model-comparison experiment only, not served
 }
 
 # Candidates for the single-feature baseline: features that measure change between pre and post.
@@ -157,6 +159,8 @@ def make_pipeline(name: str, params: dict[str, Any], seed: int, skew_threshold: 
         model = KNeighborsClassifier(n_jobs=-1, **params)
     elif name == "decision_tree":
         model = DecisionTreeClassifier(class_weight="balanced", random_state=seed, **params)
+    elif name == "svm":  # model-comparison experiment (Arena only); class weights like the DT
+        model = SVC(class_weight="balanced", random_state=seed, **params)
     elif name == "random_forest":
         model = RandomForestClassifier(n_estimators=settings.n_estimators if settings else 200,
                                        class_weight="balanced_subsample", n_jobs=-1, random_state=seed, **params)

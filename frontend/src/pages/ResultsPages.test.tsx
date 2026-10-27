@@ -1,7 +1,8 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { comparison, models } from '../test/fixtures'
+import { ModelComparisonSection } from '../components/ModelComparisonSection'
+import { comparison, modelComparison, models } from '../test/fixtures'
 import { mockApi, renderAt } from '../test/utils'
 import { ClusterAtlasPage } from './ClusterAtlasPage'
 import { FeatureLabPage } from './FeatureLabPage'
@@ -65,7 +66,7 @@ describe('Model Arena', () => {
     expect(screen.queryByText('0.999')).not.toBeInTheDocument()
     expect(screen.queryByText(/Random Forest/)).not.toBeInTheDocument()
     const confusionModels = screen.getAllByRole('radiogroup', { name: 'Model' })[0]
-    expect(within(confusionModels).getAllByRole('radio').map((r) => r.textContent)).toEqual(['Threshold baseline', 'KNN', 'Decision Tree'])
+    expect(within(confusionModels).getAllByRole('radio').map((r) => r.textContent)).toEqual(['KNN', 'Decision Tree'])
     expect(await within(confusionModels).findByRole('radio', { name: 'KNN' })).toHaveAttribute('aria-checked', 'true') // the default
     expect(calls.some((u) => u.pathname.includes('logistic_regression'))).toBe(false)
   })
@@ -222,5 +223,55 @@ describe('Reports', () => {
     mockApi({ '/api/analyses': { body: { total: 0, items: [] } } })
     renderAt(<ReportsPage />, '/reports')
     expect(await screen.findByText('No analyses yet.')).toBeInTheDocument()
+  })
+})
+
+describe('Model Comparison & Ensemble Analysis', () => {
+  const routes = () => ({
+    '/api/models': (url: URL) => url.pathname === '/api/models' ? { body: models }
+      : url.pathname.endsWith('/metrics')
+        ? { body: { model: 'knn', hyperparameters: {}, metrics: { val: metrics, test: metrics, test_per_event: { 'ev-a': metrics } } } }
+        : { body: { root: { id: 0, depth: 0, samples: 50, class_fractions: {}, majority: 'destroyed', leaf: true }, n_nodes: 1, max_depth: 0, n_leaves: 1, classes: [], view_max_depth: 3 } },
+    '/api/results/comparison': (url: URL) => {
+      const c = comparison(url.searchParams.get('design') ?? 'within_event', 0.5, 0.4)
+      return { body: { ...c, models: [{ ...c.models[0], model: 'baseline', test_macro_f1: 0.383 }, ...c.models] } }
+    },
+    '/api/results/model-comparison': { body: modelComparison },
+  })
+
+  it('shows the comparison table, GridSearchCV, confusion matrix, per-class metrics and the ensemble explanation from the API', async () => {
+    mockApi(routes())
+    renderAt(<ModelComparisonSection />)
+    const table = (await screen.findByText('A. All models on the test sets')).closest('section')!
+    expect(within(table).getByText('Soft Voting (SVM + RF + KNN)')).toBeInTheDocument()
+    expect(within(table).getAllByText('parallel ensemble')).toHaveLength(1)
+    expect(within(table).getByText('not evaluated')).toBeInTheDocument() // the optimised DT has no cross-event result
+    expect(within(table).getByText('0.561')).toBeInTheDocument()
+    const grid = screen.getByText('C. GridSearchCV (grouped by scene)').closest('section')!
+    expect(grid).toHaveTextContent('max_depth=8 · min_samples_leaf=100')
+    expect(grid).toHaveTextContent('0.460 → 0.472(+0.012)')
+    expect(screen.getByRole('radio', { name: 'Soft Voting (SVM + RF + KNN)' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('table', { name: 'Per-class metrics' })).toHaveTextContent('destroyed0.5300.4000.45013')
+    const ens = screen.getByText('F. How the ensemble works').closest('section')!
+    expect(ens).toHaveTextContent('Soft voting reaches macro-F1 0.561, higher than its best member (Random Forest, 0.550)')
+    expect(ens).toHaveTextContent('Soft voting 0.282 vs best member Random Forest 0.291')
+    expect(ens).toHaveTextContent('Random Forest is itself a parallel ensemble')
+    await userEvent.click(within(screen.getByRole('radiogroup', { name: 'Bar chart design' })).getByRole('radio', { name: 'cross-event' }))
+    expect(screen.getByText(/Optimised versions were tuned and tested within-event only/)).toBeInTheDocument()
+  })
+
+  it('the Arena has the new section and no threshold baseline anywhere', async () => {
+    mockApi(routes())
+    renderAt(<ModelArenaPage />, '/arena')
+    expect(await screen.findByText('Model Comparison & Ensemble Analysis')).toBeInTheDocument()
+    await screen.findByText('A. All models on the test sets')
+    expect(screen.queryByText(/baseline/i)).not.toBeInTheDocument()
+    expect(screen.queryByText('0.383')).not.toBeInTheDocument()
+  })
+
+  it('missing results show the command that builds them', async () => {
+    mockApi({ '/api/results/model-comparison': { status: 404, body: { error: { code: 'results_not_found', message: 'The model comparison has not been run.', fix: 'python scripts/run_model_comparison.py' } } } })
+    renderAt(<ModelComparisonSection />)
+    expect(await screen.findByText('$ python scripts/run_model_comparison.py')).toBeInTheDocument()
   })
 })

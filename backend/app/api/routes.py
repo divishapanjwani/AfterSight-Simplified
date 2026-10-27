@@ -15,6 +15,7 @@ from app.features.schema import FEATURE_COLUMNS
 from app.inference import feature_lab, images, review_queue, scenes
 from app.inference.analysis import (MODEL_LABELS, explain_building, list_analyses, load_analysis, run_analysis,
                                     served_analysis_records)
+from app.experiments import model_comparison
 from app.experiments import summary as phase3b_summary
 from app.inference.review import usable_threshold
 from app.reports.reports import pdf_name, report_context, write_csv, write_pdf
@@ -159,9 +160,10 @@ def list_models(store: StoreDep) -> dict[str, Any]:
             "serving_scheme": store.serving.scheme, "default_model": store.training_config.default_model, "models": models}
 
 
-# Saved damage-model results the research endpoints read. Logistic Regression is not a damage model of the app: a request
-# for it gets the same validation error as any unknown model, and its saved rows are left out of the comparison.
-ARENA_MODELS = Literal["baseline", "knn", "decision_tree", "random_forest"]
+# Saved damage-model results the research endpoints read. Logistic Regression is not a damage model of the app, and the
+# threshold baseline is no longer in active use: a request for either gets the same validation error as any unknown
+# model, and their saved rows are left out of the comparison (the files stay on disk).
+ARENA_MODELS = Literal["knn", "decision_tree", "random_forest"]
 
 
 @router.get("/models/{name}/metrics", tags=["models"])
@@ -222,6 +224,12 @@ def results_confounding(store: StoreDep) -> dict[str, Any]:
     if doc is None:
         raise NotFound("The confounding check has not been run.", code="results_not_found", fix=FIX["models"])
     return doc
+
+
+@router.get("/results/model-comparison", tags=["results"])
+def results_model_comparison(store: StoreDep) -> dict[str, Any]:
+    """SVM, soft-voting ensemble and GridSearchCV results (Model Arena only; none of these models is served)."""
+    return model_comparison.load_summary(store)
 
 
 @router.get("/results/experiments", tags=["results"])

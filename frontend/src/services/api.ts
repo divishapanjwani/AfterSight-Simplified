@@ -1,7 +1,7 @@
 /** Fetch wrapper for the AfterSight API (proxied by Vite from /api to http://localhost:8020). */
 
 import type {
-  AnalysisResult, AnalysisSummary, Clusters, Comparison, Confounding, DatasetStatus, Explanation, FeatureSummary, Health, ModelList,
+  AnalysisResult, AnalysisSummary, Clusters, Comparison, Confounding, ModelComparison, DatasetStatus, Explanation, FeatureSummary, Health, ModelList,
   ModelMetrics, ReviewQueue, Scatter, SceneDetail, SceneList, TreeView,
 } from '../types/api'
 
@@ -73,6 +73,7 @@ export const api = {
   modelMetrics: (name: string, design: string, scheme = 'four_class') => getJson<ModelMetrics>(`/models/${name}/metrics`, { design, scheme }),
   tree: (maxDepth: number, design = 'within_event') => getJson<TreeView>('/models/decision_tree/tree', { max_depth: maxDepth, design }),
   confounding: () => getJson<Confounding>('/results/confounding'),
+  modelComparison: () => getJson<ModelComparison>('/results/model-comparison'),
   featureSummary: () => getJson<FeatureSummary>('/features/summary'),
   scatter: (x: string, y: string, n = 1500) => getJson<Scatter>('/features/scatter', { x, y, n }),
   clusters: (k: number, design = 'within_event') => getJson<Clusters>('/clusters', { k, design }),

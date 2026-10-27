@@ -69,13 +69,13 @@ def test_health(client) -> None:
 def test_status_ready_on_built_deployment(client) -> None:
     tiles = client.get("/api/dataset/status").json()["tiles"]
     assert all(tiles[t]["ready"] for t in ("scene_cache", "features", "splits", "models", "review_thresholds"))
-    # readiness follows the served models in config (KNN and the Decision Tree). The fixture also has a saved Logistic
-    # Regression (like the old files left on disk) and an untrained Random Forest; neither is served or affects the tiles.
-    assert tiles["models"]["detail"]["trained"] == {"knn": True, "decision_tree": True}
+    # readiness follows the served models in config (KNN, Decision Tree, Random Forest). The fixture also has a saved
+    # Logistic Regression (like the old files left on disk); it is not served and does not affect the tiles.
+    assert tiles["models"]["detail"]["trained"] == {"knn": True, "decision_tree": True, "random_forest": True}
     assert tiles["models"]["fix"] is None
     assert tiles["models"]["state"] == "ready" and tiles["models"]["reason"] == "all required served models are trained"
     thresholds = tiles["review_thresholds"]
-    assert thresholds["state"] == "ready" and set(thresholds["detail"]["thresholds"]) == {"knn", "decision_tree"}
+    assert thresholds["state"] == "ready" and set(thresholds["detail"]["thresholds"]) == {"knn", "decision_tree", "random_forest"}
     assert thresholds["reason"] == "usable for every required served model (knn, decision_tree)"
 
 
@@ -202,13 +202,13 @@ def test_analysis_input_validation(client) -> None:
     _assert_clean_error(client.get("/api/analysis/..%2F..%2Fsecret"), 404)
 
 
-@pytest.mark.parametrize("model", ["logistic_regression", "random_forest", "svm"])
+@pytest.mark.parametrize("model", ["logistic_regression", "baseline", "svm", "soft_voting"])
 def test_models_not_served_are_rejected_cleanly(client, model) -> None:
-    """LR is saved in the fixture (like the old files on disk) and RF is not trained; both are outside the served list,
-    so both get exactly the error of an unknown model."""
+    """LR and the baseline are saved in the fixture (like the old files on disk), and the SVM / soft-voting ensemble are
+    Arena-only; all are outside the served list, so all get exactly the error of an unknown model."""
     sid = _scene(client, "test")
     error = _assert_clean_error(client.post("/api/analysis", json={"scene_id": sid, "model_name": model}), 404, "model_not_found")
-    assert error["message"] == "Unknown model. Choose one of: knn, decision_tree."
+    assert error["message"] == "Unknown model. Choose one of: knn, decision_tree, random_forest."
     _assert_clean_error(client.get("/api/review-queue", params={"model": model}), 404, "model_not_found")
     assert model not in [m["name"] for m in client.get("/api/models").json()["models"]]
 
@@ -307,12 +307,33 @@ def test_review_queue(client) -> None:
     assert body["total_flagged"] <= body["total_buildings"]
     assert body["flagged_low_confidence"] + body["flagged_disagreement_only"] == body["total_flagged"]
     _assert_clean_error(client.get("/api/review-queue", params={"split": "everything"}), 422)
-    # disagreement is between the served models only: KNN vs the Decision Tree, never the saved Logistic Regression
-    for model, other in (("knn", "decision_tree"), ("decision_tree", "knn")):
+    # disagreement is between the served models only (KNN, DT, RF), never the saved Logistic Regression
+    served = {"knn", "decision_tree", "random_forest"}
+    for model in served:
         items = client.get("/api/review-queue", params={"model": model, "limit": 100}).json()["items"]
-        assert all(set(i["other_models"]) == {other} for i in items)
+        assert all(set(i["other_models"]) == served - {model} for i in items)
         disagreeing = [r for i in items for r in i["reasons"] if r.startswith("other models disagree")]
-        assert items and disagreeing and all(r.startswith(f"other models disagree: {other} says") for r in disagreeing)
+        assert items and disagreeing
+        named = {part.split(" says")[0] for r in disagreeing for part in r.removeprefix("other models disagree: ").split(", ")}
+        assert named <= served - {model}
+
+
+def test_random_forest_is_served_with_no_per_building_explanation(client) -> None:
+    analysis = client.post("/api/analysis", json={"scene_id": _scene(client, "test"), "model_name": "random_forest"})
+    assert analysis.status_code == 200, analysis.text
+    body = analysis.json()
+    assert body["confidence_kind"] == "mean of tree leaf fractions" and body["model"]["label"] == "Random Forest"
+    building = body["buildings"][0]
+    explain = client.get(f"/api/analysis/{body['analysis_id']}/buildings/{building['building_uid']}/explain").json()
+    assert explain["kind"] == "none" and explain["detail"] == {"note": "No per-building explanation for this model."}
+    assert explain["predicted"] == building["predicted"]
+
+
+def test_threshold_baseline_is_gone_from_the_arena(client) -> None:
+    for design in ("within_event", "cross_event"):
+        rows = [m["model"] for m in client.get("/api/results/comparison", params={"design": design}).json()["models"]]
+        assert "baseline" not in rows and {"knn", "decision_tree", "random_forest"} <= set(rows)
+    _assert_clean_error(client.get("/api/models/baseline/metrics"), 422, "invalid_request")
 
 
 @contextlib.contextmanager
@@ -441,9 +462,9 @@ def test_phase3b_summary_malformed_or_incomplete(client, store, content, words) 
 def test_models_and_results(client) -> None:
     body = client.get("/api/models").json()
     assert body["default_model"] == "knn"
-    assert [m["name"] for m in body["models"]] == ["knn", "decision_tree"]  # the served list from config
+    assert [m["name"] for m in body["models"]] == ["knn", "decision_tree", "random_forest"]  # the served list from config
     assert [m["name"] for m in body["models"] if m["default"]] == ["knn"]
-    assert not any(m["optional"] for m in body["models"])
+    assert [m["name"] for m in body["models"] if m["optional"]] == ["random_forest"]
     metrics = client.get("/api/models/knn/metrics").json()
     assert metrics["test_evaluations"] == 1 and "test_per_event" in metrics["metrics"]
     cross = client.get("/api/models/decision_tree/metrics", params={"design": "cross_event"}).json()
@@ -513,3 +534,19 @@ def test_recent_analyses_list(client) -> None:
     assert item["split"] == "train" and item["warning"] == TRAIN_WARNING
     assert item["pdf_url"].endswith("/report.pdf") and item["n_buildings"] == len(analysis["buildings"])
     _assert_clean_error(client.get("/api/analyses", params={"limit": 0}), 422)
+
+
+def test_model_comparison_endpoint(client, store) -> None:
+    error = _assert_clean_error(client.get("/api/results/model-comparison"), 404, "results_not_found")
+    assert error["fix"] == "python scripts/run_model_comparison.py"
+    path = store.paths.artifacts / "experiments" / "model_comparison" / "summary.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        for bad in ("{oops", json.dumps({"designs": {"within_event": {"models": "x"}}})):
+            path.write_text(bad, encoding="utf-8")
+            _assert_clean_error(client.get("/api/results/model-comparison"), 503, "results_invalid")
+        doc = {"label": "x", "designs": {"within_event": {"models": [{"model": "soft_voting", "kind": "ensemble"}]}}, "grid_search": {}}
+        path.write_text(json.dumps(doc), encoding="utf-8")
+        assert client.get("/api/results/model-comparison").json() == doc  # passed through unchanged
+    finally:
+        path.unlink()

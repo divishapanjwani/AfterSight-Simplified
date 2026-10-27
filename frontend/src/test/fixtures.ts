@@ -84,9 +84,9 @@ const prediction = (uid: string, true_label: BuildingPrediction['true_label'], p
 
 export const analysisFor = (id: string, model = 'knn', split: SceneSummary['split'] = 'test', warning: string | null = null): AnalysisResult => ({
   analysis_id: 'abcdef0123456789', cached: false, created_at: 't', scene_id: id, event: 'ev-a', disaster_type: 'flooding',
-  model: { name: model, label: model === 'knn' ? 'K-Nearest Neighbours' : 'Decision Tree',
+  model: { name: model, label: model === 'knn' ? 'K-Nearest Neighbours' : model === 'random_forest' ? 'Random Forest' : 'Decision Tree',
     design: 'within_event', design_label: 'within-event generalisation', scheme: 'four_class', trained_at: 't', hyperparameters: {}, test_macro_f1: 0.5, optional: false },
-  confidence_kind: model === 'knn' ? 'vote fraction of neighbours' : 'class fraction in the leaf',
+  confidence_kind: model === 'knn' ? 'vote fraction of neighbours' : model === 'random_forest' ? 'mean of tree leaf fractions' : 'class fraction in the leaf',
   review_threshold: 0.48, review_rule: 'rule',
   provenance: { split, design: 'within_event', design_label: 'within-event generalisation', warning, note: 'note' },
   counts: { ground_truth: { 'no-damage': 1, 'minor-damage': 0, 'major-damage': 0, destroyed: 1 }, predicted: { 'no-damage': 0, 'minor-damage': 0, 'major-damage': 0, destroyed: 2 } },
@@ -102,8 +102,40 @@ export const explanations: Record<string, Explanation> = {
   decision_tree: { ...base, building_uid: 'x', kind: 'decision_path', detail: { prediction: 'destroyed', leaf_samples: 3677,
     leaf_class_fractions: { destroyed: 0.6, 'no-damage': 0.4 },
     steps: [{ feature: 'glcm_homogeneity_delta', value_raw: -0.022, op: '>', threshold_raw: -0.146 }] } },
+  random_forest: { ...base, building_uid: 'x', kind: 'none', detail: { note: 'No per-building explanation for this model.' } },
   knn: { ...base, building_uid: 'x', kind: 'nearest_neighbours', detail: { k: 2, weights: 'uniform', neighbours: [
     { sample_id: 'ev-b_00000001_b0003', label: 'destroyed', distance: 1.5, split: 'train', crop_urls: { pre: '/p', post: '/q' } },
     { sample_id: 'ev-b_00000002_b0004', label: 'minor-damage', distance: 1.9, split: 'train', crop_urls: { pre: '/p', post: '/q' } },
   ] } },
+}
+
+// ---------------------------------------------------------------- model comparison (test values, not xBD)
+import type { ComparedModel, ModelComparison } from '../types/api'
+
+const LABELS4 = ['no-damage', 'minor-damage', 'major-damage', 'destroyed']
+const cmp = (model: string, label: string, kind: ComparedModel['kind'], f1: number, extra: Partial<ComparedModel> = {}): ComparedModel => ({
+  model, label, kind, source: 's', ...extra,
+  metrics: { n: 10, accuracy: f1 + 0.1, macro_precision: f1 + 0.01, macro_recall: f1 - 0.01, macro_f1: f1,
+    per_class: Object.fromEntries(LABELS4.map((c, i) => [c, { precision: 0.5 + i / 100, recall: 0.4, f1: 0.45, support: 10 + i }])),
+    confusion_matrix: { labels: LABELS4, rows_true_cols_pred: [[5, 1, 0, 0], [1, 4, 1, 0], [0, 1, 3, 1], [0, 0, 1, 6]] } },
+})
+
+export const modelComparison: ModelComparison = {
+  label: 'Model comparison', created_at: 't', seed: 42, grid_search: {
+    decision_tree: { label: 'Decision Tree', grid: { max_depth: [4, 8], min_samples_leaf: [20, 100] }, fixed: {}, cv: 'GroupKFold(n_splits=3) grouped by scene',
+      trained_on: 'full within-event training split', best_params: { max_depth: 8, min_samples_leaf: 100 }, best_cv_macro_f1: 0.4811,
+      test_macro_f1_default: 0.46, test_macro_f1_optimised: 0.472, difference: 0.012 },
+  },
+  notes: ['Test values.'],
+  designs: {
+    within_event: { design_label: 'within-event generalisation', classes: LABELS4, n_test: 10,
+      svm_sample: { buildings: 10128, scenes: 168, of_training_buildings: 49929, seed: 42 },
+      models: [cmp('knn', 'KNN', 'default', 0.51), cmp('decision_tree', 'Decision Tree', 'default', 0.46), cmp('random_forest', 'Random Forest', 'default', 0.55),
+        cmp('svm', 'SVM', 'default', 0.505), cmp('soft_voting', 'Soft Voting (SVM + RF + KNN)', 'ensemble', 0.561, { members: ['svm', 'random_forest', 'knn'], implementation: 'VotingClassifier' }),
+        cmp('decision_tree_optimised', 'Decision Tree (optimised)', 'optimised', 0.472)] },
+    cross_event: { design_label: 'cross-event generalisation', classes: LABELS4, n_test: 10,
+      svm_sample: { buildings: 10061, scenes: 175, of_training_buildings: 42425, seed: 42 },
+      models: [cmp('knn', 'KNN', 'default', 0.27), cmp('decision_tree', 'Decision Tree', 'default', 0.29), cmp('random_forest', 'Random Forest', 'default', 0.291),
+        cmp('svm', 'SVM', 'default', 0.274), cmp('soft_voting', 'Soft Voting (SVM + RF + KNN)', 'ensemble', 0.282, { members: ['svm', 'random_forest', 'knn'], implementation: 'VotingClassifier' })] },
+  },
 }

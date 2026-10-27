@@ -8,7 +8,7 @@ through `backend/app/core/store.py`.
 | Path | Purpose |
 |---|---|
 | `start.sh` | starts the API (8020) and the web app (5200), freeing those ports first |
-| `scripts/run_pipeline.sh` | runs the 7 build steps in order (inspect → features → splits → train → thresholds → feature-set experiments → demo cache) |
+| `scripts/run_pipeline.sh` | runs the 10 build steps in order (inspect → features → splits → train → model comparison → AdaBoost → serve SVM + soft voting → thresholds → feature-set experiments → demo cache) |
 | `config/events.yaml` | events, damage-value mapping, connectivity, minimum blob area, cache settings |
 | `config/features.yaml` | ring width, Canny σ, GLCM levels and distance |
 | `config/training.yaml` | split designs, seed, skew threshold, model grids, serving set, review target accuracy |

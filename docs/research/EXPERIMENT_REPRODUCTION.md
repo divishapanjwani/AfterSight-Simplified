@@ -62,7 +62,7 @@ paper/build/.venv/bin/python paper/build/build_paper.py               # -> docs/
 ## B. Regenerate everything from the raw data (retrains; not done for the paper)
 
 ```zsh
-scripts/run_pipeline.sh                  # 7 steps; add --no-experiments to skip the feature-set experiments
+scripts/run_pipeline.sh                  # 10 steps; add --no-experiments to skip the feature-set experiments
 ```
 
 | Step | Command | Output |
@@ -71,11 +71,14 @@ scripts/run_pipeline.sh                  # 7 steps; add --no-experiments to skip
 | 2 | `python scripts/build_features.py --workers 4` | `data/processed/features/features_v1.parquet` (71,340 × 37) |
 | 3 | `python scripts/make_splits.py` | `data/splits/within_event_v1.json`, `cross_event_v1.json` |
 | 4 | `python scripts/train.py` | `artifacts/models/…`, `artifacts/metrics/…` (each test set evaluated once), K-Means, confounding check |
-| 5 | `python scripts/calibrate_review.py` | `artifacts/models/within_event/four_class/review_thresholds.json` (validation only) |
-| 6 | `python scripts/run_phase3b.py` | feature-set experiments (called "Phase 3b" during development) → `artifacts/experiments/phase3b/` |
-| 7 | `python scripts/prepare_demo.py` | 3 pre-cached demo scenes and reports |
+| 5 | `python scripts/run_model_comparison.py` | SVM, soft voting, GridSearchCV → `artifacts/experiments/model_comparison/` (needs step 4) |
+| 6 | `python scripts/run_model_comparison.py --adaboost-only` | adds the AdaBoost row to the same summary |
+| 7 | `python scripts/serve_comparison_models.py` | serves the saved SVM and the soft-voting ensemble (no refit) → `artifacts/models/within_event/four_class/` |
+| 8 | `python scripts/calibrate_review.py` | `artifacts/models/within_event/four_class/review_thresholds.json` for all five served models (validation only) |
+| 9 | `python scripts/run_phase3b.py` | feature-set experiments (called "Phase 3b" during development) → `artifacts/experiments/phase3b/` |
+| 10 | `python scripts/prepare_demo.py` | 3 pre-cached demo scenes and reports |
 
-**Run time:** a fresh end-to-end run took **571 s** on the M4 laptop. That figure is documented from the
+**Run time:** a fresh end-to-end run of the original 7 steps (before steps 5–7 were added) took **571 s** on the M4 laptop. That figure is documented from the
 project's fresh-setup check (`docs/UNDERSTANDING_AFTERSIGHT.md`, Section 5) and was not re-measured here.
 The saved per-fit training times for the paper's models are:
 

@@ -439,12 +439,14 @@ flowchart LR
     I["inspect<br/>inspect_dataset.py"] --> F["features<br/>build_features.py"]
     F --> S["splits<br/>make_splits.py"]
     S --> T["train + evaluate<br/>train.py"]
-    T --> R["review thresholds<br/>calibrate_review.py"]
+    T --> C["model comparison<br/>run_model_comparison.py"]
+    C --> V["serve SVM + soft voting<br/>serve_comparison_models.py"]
+    V --> R["review thresholds<br/>calibrate_review.py"]
     R --> X["experiments<br/>run_phase3b.py"]
     X --> D["demo cache<br/>prepare_demo.py"]
 ```
 
-`scripts/run_pipeline.sh` runs all of them in this order. A fresh run took 571 seconds on our laptop.
+`scripts/run_pipeline.sh` runs all of them in this order (plus the AdaBoost row, `run_model_comparison.py --adaboost-only`). A fresh run of the original steps, before the model comparison and serving steps were added, took 571 seconds on our laptop.
 
 **Loading** (`backend/app/datasets/xbd_parquet.py`)
 - **Does:** streams Parquet rows, decodes PNG bytes, and reads the event and scene from `image_name`.

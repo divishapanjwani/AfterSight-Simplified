@@ -149,7 +149,7 @@ disagree.
 
 ```zsh
 source .venv/bin/activate
-scripts/run_pipeline.sh          # inspect → features → splits → train → thresholds → experiments → demo
+scripts/run_pipeline.sh          # inspect → features → splits → train → model comparison → serve SVM + soft voting → thresholds → experiments → demo
 python scripts/evaluate.py       # prints the comparison tables from artifacts (never re-touches test)
 ```
 

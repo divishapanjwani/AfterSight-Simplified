@@ -13,7 +13,7 @@ and cluster explorers.
 
 ## Contents
 
-[Problem](#problem) · [What it does](#what-it-does) · [Results](#results-honestly) · [Quick start](#quick-start-macos) ·
+[Problem](#problem) · [What it does](#what-it-does) · [Results](#results-honestly) · [Quick start](#quick-start-macos) ([Windows](#quick-start-windows-powershell)) ·
 [Usage](#usage) · [Architecture](#architecture) · [Dataset and licence](#dataset-and-licence) · [API](#api) · [Tests](#tests) ·
 [Limitations](#limitations) · [Troubleshooting](#troubleshooting) · [Future scope](#future-scope) · [Changelog](#changelog) ·
 [Related work](#related-work)
@@ -89,28 +89,81 @@ deeper Decision Tree (depth 12: test macro-F1 0.470 → 0.474).
 
 Requires Python 3.11 (`brew install python@3.11`) and Node 20+. The virtualenv lives at the **repo root**.
 
+**The trained models are not in git** (`data/`, `artifacts/` and `outputs/` are git-ignored), so a fresh clone
+has to build them. The order matters: the model comparison needs the trained KNN, Decision Tree and Random
+Forest; `serve_comparison_models.py` needs the comparison's saved SVM; the review thresholds and the demo cache
+need all five served models (KNN, DT, RF, SVM, soft voting). `scripts/run_pipeline.sh` runs these steps in order.
+
 ```zsh
 # 1. once, from the repo root: Python + JS dependencies
 python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r backend/requirements.txt
 (cd frontend && npm ci)
-# Windows (PowerShell): py -3.11 -m venv .venv; .\.venv\Scripts\Activate.ps1; python -m pip install -r backend\requirements.txt
 #   Always run the tests inside this venv (python -m pytest). A global Python can see other packages (e.g. torch
 #   in user site-packages), which makes test_no_deep_learning_frameworks_installed fail; the venv does not.
 
 # 2. put the xBD Parquet shards in data/raw/xbd_parquet/  (see data/README.md)
 
-# 3. build everything: inspect → features → splits → train → thresholds → experiments → demo cache (~10 min)
+# 3. build everything (~11 min): scripts/run_pipeline.sh runs, in this order,
+#      inspect → features → splits → train KNN/DT/RF → model comparison (SVM, soft voting, GridSearchCV)
+#      → AdaBoost row → serve the SVM + soft voting → review thresholds → Phase 3b experiments → demo cache
 scripts/run_pipeline.sh
 
 # 4. run the app (frees ports 8020/5200 if busy, prints the URL; Ctrl-C stops both)
 ./start.sh                      # → http://localhost:5200   (API docs: http://localhost:8020/docs)
 ```
 
+The same steps one by one (what `run_pipeline.sh` runs, venv active, from the repo root):
+
+```zsh
+python scripts/inspect_dataset.py --alignment          # 1. inspect the shards, fill the scene cache
+python scripts/build_features.py --workers 4           # 2. per-building features
+python scripts/make_splits.py                          # 3. scene-grouped split manifests
+python scripts/train.py                                # 4. train + evaluate KNN, DT, RF (test sets once)
+python scripts/run_model_comparison.py                 # 5. SVM, soft voting, GridSearchCV (needs step 4)
+python scripts/run_model_comparison.py --adaboost-only # 6. AdaBoost row for the Arena
+python scripts/serve_comparison_models.py              # 7. serve the SVM + soft voting (no refit; needs step 5)
+python scripts/calibrate_review.py                     # 8. review thresholds for all five models (validation)
+python scripts/run_phase3b.py                          # 9. feature-set experiments (optional)
+python scripts/prepare_demo.py                         # 10. pre-cache the demo scenes
+```
+
 Without steps 2–3 the app still starts, and every page shows what is missing and the command that builds
-it. A clean clone following exactly these steps was tested in Phase 6: about 11 minutes end to end, with
-results identical to the original run. After installation the app works fully offline.
+it. A clean clone following the original steps was tested in Phase 6: about 11 minutes end to end, with
+results identical to the original run. Steps 5–7 were added later, and the full sequence has not been re-run
+on a fresh clone since. After installation the app works fully offline.
+
+### Quick start (Windows, PowerShell)
+
+`run_pipeline.sh` and `start.sh` are bash scripts, so on Windows run the steps directly, in the same order.
+These commands mirror the macOS ones but have not been tested on Windows.
+
+```powershell
+# 1. once, from the repo root: Python + JS dependencies
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1          # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+python -m pip install -r backend\requirements.txt
+cd frontend; npm ci; cd ..
+
+# 2. put the xBD Parquet shards in data\raw\xbd_parquet\  (see data\README.md)
+
+# 3. build everything, in this order (venv active, repo root)
+python scripts\inspect_dataset.py --alignment
+python scripts\build_features.py --workers 4
+python scripts\make_splits.py
+python scripts\train.py                                # KNN, DT, RF
+python scripts\run_model_comparison.py                 # SVM, soft voting, GridSearchCV (needs train.py)
+python scripts\run_model_comparison.py --adaboost-only # AdaBoost row for the Arena
+python scripts\serve_comparison_models.py              # serve the SVM + soft voting (needs the comparison)
+python scripts\calibrate_review.py                     # review thresholds for all five models
+python scripts\run_phase3b.py                          # feature-set experiments (optional)
+python scripts\prepare_demo.py                         # pre-cache the demo scenes
+
+# 4. run the app in two PowerShell windows
+.\.venv\Scripts\Activate.ps1; cd backend; python -m uvicorn app.main:app --port 8020   # window 1: API
+cd frontend; npx vite --port 5200 --strictPort                                       # window 2 → http://localhost:5200
+```
 
 ### Running the servers by hand
 

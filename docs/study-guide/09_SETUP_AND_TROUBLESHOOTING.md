@@ -48,6 +48,10 @@ cd frontend; npm ci; cd ..
 cd frontend; npx vite --port 5200 --strictPort
 ```
 
+To build the models on Windows, run the pipeline steps one by one in the order listed in the README
+(*Quick start (Windows, PowerShell)*): `train.py` before `run_model_comparison.py`, then
+`serve_comparison_models.py`, then `calibrate_review.py` and `prepare_demo.py`.
+
 Run the backend tests on Windows **inside the venv**: `python -m pytest` from the repo root.
 
 ## Rebuilding from raw data (only if you must; it retrains every model)

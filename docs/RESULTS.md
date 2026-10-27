@@ -5,7 +5,7 @@ scikit-learn 1.9.1). Reprint anytime with `python scripts/evaluate.py`. Macro-F1
 Recall is per class on the test set. Inference time is in milliseconds per 1,000 buildings (KNN and the
 random forest use all CPU cores).
 
-The app's damage models are **KNN** (default) and the **Decision Tree**. Saved Logistic Regression rows in the
+The app's damage models are **KNN** (default), the **Decision Tree** and the **Random Forest**. The threshold baseline rows are kept below as saved results only; it is no longer in active use. SVM, soft-voting, AdaBoost and GridSearchCV results: `artifacts/experiments/model_comparison/summary.json` and the README. Saved Logistic Regression rows in the
 comparison files are not damage models of this project and are not listed here (nor by `evaluate.py` or the app);
 a logistic regression appears below only as the analysis classifier of the confounding check and in the
 feature-set experiment.
@@ -19,7 +19,7 @@ Test: 10,706 buildings from unseen scenes of the same 5 disasters.
 | Baseline (`glcm_homogeneity_delta` thresholds) | 0.332 | 0.383 | 0.584 | 0.876 | 0.109 | 0.057 | 0.443 | 0.8 | 0.0 |
 | **KNN** (k=15, uniform; app default) | 0.518 | **0.520** | 0.636 | 0.831 | 0.270 | 0.254 | 0.658 | 0.2 | 19.7 |
 | **Decision Tree** (depth 8, leaf 100) | 0.511 | **0.470** | 0.484 | 0.434 | 0.449 | 0.499 | 0.780 | 1.2 | 0.3 |
-| Random Forest — *optional reference* | 0.589 | 0.546 | 0.590 | 0.617 | 0.486 | 0.430 | 0.811 | 4.7 | 3.9 |
+| **Random Forest** (served) | 0.589 | 0.546 | 0.590 | 0.617 | 0.486 | 0.430 | 0.811 | 4.7 | 3.9 |
 
 ## Cross-event generalisation · 4-class (primary)
 
@@ -30,7 +30,7 @@ Test: all 21,429 hurricane-michael buildings. The model never saw this disaster.
 | Baseline (`abs_dmean_r` thresholds) | 0.362 | 0.193 | 0.245 | 0.264 | 0.153 | 0.260 | 0.461 | 1.0 | 0.0 |
 | **KNN** (k=15, uniform; app default) | 0.581 | **0.271** | 0.554 | 0.808 | 0.071 | 0.033 | 0.354 | 0.2 | 16.8 |
 | **Decision Tree** (depth 8, leaf 100) | 0.576 | **0.294** | 0.502 | 0.663 | 0.241 | 0.024 | 0.428 | 1.0 | 0.2 |
-| Random Forest — *optional reference* | 0.639 | 0.291 | 0.606 | 0.888 | 0.069 | 0.008 | 0.431 | 4.7 | 3.3 |
+| **Random Forest** (served) | 0.639 | 0.291 | 0.606 | 0.888 | 0.069 | 0.008 | 0.431 | 4.7 | 3.3 |
 
 ## 3-class experiment (no-damage / damaged / destroyed)
 

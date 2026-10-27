@@ -13,10 +13,11 @@ Data = Parquet mirror of the xBD train split (masks only, no polygons); footprin
 - `un-classified` / unknown labels / unexpected mask values / blobs with no damage value: exclude and count, never coerce.
 
 ## ML
-- scikit-learn only. Required damage models (the only ones the app serves): **KNN (default)** and **Decision Tree**.
-  Also required: threshold baseline (non-ML) and K-Means (analysis only).
+- scikit-learn only. Served damage models: **KNN (default)**, **Decision Tree** and **Random Forest** (saved model,
+  no per-building explanation). Arena-only comparison models: SVM, soft-voting ensemble (SVM + RF + KNN),
+  GridSearchCV-optimised KNN/DT/SVM, AdaBoost. K-Means is analysis only. The threshold baseline is no longer in active use.
 - Logistic Regression is **not a damage model**: it is used only as an analysis classifier for the confounding
-  check and the feature-set experiment. Random Forest is research-only (trained and saved, never served or shown).
+  check and the feature-set experiment.
   Optional (after required work): GaussianNB, LinearSVC.
 - **Forbidden:** PyTorch, TensorFlow, Keras, CNNs, pretrained vision models, external AI APIs. Do not install them.
 - Splits are grouped by scene (event-level hold-out preferred). Fit preprocessing on train only;

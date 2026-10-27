@@ -48,10 +48,12 @@ domain shift.
 
 **Models**
 
-- **Which model is best?** It depends on the test. KNN (the default) scores 0.520 within-event and 0.271
-  cross-event; the Decision Tree 0.470 and 0.294. KNN is better on new scenes of known disasters, the Decision
-  Tree holds up slightly better on the unseen disaster. The saved Random Forest reference (0.546 within-event)
-  is not served or shown in the app.
+- **Which model is best?** It depends on the test. Within-event (macro-F1): Random Forest 0.546, soft voting
+  0.542, KNN 0.520, SVM 0.514, Decision Tree 0.470, AdaBoost 0.396. Cross-event: Decision Tree 0.294, Random Forest
+  0.291, soft voting 0.282, SVM 0.275, AdaBoost 0.273, KNN 0.271. Every model drops to about 0.27–0.29 on the unseen
+  disaster, so no choice of classifier fixes the domain shift.
+- **Which models does the app serve?** KNN (default), the Decision Tree and the Random Forest (Triage Desk, Case
+  File, Review Queue, reports). The SVM, the ensembles and the optimised versions are in the Model Arena only.
 - **Why these two models?** They are the two models the paper compares, and they explain themselves in two
   different, easy-to-show ways: KNN by its most similar labelled training buildings, the Decision Tree by the
   yes/no questions from the root to its leaf (both in the Case File).
@@ -60,8 +62,8 @@ domain shift.
   strongly the features identify the disaster.
 - **Why is KNN slow?** It stores all 49,929 training buildings and compares each new building with them at
   prediction time (about 20 ms per 1,000 buildings vs 0.3 ms for the Decision Tree).
-- **What does the baseline show?** One feature (texture-smoothness change) with three thresholds already gets
-  0.383 within-event. Learned models add about 0.14.
+- **What happened to the threshold baseline?** It is no longer in active use (faculty request); its saved files
+  stay on disk. It was one feature with three thresholds (0.383 within-event).
 - **What does K-Means tell you?** That the strongest natural grouping is *not* damage (ARI 0.04–0.10).
   Clusters are never used as predictions. In the Cluster Atlas, silhouette (−1 to 1) says how well separated the
   clusters are, and ARI (0 = random, 1 = identical) says how well they match the reference labels; ARI is not
@@ -87,6 +89,35 @@ domain shift.
   all 752 explanations, the Feature Lab numbers and `/models` before the change, and they were identical after
   it. See [SIMPLIFICATION_NOTES.md](SIMPLIFICATION_NOTES.md).
 
+**Model comparison and ensembles (Arena · 08)**
+
+- **SVM?** A support vector machine finds the boundary between classes with the widest margin; the RBF kernel lets
+  that boundary curve. We use the same preprocessing as the other models, balanced class weights, and
+  `probability=True` (Platt scaling) so it can join soft voting. Test macro-F1 0.514 within-event, 0.275 cross-event.
+- **Why sample 10,000 buildings for the SVM?** SVC training time grows roughly with the square of the number of
+  samples, so ~50k buildings would take far too long. We took whole training *scenes* in a seeded random order until
+  we had 10,128 buildings (168 scenes), so buildings from one scene are never split, as in every other split here.
+- **Random Forest?** 200 decision trees, each grown on a bootstrap sample of buildings with a random subset of
+  features at each split; the forest averages their votes. That is a **parallel ensemble (bagging)**. Best
+  within-event macro-F1 (0.546), but no single readable path, so the Case File shows only its scores.
+- **Soft voting?** Each of SVM, Random Forest and KNN gives a probability-like score per class; we average the
+  three with equal weights and predict the highest average (sklearn `VotingClassifier(voting="soft")` over the
+  already-fitted models, so nothing is retrained). Result: 0.542 within, 0.282 cross. It beats KNN and the SVM,
+  but **not** the Random Forest: averaging in KNN, which leans towards "no damage", lowers the rare-class recall
+  (within-event minor-damage recall 0.299 for the ensemble vs 0.486 for the Random Forest; major 0.339 vs 0.430).
+- **Parallel vs serial ensembles?** Parallel: members are trained independently and combined (soft voting,
+  bagging/Random Forest). Serial: each new member is trained to fix the previous ones' errors (boosting). Our
+  AdaBoost over 200 decision stumps scored 0.396 within-event and 0.273 cross-event: unweighted boosting of
+  one-question stumps under-predicts the rare damage classes (macro recall 0.404).
+- **GridSearchCV with grouped CV?** For each setting in the grid, train on two thirds of the training *scenes*
+  and score macro-F1 on the remaining third (GroupKFold(3) grouped by scene, so no scene is in both), three times;
+  pick the best average, refit it on all training data, and test it once. Preprocessing is inside the pipeline, so
+  it is refitted in every fold. Test data never takes part. Results: KNN k=15 uniform (CV 0.499) and SVM RBF C=1
+  (CV 0.522) were already the defaults, so their test scores did not change; the Decision Tree chose depth 12
+  (CV 0.483), test macro-F1 0.470 → 0.474 (+0.004, a negligible gain).
+- **Why not tune on the test set?** Then the test score would no longer be an unbiased estimate; the grouped CV
+  keeps selection on training data only.
+
 ## 5-minute demo script
 
 1. **Readiness (30 s):** everything is built. The headline card shows KNN 0.520 within-event vs 0.271
@@ -95,7 +126,8 @@ domain shift.
    back.
 3. **Triage Desk, fire scene `santa-rosa-wildfire_00000006` (60 s):** Run analysis (KNN, the default). Swipe
    pre/post, then the Prediction overlay, then Correct vs wrong. Burned roofs → *destroyed* is the easiest class
-   (scene macro-F1 0.55 with KNN, 0.58 with the Decision Tree).
+   (scene macro-F1 0.55 with KNN, 0.58 with the Decision Tree). Then pick **Random Forest** to show the third
+   served model.
 4. **Case file (60 s):** click a destroyed building and show the outlined crops, predicted vs ground truth, and
    the 15 most similar training buildings (KNN). Switch the model to the Decision Tree for its root-to-leaf
    questions.
@@ -103,7 +135,8 @@ domain shift.
    the hardest distinction.
 6. **Arena (60 s):** the dumbbell (every model drops on the unseen disaster), then the confounding check (82.9%
    event-prediction accuracy vs 25.2% for always guessing the most common event; an analysis classifier, not a
-   damage model). The KNN and Decision Tree rows are the paper's comparison.
+   damage model). The KNN and Decision Tree rows are the paper's comparison. Then **Arena · 08**: the comparison
+   table, the GridSearchCV table and the soft-voting explanation (0.542 vs the Random Forest's 0.546).
 7. **Report (30 s):** download the PDF. It carries the split, the metrics and the limitations.
 
 Backup: the flooding scene `hurricane-harvey_00000356` is mostly minor damage under water, and the models struggle

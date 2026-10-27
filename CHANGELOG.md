@@ -46,6 +46,33 @@ Dataset, features, splits, training, models, saved results, configs, API routes 
 behaviour snapshot (12 demo analyses, 752 explanations, Feature Lab, `/models`) is **IDENTICAL** to the
 baseline taken before any edit.
 
+## Enhancements for the faculty review (branch `enhancements`)
+
+| Change | Files | Why |
+|---|---|---|
+| **Random Forest served again** (Triage Desk, review queue, readiness, reports), reusing the saved model (not retrained) and its saved validation threshold (0.3865). Its Case File shows the class scores and "No per-building explanation for this model." | `config/training.yaml`, `backend/app/inference/analysis.py`, `schemas/api.py`, `CaseFile.tsx` | Faculty request |
+| **SVM** (shared preprocessing + `SVC(class_weight="balanced", probability=True)`, RBF, C=1) on a scene-grouped random sample of training buildings (10,128 within-event, 10,061 cross-event; seed 42); class order checked against the other models | `backend/app/experiments/model_comparison.py`, `training/models.py` (`svm` pipeline) | SVC does not scale to ~50k buildings in our time budget |
+| **GridSearchCV** (GroupKFold(3) by scene, `f1_macro`, preprocessing inside the pipeline, within-event training split only) for KNN, DT and SVM; best configurations refitted as "optimised" versions and evaluated once on the within-event test set | same | Faculty request; never uses the test sets for selection |
+| **Soft-voting ensemble** (equal-weight average of `predict_proba` of SVM + RF + KNN) via `VotingClassifier(voting="soft")` over `FrozenEstimator` members, so nothing is refitted; checked to equal the plain average | same | Parallel ensemble |
+| **AdaBoost** over 200 decision stumps (optional, serial ensemble), appended with `--adaboost-only` | same | Optional step; time allowed it |
+| New endpoint `GET /api/results/model-comparison`; new Arena card **"ARENA · 08 Model Comparison & Ensemble Analysis"** (comparison table, macro-F1 chart with a within/cross toggle, GridSearchCV table, confusion matrix and per-class metrics for any model, ensemble explanation) | `routes.py`, `frontend/src/components/ModelComparisonSection.tsx`, `ModelArenaPage.tsx` | Show everything in the app, from saved results only |
+| **Threshold baseline removed from active use**: Arena rows and charts, `/models/{name}/metrics`, comparison rows and `evaluate.py`. Its saved files stay on disk | `routes.py`, `ModelArenaPage.tsx`, `scripts/evaluate.py` | Faculty request |
+
+**Real results** are in the README and `docs/VIVA_NOTES.md`. Soft voting (0.542 within, 0.282 cross) beats KNN and
+the SVM but not the Random Forest (0.546, 0.291). GridSearchCV kept KNN (k=15, uniform) and SVM (RBF, C=1) at their
+defaults and chose a depth-12 Decision Tree (test macro-F1 0.470 → 0.474). AdaBoost: 0.396 within, 0.273 cross.
+
+**Unchanged:** KNN and DT predictions, confidences and explanations are identical to the snapshot taken before this
+branch; the served RF's analyses match the snapshot from before the two-model change (only its label lost
+"(optional)"). No served model was retrained.
+
+**Review Queue** (test split, 10,706 buildings) now checks disagreement across three served models: KNN 6,107 flagged
+(was 5,889; low-confidence 2,388 unchanged), DT 7,457 (was 7,372; low-confidence 5,652 unchanged), RF 5,436
+(1,624 low-confidence).
+
+**Honest note:** `run_model_comparison.py` was accidentally run a second time during development (a deterministic
+rerun with the same seed). Every test result was identical and nothing was selected using it; the summary records this.
+
 ## KNN and Decision Tree; Logistic Regression removed (branch `knn-dt`)
 
 The app's damage models are now **KNN (default)** and the **Decision Tree**, the two models the paper compares.
